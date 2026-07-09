@@ -30,20 +30,41 @@ import { generateKOTPDF } from "./utils/kotGenerator";
 import { DigitalMenuSyncService } from "./digital-menu-sync";
 import { ExternalOrdersSyncService } from "./external-orders-sync";
 import { mongoStorage } from "./mongo-storage";
+import { computeBillTotals, DEFAULT_TAX_SETTINGS, type TaxSettings } from "@shared/tax";
 
 const orderActionSchema = z.object({
   print: z.boolean().optional().default(false),
+  taxRate: z.number().min(0).max(100).optional(),
+  serviceCharge: z.number().min(0).max(100).optional(),
 });
 
 const checkoutSchema = z.object({
   paymentMode: z.string().optional(),
   print: z.boolean().optional().default(false),
+  taxRate: z.number().min(0).max(100).optional(),
+  serviceCharge: z.number().min(0).max(100).optional(),
   splitPayments: z.array(z.object({
     person: z.number(),
     amount: z.number(),
     paymentMode: z.string(),
   })).optional(),
 });
+
+async function getTaxSettings(st: IStorage): Promise<TaxSettings> {
+  const [taxRate, serviceCharge, gstEnabled, gstNumber] = await Promise.all([
+    st.getSetting("tax_rate"),
+    st.getSetting("service_charge"),
+    st.getSetting("gst_enabled"),
+    st.getSetting("gst_number"),
+  ]);
+
+  return {
+    taxRate: taxRate !== undefined ? parseFloat(taxRate) : DEFAULT_TAX_SETTINGS.taxRate,
+    serviceCharge: serviceCharge !== undefined ? parseFloat(serviceCharge) : DEFAULT_TAX_SETTINGS.serviceCharge,
+    gstEnabled: gstEnabled !== undefined ? gstEnabled === "true" : DEFAULT_TAX_SETTINGS.gstEnabled,
+    gstNumber: gstNumber !== undefined ? gstNumber : DEFAULT_TAX_SETTINGS.gstNumber,
+  };
+}
 
 let wss: WebSocketServer;
 
@@ -789,8 +810,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const subtotal = orderItems.reduce((sum, item) => 
         sum + parseFloat(item.price) * item.quantity, 0
       );
-      const tax = subtotal * 0.05;
-      const total = subtotal + tax;
+      const taxSettings = await getTaxSettings(st);
+      const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
+      const effectiveServiceCharge = result.data.serviceCharge ?? taxSettings.serviceCharge;
+      const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, effectiveTaxRate, effectiveServiceCharge);
 
       let tableInfo = null;
       if (order.tableId) {
@@ -817,6 +840,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         customerPhone: order.customerPhone,
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
+        cgst: cgst.toFixed(2),
+        sgst: sgst.toFixed(2),
+        serviceCharge: serviceCharge.toFixed(2),
         discount: "0",
         total: total.toFixed(2),
         paymentMode: order.paymentMode || "cash",
@@ -850,8 +876,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const subtotal = orderItems.reduce((sum, item) => 
       sum + parseFloat(item.price) * item.quantity, 0
     );
-    const tax = subtotal * 0.05;
-    const total = subtotal + tax;
+    const taxSettings = await getTaxSettings(st);
+    const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
+    const effectiveServiceCharge = result.data.serviceCharge ?? taxSettings.serviceCharge;
+    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, effectiveTaxRate, effectiveServiceCharge);
 
     let tableInfo = null;
     if (order.tableId) {
@@ -878,6 +906,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       customerPhone: order.customerPhone,
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
+      cgst: cgst.toFixed(2),
+      sgst: sgst.toFixed(2),
+      serviceCharge: serviceCharge.toFixed(2),
       discount: "0",
       total: total.toFixed(2),
       paymentMode: order.paymentMode || "cash",
@@ -909,8 +940,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const subtotal = orderItems.reduce((sum, item) => 
       sum + parseFloat(item.price) * item.quantity, 0
     );
-    const tax = subtotal * 0.05;
-    const total = subtotal + tax;
+    const taxSettings = await getTaxSettings(st);
+    const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
+    const effectiveServiceCharge = result.data.serviceCharge ?? taxSettings.serviceCharge;
+    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, effectiveTaxRate, effectiveServiceCharge);
 
     if (result.data.splitPayments && result.data.splitPayments.length > 0) {
       const splitSum = result.data.splitPayments.reduce((sum, split) => sum + split.amount, 0);
@@ -966,6 +999,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       customerPhone: checkedOutOrder.customerPhone,
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
+      cgst: cgst.toFixed(2),
+      sgst: sgst.toFixed(2),
+      serviceCharge: serviceCharge.toFixed(2),
       discount: "0",
       total: total.toFixed(2),
       paymentMode: result.data.paymentMode || "cash",
@@ -1002,6 +1038,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const orderItems = await st.getOrderItems(invoice.orderId);
+      const taxSettings = await getTaxSettings(st);
 
       const pdfBuffer = generateInvoicePDF({
         invoice,
@@ -1010,7 +1047,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         restaurantName: "Restaurant POS",
         restaurantAddress: "123 Main Street, City, State 12345",
         restaurantPhone: "+1 (555) 123-4567",
-        restaurantGSTIN: "GSTIN1234567890",
+        restaurantGSTIN: taxSettings.gstEnabled ? taxSettings.gstNumber : "",
       });
 
       res.setHeader("Content-Type", "application/pdf");
@@ -1516,6 +1553,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     await st.setSetting("mongodb_uri", uri);
     res.json({ success: true });
+  });
+
+  app.get("/api/settings/tax", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    const settings = await getTaxSettings(st);
+    res.json(settings);
+  });
+
+  const taxSettingsSchema = z.object({
+    taxRate: z.number().min(0).max(100),
+    serviceCharge: z.number().min(0).max(100),
+    gstEnabled: z.boolean(),
+    gstNumber: z.string().optional().default(""),
+  });
+
+  app.post("/api/settings/tax", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    const result = taxSettingsSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+    const { taxRate, serviceCharge, gstEnabled, gstNumber } = result.data;
+    await Promise.all([
+      st.setSetting("tax_rate", String(taxRate)),
+      st.setSetting("service_charge", String(serviceCharge)),
+      st.setSetting("gst_enabled", String(gstEnabled)),
+      st.setSetting("gst_number", gstNumber),
+    ]);
+    res.json({ taxRate, serviceCharge, gstEnabled, gstNumber });
   });
 
   app.post("/api/menu/sync-from-mongodb", requireAuth, async (req, res) => {

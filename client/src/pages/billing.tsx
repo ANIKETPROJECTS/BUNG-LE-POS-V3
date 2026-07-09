@@ -34,6 +34,8 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { MenuItem, Customer, Invoice, Order, OrderItem as SchemaOrderItem } from "@shared/schema";
+import { computeBillTotals } from "@shared/tax";
+import { useTaxSettings } from "@/hooks/use-tax-settings";
 
 interface OrderItem {
   id: string;
@@ -75,6 +77,14 @@ export default function BillingPage() {
   const [selectedTableFromDropdown, setSelectedTableFromDropdown] = useState<string>("");
   const [showMobileCart, setShowMobileCart] = useState(false);
   const { toast} = useToast();
+  const { data: taxSettings } = useTaxSettings();
+  const [taxRate, setTaxRate] = useState(taxSettings.taxRate);
+  const [serviceChargeRate, setServiceChargeRate] = useState(taxSettings.serviceCharge);
+
+  useEffect(() => {
+    setTaxRate(taxSettings.taxRate);
+    setServiceChargeRate(taxSettings.serviceCharge);
+  }, [taxSettings.taxRate, taxSettings.serviceCharge]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -259,7 +269,7 @@ export default function BillingPage() {
 
   const saveMutation = useMutation({
     mutationFn: async ({ orderId, print }: { orderId: string; print: boolean }) => {
-      const res = await apiRequest("POST", `/api/orders/${orderId}/save`, { print });
+      const res = await apiRequest("POST", `/api/orders/${orderId}/save`, { print, taxRate, serviceCharge: serviceChargeRate });
       const saveData = await res.json();
       
       if (print && saveData.invoice) {
@@ -307,7 +317,7 @@ export default function BillingPage() {
 
   const billMutation = useMutation({
     mutationFn: async ({ orderId, print }: { orderId: string; print: boolean }) => {
-      const res = await apiRequest("POST", `/api/orders/${orderId}/bill`, { print });
+      const res = await apiRequest("POST", `/api/orders/${orderId}/bill`, { print, taxRate, serviceCharge: serviceChargeRate });
       const billData = await res.json();
       
       if (print && billData.invoice) {
@@ -323,13 +333,15 @@ export default function BillingPage() {
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: async ({ orderId, paymentMode, splitPayments, print }: { 
+    mutationFn: async ({ orderId, paymentMode, splitPayments, print, taxRate, serviceCharge }: { 
       orderId: string; 
       paymentMode: string; 
       splitPayments?: Array<{ person: number; amount: number; paymentMode: string }>; 
-      print: boolean 
+      print: boolean;
+      taxRate?: number;
+      serviceCharge?: number;
     }) => {
-      const res = await apiRequest("POST", `/api/orders/${orderId}/checkout`, { paymentMode, splitPayments, print });
+      const res = await apiRequest("POST", `/api/orders/${orderId}/checkout`, { paymentMode, splitPayments, print, taxRate, serviceCharge });
       return await res.json();
     },
     onSuccess: (data) => {
@@ -702,8 +714,7 @@ export default function BillingPage() {
 
   const handleConfirmPayment = async () => {
     const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const tax = subtotal * 0.05;
-    const total = subtotal + tax;
+    const { total } = computeBillTotals(subtotal, taxRate, serviceChargeRate);
 
     try {
       let orderId = currentOrderId;
@@ -724,6 +735,8 @@ export default function BillingPage() {
       const checkoutResponse = await checkoutMutation.mutateAsync({ 
         orderId: orderId, 
         paymentMode: paymentMethod,
+        taxRate,
+        serviceCharge: serviceChargeRate,
         splitPayments: undefined,
         print: false 
       });
@@ -807,6 +820,7 @@ export default function BillingPage() {
     setSplitMode("equal");
     setSplitCount(2);
     const equalAmount = total / 2;
+
     setSplitAmounts([equalAmount, equalAmount]);
     setSplitPaymentModes(["cash", "cash"]);
     setShowSplitBillDialog(true);
@@ -855,8 +869,7 @@ export default function BillingPage() {
 
   const handleConfirmCheckout = async () => {
     const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const tax = subtotal * 0.05;
-    const total = subtotal + tax;
+    const { total } = computeBillTotals(subtotal, taxRate, serviceChargeRate);
 
     try {
       let orderId = currentOrderId;
@@ -885,6 +898,8 @@ export default function BillingPage() {
       const checkoutResponse = await checkoutMutation.mutateAsync({ 
         orderId: orderId, 
         paymentMode: paymentMethod,
+        taxRate,
+        serviceCharge: serviceChargeRate,
         splitPayments: splitPaymentsData,
         print: false 
       });
@@ -976,8 +991,7 @@ export default function BillingPage() {
   };
 
   const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const tax = subtotal * 0.05;
-  const total = subtotal + tax;
+  const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, taxRate, serviceChargeRate);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-50">
@@ -1107,6 +1121,8 @@ export default function BillingPage() {
             onPaymentMethodSelect={handlePaymentMethodSelect}
             onConfirmPayment={handleConfirmPayment}
             paymentMethod={paymentMethod}
+            onTaxRateChange={setTaxRate}
+            onServiceChargeChange={setServiceChargeRate}
           />
         </div>
       </div>
@@ -1164,6 +1180,8 @@ export default function BillingPage() {
               onPaymentMethodSelect={handlePaymentMethodSelect}
               onConfirmPayment={handleConfirmPayment}
               paymentMethod={paymentMethod}
+              onTaxRateChange={setTaxRate}
+              onServiceChargeChange={setServiceChargeRate}
             />
           </div>
         </SheetContent>
@@ -1214,9 +1232,23 @@ export default function BillingPage() {
                 <span>₹{subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>Tax (5%):</span>
+                <span>Tax ({taxRate}%):</span>
                 <span>₹{tax.toFixed(2)}</span>
               </div>
+              <div className="flex justify-between text-xs pl-2 text-muted-foreground">
+                <span>CGST ({(taxRate / 2).toFixed(1)}%):</span>
+                <span>₹{cgst.toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between text-xs pl-2 text-muted-foreground">
+                <span>SGST ({(taxRate / 2).toFixed(1)}%):</span>
+                <span>₹{sgst.toFixed(2)}</span>
+              </div>
+              {serviceCharge > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>Service Charge ({serviceChargeRate}%):</span>
+                  <span>₹{serviceCharge.toFixed(2)}</span>
+                </div>
+              )}
               <div className="flex justify-between font-bold text-lg border-t pt-2">
                 <span>Total:</span>
                 <span className="text-primary">₹{total.toFixed(2)}</span>

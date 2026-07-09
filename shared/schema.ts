@@ -304,6 +304,9 @@ export interface Invoice {
   customerPhone: string | null;
   subtotal: string;
   tax: string;
+  cgst: string;
+  sgst: string;
+  serviceCharge: string;
   discount: string;
   total: string;
   paymentMode: string;
@@ -324,6 +327,9 @@ export const insertInvoiceSchema = z.object({
   customerPhone: z.string().nullable().optional(),
   subtotal: z.string(),
   tax: z.string(),
+  cgst: z.string().default("0"),
+  sgst: z.string().default("0"),
+  serviceCharge: z.string().default("0"),
   discount: z.string().default("0"),
   total: z.string(),
   paymentMode: z.string(),

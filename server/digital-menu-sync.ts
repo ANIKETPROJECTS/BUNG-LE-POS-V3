@@ -2,6 +2,7 @@ import { mongodb } from './mongodb';
 import { type DigitalMenuOrder, type DigitalMenuCustomer } from '@shared/schema';
 import { type IStorage } from './storage';
 import { ObjectId } from 'mongodb';
+import { computeBillTotals, DEFAULT_TAX_SETTINGS } from '@shared/tax';
 
 // If a claim (syncedToPOS set, no posOrderId yet) is older than this, assume
 // the process that claimed it crashed before finishing and allow it to be
@@ -555,8 +556,13 @@ export class DigitalMenuSyncService {
       const subtotal = orderItems.reduce((sum, item) => 
         sum + parseFloat(item.price) * item.quantity, 0
       );
-      const tax = subtotal * 0.05;
-      const total = subtotal + tax;
+      const taxRateSetting = await this.storage.getSetting("tax_rate");
+      const serviceChargeSetting = await this.storage.getSetting("service_charge");
+      const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(
+        subtotal,
+        taxRateSetting !== undefined ? parseFloat(taxRateSetting) : DEFAULT_TAX_SETTINGS.taxRate,
+        serviceChargeSetting !== undefined ? parseFloat(serviceChargeSetting) : DEFAULT_TAX_SETTINGS.serviceCharge
+      );
 
       // Get payment method from digital menu order, default to cash
       const paymentMode = (digitalOrder.paymentMethod || 'cash').toLowerCase();
@@ -610,6 +616,9 @@ export class DigitalMenuSyncService {
         customerPhone: checkedOutOrder.customerPhone,
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
+        cgst: cgst.toFixed(2),
+        sgst: sgst.toFixed(2),
+        serviceCharge: serviceCharge.toFixed(2),
         discount: '0',
         total: total.toFixed(2),
         paymentMode: paymentMode,

@@ -119,8 +119,12 @@ export function generateInvoicePDF(data: InvoiceData): Buffer {
 
   const subtotal = parseFloat(invoice.subtotal);
   const tax = parseFloat(invoice.tax);
+  const cgst = parseFloat(invoice.cgst || "0");
+  const sgst = parseFloat(invoice.sgst || "0");
+  const serviceCharge = parseFloat(invoice.serviceCharge || "0");
   const discount = parseFloat(invoice.discount || "0");
   const total = parseFloat(invoice.total);
+  const taxRatePercent = subtotal > 0 ? (tax / subtotal) * 100 : 0;
 
   doc.setFontSize(11);
   const summaryX = pageWidth - 70;
@@ -129,8 +133,22 @@ export function generateInvoicePDF(data: InvoiceData): Buffer {
   doc.text(`₹${subtotal.toFixed(2)}`, pageWidth - 15, yPosition, { align: "right" });
   
   yPosition += 7;
-  doc.text("Tax (5%):", summaryX, yPosition);
+  doc.text(`Tax (${taxRatePercent.toFixed(1)}%):`, summaryX, yPosition);
   doc.text(`₹${tax.toFixed(2)}`, pageWidth - 15, yPosition, { align: "right" });
+
+  yPosition += 7;
+  doc.text(`CGST (${(taxRatePercent / 2).toFixed(1)}%):`, summaryX, yPosition);
+  doc.text(`₹${cgst.toFixed(2)}`, pageWidth - 15, yPosition, { align: "right" });
+
+  yPosition += 7;
+  doc.text(`SGST (${(taxRatePercent / 2).toFixed(1)}%):`, summaryX, yPosition);
+  doc.text(`₹${sgst.toFixed(2)}`, pageWidth - 15, yPosition, { align: "right" });
+
+  if (serviceCharge > 0) {
+    yPosition += 7;
+    doc.text("Service Charge:", summaryX, yPosition);
+    doc.text(`₹${serviceCharge.toFixed(2)}`, pageWidth - 15, yPosition, { align: "right" });
+  }
   
   if (discount > 0) {
     yPosition += 7;

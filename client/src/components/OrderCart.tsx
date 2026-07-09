@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Minus, Plus, Trash2, User, Table, StickyNote, Send, UserPlus, Users } from "lucide-react";
 import type { Customer } from "@shared/schema";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTaxSettings } from "@/hooks/use-tax-settings";
+import { computeBillTotals } from "@shared/tax";
 
 interface OrderItem {
   id: string;
@@ -56,6 +58,8 @@ interface OrderCartProps {
   onPaymentMethodSelect?: (method: "cash" | "upi" | "card") => void;
   onConfirmPayment?: () => void;
   paymentMethod?: "cash" | "upi" | "card";
+  onTaxRateChange?: (rate: number) => void;
+  onServiceChargeChange?: (rate: number) => void;
 }
 
 export default function OrderCart({
@@ -85,12 +89,23 @@ export default function OrderCart({
   onPaymentMethodSelect,
   onConfirmPayment,
   paymentMethod: externalPaymentMethod = "cash",
+  onTaxRateChange,
+  onServiceChargeChange,
 }: OrderCartProps) {
   const [notesDialogItem, setNotesDialogItem] = useState<OrderItem | null>(null);
   const [tempNotes, setTempNotes] = useState("");
   const [customNote, setCustomNote] = useState("");
   const paymentMethod = externalPaymentMethod;
-  
+  const { data: taxSettings } = useTaxSettings();
+
+  const [taxRate, setTaxRate] = useState(taxSettings.taxRate);
+  const [serviceChargeRate, setServiceChargeRate] = useState(taxSettings.serviceCharge);
+
+  useEffect(() => {
+    setTaxRate(taxSettings.taxRate);
+    setServiceChargeRate(taxSettings.serviceCharge);
+  }, [taxSettings.taxRate, taxSettings.serviceCharge]);
+
   const predefinedNotes = [
     "Make it Spicy",
     "Less Spicy",
@@ -103,8 +118,21 @@ export default function OrderCart({
   ];
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const tax = subtotal * 0.05;
-  const total = subtotal + tax;
+  const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, taxRate, serviceChargeRate);
+
+  const handleTaxRateChange = (value: string) => {
+    const rate = value === "" ? 0 : parseFloat(value);
+    if (Number.isNaN(rate)) return;
+    setTaxRate(rate);
+    onTaxRateChange?.(rate);
+  };
+
+  const handleServiceChargeChange = (value: string) => {
+    const rate = value === "" ? 0 : parseFloat(value);
+    if (Number.isNaN(rate)) return;
+    setServiceChargeRate(rate);
+    onServiceChargeChange?.(rate);
+  };
 
   const handleOpenNotes = (item: OrderItem) => {
     setNotesDialogItem(item);
@@ -311,9 +339,47 @@ export default function OrderCart({
             <span className="text-gray-600">Subtotal</span>
             <span className="text-gray-900 font-semibold" data-testid="text-subtotal">₹{subtotal.toFixed(2)}</span>
           </div>
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Tax (5%)</span>
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-600 flex items-center gap-1">
+              Tax
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step="0.1"
+                value={taxRate}
+                onChange={(e) => handleTaxRateChange(e.target.value)}
+                className="h-6 w-14 px-1 py-0 text-xs"
+                data-testid="input-cart-tax-rate"
+              />
+              %
+            </span>
             <span className="text-gray-900 font-semibold" data-testid="text-tax">₹{tax.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-xs pl-2">
+            <span className="text-gray-500">CGST ({(taxRate / 2).toFixed(1)}%)</span>
+            <span className="text-gray-700" data-testid="text-cgst">₹{cgst.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between text-xs pl-2">
+            <span className="text-gray-500">SGST ({(taxRate / 2).toFixed(1)}%)</span>
+            <span className="text-gray-700" data-testid="text-sgst">₹{sgst.toFixed(2)}</span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-600 flex items-center gap-1">
+              Service Charge
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                step="0.1"
+                value={serviceChargeRate}
+                onChange={(e) => handleServiceChargeChange(e.target.value)}
+                className="h-6 w-14 px-1 py-0 text-xs"
+                data-testid="input-cart-service-charge"
+              />
+              %
+            </span>
+            <span className="text-gray-900 font-semibold" data-testid="text-service-charge">₹{serviceCharge.toFixed(2)}</span>
           </div>
           <Separator />
           <div className="flex justify-between font-bold text-base pt-1">

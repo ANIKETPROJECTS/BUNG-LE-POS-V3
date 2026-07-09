@@ -14,7 +14,11 @@ export default function PrintableInvoice({ invoice, order, orderItems, onPrintCo
 
   const subtotal = parseFloat(invoice.subtotal);
   const tax = parseFloat(invoice.tax);
+  const cgst = parseFloat(invoice.cgst || "0");
+  const sgst = parseFloat(invoice.sgst || "0");
+  const serviceCharge = parseFloat(invoice.serviceCharge || "0");
   const total = parseFloat(invoice.total);
+  const taxRatePercent = subtotal > 0 ? (tax / subtotal) * 100 : 0;
 
   return (
     <div className="print-invoice">
@@ -133,9 +137,23 @@ export default function PrintableInvoice({ invoice, order, orderItems, onPrintCo
           <span>₹{subtotal.toFixed(2)}</span>
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
-          <span>Tax (5%):</span>
+          <span>Tax ({taxRatePercent.toFixed(1)}%):</span>
           <span>₹{tax.toFixed(2)}</span>
         </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+          <span>CGST ({(taxRatePercent / 2).toFixed(1)}%):</span>
+          <span>₹{cgst.toFixed(2)}</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+          <span>SGST ({(taxRatePercent / 2).toFixed(1)}%):</span>
+          <span>₹{sgst.toFixed(2)}</span>
+        </div>
+        {serviceCharge > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
+            <span>Service Charge:</span>
+            <span>₹{serviceCharge.toFixed(2)}</span>
+          </div>
+        )}
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontWeight: 'bold', fontSize: '13px', borderTop: '1px solid #000', marginTop: '5px' }}>
           <span>Grand Total:</span>
           <span>₹{total.toFixed(2)}</span>

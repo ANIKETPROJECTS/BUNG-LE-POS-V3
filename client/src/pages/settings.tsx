@@ -10,6 +10,8 @@ import { Separator } from "@/components/ui/separator";
 import { LogOut } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useTaxSettings } from "@/hooks/use-tax-settings";
+import { useEffect } from "react";
 
 export default function SettingsPage() {
   const [, setLocation] = useLocation();
@@ -18,6 +20,45 @@ export default function SettingsPage() {
   const [email, setEmail] = useState("contact@restaurant.com");
   const [phone, setPhone] = useState("+91 9876543210");
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const { data: taxSettings } = useTaxSettings();
+  const [gstEnabled, setGstEnabled] = useState(true);
+  const [gstNumber, setGstNumber] = useState("");
+  const [taxRate, setTaxRate] = useState(18);
+  const [serviceCharge, setServiceCharge] = useState(0);
+  const [isSavingTax, setIsSavingTax] = useState(false);
+
+  useEffect(() => {
+    setGstEnabled(taxSettings.gstEnabled);
+    setGstNumber(taxSettings.gstNumber);
+    setTaxRate(taxSettings.taxRate);
+    setServiceCharge(taxSettings.serviceCharge);
+  }, [taxSettings]);
+
+  const handleSaveTaxSettings = async () => {
+    setIsSavingTax(true);
+    try {
+      await apiRequest("POST", "/api/settings/tax", {
+        taxRate,
+        serviceCharge,
+        gstEnabled,
+        gstNumber,
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/settings/tax"] });
+      toast({
+        title: "Tax settings saved",
+        description: "The new tax configuration will apply to new bills.",
+      });
+    } catch (error) {
+      toast({
+        title: "Failed to save",
+        description: "Could not save tax settings. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSavingTax(false);
+    }
+  };
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -121,21 +162,53 @@ export default function SettingsPage() {
                     <Label>Enable GST</Label>
                     <p className="text-sm text-muted-foreground">Apply GST to all orders</p>
                   </div>
-                  <Switch defaultChecked data-testid="switch-gst" />
+                  <Switch checked={gstEnabled} onCheckedChange={setGstEnabled} data-testid="switch-gst" />
                 </div>
                 <div>
                   <Label>GST Number</Label>
-                  <Input placeholder="22AAAAA0000A1Z5" data-testid="input-gst-number" />
+                  <Input
+                    placeholder="22AAAAA0000A1Z5"
+                    value={gstNumber}
+                    onChange={(e) => setGstNumber(e.target.value)}
+                    data-testid="input-gst-number"
+                  />
                 </div>
                 <div>
                   <Label>Default Tax Rate (%)</Label>
-                  <Input type="number" defaultValue="5" data-testid="input-tax-rate" />
+                  <p className="text-sm text-muted-foreground mb-1">
+                    Total GST charged on bills, split evenly into CGST + SGST
+                  </p>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={taxRate}
+                    onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
+                    data-testid="input-tax-rate"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    CGST: {(taxRate / 2).toFixed(1)}% + SGST: {(taxRate / 2).toFixed(1)}%
+                  </p>
                 </div>
                 <div>
                   <Label>Service Charge (%)</Label>
-                  <Input type="number" defaultValue="10" data-testid="input-service-charge" />
+                  <Input
+                    type="number"
+                    min={0}
+                    max={100}
+                    value={serviceCharge}
+                    onChange={(e) => setServiceCharge(parseFloat(e.target.value) || 0)}
+                    data-testid="input-service-charge"
+                  />
                 </div>
-                <Button className="mt-6" data-testid="button-save-tax">Save Tax Settings</Button>
+                <Button
+                  className="mt-6"
+                  onClick={handleSaveTaxSettings}
+                  disabled={isSavingTax}
+                  data-testid="button-save-tax"
+                >
+                  {isSavingTax ? "Saving..." : "Save Tax Settings"}
+                </Button>
               </div>
             </div>
           </TabsContent>
