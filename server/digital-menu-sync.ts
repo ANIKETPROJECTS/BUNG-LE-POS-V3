@@ -282,7 +282,7 @@ export class DigitalMenuSyncService {
             // Verify if the order needs checkout by checking the POS order status
             try {
               const posOrder = await this.storage.getOrder(digitalOrder.posOrderId);
-              if (posOrder && posOrder.status !== 'paid' && posOrder.status !== 'billed') {
+              if (posOrder && posOrder.status !== 'completed' && posOrder.status !== 'paid' && posOrder.status !== 'billed') {
                 console.log(`💳 Order ${orderId} has invoice_generated payment status but not checked out - processing now`);
                 const orderWithCustomer = {
                   ...digitalOrder,

@@ -393,7 +393,7 @@ export class MongoStorage implements IStorage {
       { id } as any,
       { 
         $set: { 
-          status: "paid", 
+          status: "completed", 
           paymentMode: paymentMode ?? null, 
           paidAt: new Date(), 
           completedAt: new Date() 

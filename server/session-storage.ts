@@ -284,7 +284,7 @@ export class SessionStorage implements IStorage {
   async getCompletedOrders(): Promise<Order[]> {
     await this.ensureConnection();
     const orders = await this.getCollection<Order>('orders')
-      .find({ status: 'completed' } as any)
+      .find({ status: { $in: ['paid', 'completed'] } } as any)
       .sort({ completedAt: -1 })
       .toArray();
     return orders;

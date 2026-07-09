@@ -566,7 +566,7 @@ export class MemStorage implements IStorage {
     if (!order) return undefined;
     const updated: Order = {
       ...order,
-      status: "paid",
+      status: "completed",
       paymentMode: paymentMode ?? order.paymentMode,
       paidAt: new Date(),
       completedAt: new Date(),
