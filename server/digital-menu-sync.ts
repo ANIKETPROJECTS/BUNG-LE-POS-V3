@@ -628,6 +628,10 @@ export class DigitalMenuSyncService {
         notes: null,
       });
 
+      // Mark the digital menu order itself as completed/paid so the digital
+      // menu UI and DB no longer show it as "pending"
+      await this.markDigitalOrderCompleted(digitalOrder._id.toString());
+
       // Broadcast updates
       if (this.broadcastFn) {
         this.broadcastFn('order_paid', checkedOutOrder);
@@ -637,6 +641,34 @@ export class DigitalMenuSyncService {
       console.log(`✅ Auto-generated invoice ${invoiceNumber} for digital menu order ${digitalOrder._id}`);
     } catch (error) {
       console.error(`❌ Failed to auto-generate invoice:`, error);
+    }
+  }
+
+  private async markDigitalOrderCompleted(orderId: string): Promise<void> {
+    try {
+      await mongodb.connect();
+      const collection = mongodb.getCollection('digital_menu_customer_orders');
+
+      const result = await collection.updateOne(
+        { _id: new ObjectId(orderId) },
+        {
+          $set: {
+            status: 'completed',
+            paymentStatus: 'paid',
+          }
+        }
+      );
+
+      if (result.modifiedCount === 0) {
+        console.warn(`⚠️  Failed to mark digital menu order ${orderId} as completed - no document matched`);
+      } else {
+        this.orderStatusMap.set(orderId, 'completed');
+        if (this.broadcastFn) {
+          this.broadcastFn('digital_menu_order_updated', { orderId, status: 'completed' });
+        }
+      }
+    } catch (error) {
+      console.error(`❌ Failed to mark digital menu order ${orderId} as completed:`, error);
     }
   }
 
