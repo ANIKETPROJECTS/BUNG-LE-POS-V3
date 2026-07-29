@@ -139,3 +139,44 @@ Works for every restaurant you onboard — they just install QZ Tray and enter t
 - Same POS code for every restaurant
 - Each restaurant just enters their own printer IP in settings
 - You issue them a login — printing works out of the box
+
+---
+
+## Testing From Replit (With QZ Tray on Your PC)
+
+People assume "Replit is cloud = can't test local stuff." That's not true here. Here's why:
+
+```
+[Replit cloud server]  →  sends app to browser
+[Your browser on your PC]  ←→  talks to QZ Tray on localhost:8181
+[QZ Tray on your PC]  →  sends to KP307 on WiFi
+```
+
+**The key insight:** QZ Tray doesn't talk to Replit's server. It talks to your **browser**. And your browser runs on your local PC — same machine where QZ Tray is installed:
+
+> Browser → `localhost:8181` (QZ Tray) → `192.168.1.50:9100` (KP307)
+
+Replit just serves the app code. The actual print path never touches Replit's cloud.
+
+### What You Need on Your PC to Test
+1. **QZ Tray installed and running** — download from [qz.io](https://qz.io), run installer, icon appears in system tray
+2. **KP307 connected to your WiFi** — and you know its IP (print a test page to find it)
+3. **Open your Replit app URL in Chrome/Edge** on that same PC
+
+That's it. Everything else is just the code we'd build.
+
+### One Catch — HTTPS vs HTTP
+
+Replit serves your app over **HTTPS**. QZ Tray by default runs on plain WebSocket (`ws://localhost:8181`). Browsers block mixed content — an HTTPS page cannot connect to a plain `ws://` address.
+
+QZ Tray has a fix — it can run in secure mode (`wss://localhost:8181`) using a self-signed certificate you install once. This is a known setup step covered in QZ Tray's own docs. It takes about 5 minutes.
+
+### Summary
+
+| Question | Answer |
+|----------|--------|
+| Can you test printing from Replit? | ✅ Yes |
+| Does the printer need to be cloud-accessible? | ❌ No — stays on local WiFi |
+| Does QZ Tray need to be on Replit's server? | ❌ No — runs on your PC |
+| Any extra setup for HTTPS? | ✅ One-time certificate install in QZ Tray |
+| Works for every restaurant the same way? | ✅ Yes — same process |
