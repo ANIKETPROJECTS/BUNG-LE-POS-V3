@@ -10,7 +10,8 @@ module.exports = {
       env: {
         NODE_ENV: "production",
         PORT: 8080, // Using 8080 as a safe alternative to 5000/3001
-        SESSION_SECRET: "your_session_secret_here"
+        MONGODB_URI: process.env.MONGODB_URI,
+        SESSION_SECRET: process.env.SESSION_SECRET
       }
     }
   ]
