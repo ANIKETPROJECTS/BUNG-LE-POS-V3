@@ -12,10 +12,13 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
-import { Printer, Plus, Trash2, Wifi, WifiOff, TestTube } from "lucide-react";
+import { Printer, Plus, Trash2, Wifi, WifiOff, TestTube, PlugZap, PlugZapIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PrinterDevice } from "@shared/schema";
+import { useQZ } from "@/hooks/use-qz";
+import { checkPrinterOnlineViaQZ, printRawToIP, connectQZ } from "@/lib/qz-print";
+import { buildTestPrint } from "@/lib/escpos-client";
 
 interface PrinterWithStatus extends PrinterDevice {
   online?: boolean;
@@ -24,6 +27,7 @@ interface PrinterWithStatus extends PrinterDevice {
 
 export default function PrinterConfigPage() {
   const { toast } = useToast();
+  const { status: qzStatus } = useQZ();
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<PrinterDevice | null>(null);
   const [printerStatuses, setPrinterStatuses] = useState<Record<string, boolean | null>>({});
@@ -86,11 +90,18 @@ export default function PrinterConfigPage() {
   const checkStatus = async (printer: PrinterDevice) => {
     setCheckingIds(prev => new Set(prev).add(printer.id));
     try {
-      const res = await fetch(`/api/printers/${printer.id}/status`);
-      const data = await res.json();
-      setPrinterStatuses(prev => ({ ...prev, [printer.id]: data.online }));
+      const online = await checkPrinterOnlineViaQZ(printer.ip, printer.port);
+      setPrinterStatuses(prev => ({ ...prev, [printer.id]: online }));
+      if (!online) {
+        toast({
+          title: "Printer offline",
+          description: `Cannot reach ${printer.ip}:${printer.port}. Check printer is on and connected to WiFi.`,
+          variant: "destructive",
+        });
+      }
     } catch {
       setPrinterStatuses(prev => ({ ...prev, [printer.id]: false }));
+      toast({ title: "QZ Tray not connected — cannot check printer", variant: "destructive" });
     } finally {
       setCheckingIds(prev => { const s = new Set(prev); s.delete(printer.id); return s; });
     }
@@ -98,41 +109,19 @@ export default function PrinterConfigPage() {
 
   const handleTestPrint = async (printer: PrinterDevice) => {
     try {
-      const res = await apiRequest("POST", `/api/printers/${printer.id}/test`, {});
-      const data = await res.json();
-      if (data.success) {
-        toast({ title: "Test print sent", description: `${printer.name} printed successfully` });
-        setPrinterStatuses(prev => ({ ...prev, [printer.id]: true }));
-      } else {
-        // Fallback: browser print dialog
-        toast({
-          title: "Printer unreachable — opening print dialog",
-          description: data.error || "Could not connect to printer",
-        });
-        openBrowserPrintDialog(printer);
-      }
-    } catch {
-      toast({ title: "Test print failed", variant: "destructive" });
+      const bytes = buildTestPrint(printer.name, `${printer.ip}:${printer.port}`);
+      await printRawToIP(printer.ip, printer.port, bytes);
+      toast({ title: "Test print sent ✓", description: `${printer.name} should have printed a slip.` });
+      setPrinterStatuses(prev => ({ ...prev, [printer.id]: true }));
+    } catch (err: any) {
+      toast({
+        title: "Test print failed",
+        description: err?.message?.includes("websocket")
+          ? "QZ Tray is not running. Install and start it on this PC."
+          : `Could not reach printer at ${printer.ip}:${printer.port}`,
+        variant: "destructive",
+      });
     }
-  };
-
-  const openBrowserPrintDialog = (printer: PrinterDevice) => {
-    const win = window.open("", "_blank", "width=400,height=600");
-    if (!win) return;
-    win.document.write(`
-      <html><head><title>Test Print — ${printer.name}</title>
-      <style>body{font-family:monospace;padding:20px}h2{text-align:center}p{margin:4px 0}hr{border-top:1px dashed #000}</style>
-      </head><body>
-      <h2>TEST PRINT</h2><hr/>
-      <p>Printer: <b>${printer.name}</b></p>
-      <p>IP: ${printer.ip}:${printer.port}</p>
-      <p>Type: ${printer.type}</p>
-      <p>Time: ${new Date().toLocaleString()}</p>
-      <hr/><p style="text-align:center"><b>Printer is configured!</b></p>
-      </body></html>
-    `);
-    win.document.close();
-    win.print();
   };
 
   const handleAdd = () => {
@@ -158,9 +147,44 @@ export default function PrinterConfigPage() {
     Label: "bg-purple-100 text-purple-700 border-purple-200",
   };
 
+  const qzBanner = () => {
+    if (qzStatus === "connected") {
+      return (
+        <div className="flex items-center gap-2 px-4 py-2 bg-green-50 dark:bg-green-950/30 border-b border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 text-sm">
+          <PlugZap className="h-4 w-4 shrink-0" />
+          <span><strong>QZ Tray connected</strong> — Printing ready. Status checks and test prints go directly to your WiFi printer.</span>
+        </div>
+      );
+    }
+    if (qzStatus === "connecting") {
+      return (
+        <div className="flex items-center gap-2 px-4 py-2 bg-yellow-50 border-b border-yellow-200 text-yellow-700 text-sm">
+          <PlugZap className="h-4 w-4 shrink-0 animate-pulse" />
+          <span>Connecting to QZ Tray…</span>
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center justify-between px-4 py-2 bg-orange-50 dark:bg-orange-950/30 border-b border-orange-200 dark:border-orange-800 text-orange-700 dark:text-orange-400 text-sm">
+        <div className="flex items-center gap-2">
+          <PlugZapIcon className="h-4 w-4 shrink-0" />
+          <span>
+            <strong>QZ Tray not detected</strong> — Install &amp; run QZ Tray on this PC to enable WiFi printing.{" "}
+            <a href="https://qz.io" target="_blank" rel="noreferrer" className="underline font-medium">Download qz.io ↗</a>
+          </span>
+        </div>
+        <Button size="sm" variant="outline" className="shrink-0 text-xs h-7" onClick={() => connectQZ().catch(() => {})}>
+          Retry
+        </Button>
+      </div>
+    );
+  };
+
   return (
     <div className="h-screen flex flex-col overflow-hidden">
       <AppHeader title="Printer Configuration" showSearch={false} />
+
+      {qzBanner()}
 
       <div className="p-6 border-b border-border bg-muted/30">
         <div className="flex justify-between items-center">

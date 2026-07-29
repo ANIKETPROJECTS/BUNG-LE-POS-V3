@@ -17,6 +17,8 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Order, OrderItem, Table, Floor, MenuItem, PrinterDevice } from "@shared/schema";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { printRawToIP, isQZConnected } from "@/lib/qz-print";
+import { buildKOTEscPos } from "@/lib/escpos-client";
 
 // localStorage key for tracking which orders have been auto-printed
 const PRINTED_KEY = "kot_auto_printed_ids";
@@ -634,7 +636,7 @@ export default function KOTPage() {
 
   // Auto-print effect: fires when activeOrders changes
   useEffect(() => {
-    if (printers.length === 0) return; // no printers configured — skip auto-print
+    if (printers.length === 0) return;
     const autoPrintKOTPrinters = printers.filter(p => p.type === "KOT" && p.autoPrint);
     if (autoPrintKOTPrinters.length === 0) return;
 
@@ -643,6 +645,41 @@ export default function KOTPage() {
 
     newOrders.forEach(async (order) => {
       markPrinted(order.id); // mark immediately to avoid double-print
+
+      // Fetch order items for KOT
+      let items: OrderItem[] = [];
+      try {
+        const res = await fetch(`/api/orders/${order.id}/items`);
+        if (res.ok) items = await res.json();
+      } catch { /* fallback with empty items */ }
+
+      // Find table/floor info
+      const tableData = (tables as Table[]).find((t: Table) => t.id === order.tableId);
+
+      // Try QZ Tray direct printing first
+      if (isQZConnected()) {
+        const bytes = buildKOTEscPos({
+          restaurantName: "Restaurant POS",
+          kotNumber: `KOT-${order.id.slice(-6).toUpperCase()}`,
+          orderType: order.orderType,
+          tableNumber: tableData?.tableNumber,
+          customerName: order.customerName ?? undefined,
+          customerPhone: order.customerPhone ?? undefined,
+          createdAt: order.createdAt,
+          items: items.map(i => ({ name: i.name, quantity: i.quantity, notes: i.notes })),
+        });
+
+        let anySuccess = false;
+        for (const printer of autoPrintKOTPrinters) {
+          try {
+            await printRawToIP(printer.ip, printer.port, bytes);
+            anySuccess = true;
+          } catch { /* try next printer */ }
+        }
+        if (anySuccess) return;
+      }
+
+      // Fallback: server-side print → browser dialog if all fail
       try {
         const res = await fetch(`/api/printers/print-kot/${order.id}`, {
           method: "POST",
@@ -650,10 +687,7 @@ export default function KOTPage() {
           body: JSON.stringify({ printerIds: autoPrintKOTPrinters.map(p => p.id) }),
         });
         const data = await res.json();
-        if (data.allFailed) {
-          // All ESC/POS printers failed → open browser print dialog
-          await browserPrintFallback(order.id);
-        }
+        if (data.allFailed) await browserPrintFallback(order.id);
       } catch {
         await browserPrintFallback(order.id);
       }
