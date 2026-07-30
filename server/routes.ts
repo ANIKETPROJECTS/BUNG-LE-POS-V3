@@ -2370,6 +2370,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check if a printer is reachable without printing anything
+  app.post("/api/printers/:id/check", requireAuth, async (req, res) => {
+    try {
+      const { checkPrinterOnline } = await import("./utils/escpos");
+      const printer = await mongoStorage.getPrinter(req.params.id);
+      if (!printer) return res.status(404).json({ error: "Printer not found" });
+      const online = await checkPrinterOnline(printer.ip, printer.port);
+      res.json({ online });
+    } catch (e: any) {
+      res.status(500).json({ online: false, error: e.message });
+    }
+  });
+
   externalOrdersSync.start(1000);
 
   const httpServer = createServer(app);
