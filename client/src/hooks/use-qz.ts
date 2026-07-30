@@ -17,8 +17,10 @@ export function useQZ() {
 
   useEffect(() => {
     const unsub = onQZStatusChange((s) => setStatus(s as QZStatus));
-    // Attempt auto-connect on mount (silent — won't throw to UI)
-    connectQZ().catch(() => {});
+    // Attempt auto-connect on mount — log failures so they're visible in console
+    connectQZ().catch((err) => {
+      console.warn("[QZ Tray] Auto-connect failed:", err?.message ?? err);
+    });
     return unsub;
   }, []);
 
