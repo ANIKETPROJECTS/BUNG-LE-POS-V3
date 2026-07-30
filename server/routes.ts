@@ -66,6 +66,24 @@ async function getTaxSettings(st: IStorage): Promise<TaxSettings> {
   };
 }
 
+/**
+ * Upsert an invoice for an order — updates the existing one if present so that
+ * Save → Bill → Checkout never creates duplicate invoices for the same order,
+ * which was causing customer "Total Spent" to be counted multiple times.
+ */
+async function upsertInvoice(
+  st: IStorage,
+  orderId: string,
+  data: Parameters<IStorage["createInvoice"]>[0]
+): Promise<import("@shared/schema").Invoice> {
+  const existing = (await st.getInvoices()).find(inv => inv.orderId === orderId);
+  if (existing) {
+    const updated = await st.updateInvoice(existing.id, data);
+    return updated ?? existing;
+  }
+  return st.createInvoice(data);
+}
+
 async function queueBillPrintJobs(opts: {
   invoice: {
     invoiceNumber: string;
@@ -926,7 +944,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         notes: item.notes || undefined
       }));
 
-      invoice = await st.createInvoice({
+      invoice = await upsertInvoice(st, order.id, {
         invoiceNumber,
         orderId: order.id,
         tableNumber: tableInfo?.tableNumber || null,
@@ -994,7 +1012,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       notes: item.notes || undefined
     }));
 
-    const invoice = await st.createInvoice({
+    const invoice = await upsertInvoice(st, order.id, {
       invoiceNumber,
       orderId: order.id,
       tableNumber: tableInfo?.tableNumber || null,
@@ -1090,7 +1108,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       notes: item.notes || undefined
     }));
 
-    const invoice = await st.createInvoice({
+    const invoice = await upsertInvoice(st, checkedOutOrder.id, {
       invoiceNumber,
       orderId: checkedOutOrder.id,
       tableNumber: tableInfo?.tableNumber || null,
