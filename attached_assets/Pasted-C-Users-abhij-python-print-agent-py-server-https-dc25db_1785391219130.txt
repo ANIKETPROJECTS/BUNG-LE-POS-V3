@@ -1,0 +1,58 @@
+C:\Users\abhij>python print-agent.py --server https://dc25db57-a5fd-4817-a119-0d8951e8cc09-00-1fhj3yza9q058.pike.replit.dev/printer-config --username admin --password admin123
+11:19:30  INFO     === RestaurantPOS Print Agent ===
+11:19:30  INFO     Server   : https://dc25db57-a5fd-4817-a119-0d8951e8cc09-00-1fhj3yza9q058.pike.replit.dev/printer-config
+11:19:30  INFO     Username : admin
+11:19:30  INFO     Polling every 2s
+11:19:30  INFO     Logged in as 'admin' ✓
+11:19:32  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:19:34  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:19:36  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:19:38  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:19:40  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:19:42  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:19:44  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:19:46  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:19:48  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:19:50  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:19:53  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:19:55  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:19:57  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:19:59  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:01  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:03  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:05  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:07  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:09  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:11  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:13  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:15  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:17  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:19  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:21  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:23  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:25  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:27  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:29  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:32  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:34  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:36  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:38  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:40  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:42  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:44  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:46  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:20:48  ERROR    Unexpected status 502 from server
+11:20:50  ERROR    Unexpected status 502 from server
+11:20:52  ERROR    Unexpected status 502 from server
+11:20:54  ERROR    Unexpected status 502 from server
+11:20:54  WARNING  5 consecutive errors — sleeping 30s
+11:21:27  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:21:29  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:21:32  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:21:34  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:21:36  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:21:38  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:21:40  ERROR    Network error: Expecting value: line 1 column 1 (char 0)
+11:21:41  INFO     Agent stopped.
+
+C:\Users\abhij>
