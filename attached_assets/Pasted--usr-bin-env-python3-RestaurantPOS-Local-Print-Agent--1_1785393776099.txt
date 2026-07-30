@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+"""
+RestaurantPOS — Local Print Agent
+==================================
+Runs on the billing counter PC. Polls the POS server for pending KOT print
+jobs and sends ESC/POS bytes directly to the thermal printer over WiFi/LAN.
+
+Requirements:
+    pip install requests
+
+Usage:
+    python print-agent.py --server https://your-replit-url.replit.dev \
+                          --username admin \
+                          --password admin123
+
+To run automatically on Windows startup, create a shortcut to this script
+in: C:\\Users\\<YourUser>\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup
+
+Packaging as .exe (run once on any PC with Python):
+    pip install pyinstaller
+    pyinstaller --onefile print-agent.py
+    # Output: dist/print-agent.exe  — copy this to every restaurant PC
+"""
+
+import argparse
+import base64
+import socket
+import sys
+import time
+import logging
+
+try:
+    import requests
+except ImportError:
+    print("ERROR: 'requests' package not found. Run: pip install requests")
+    sys.exit(1)
+
+# ─── Logging ──────────────────────────────────────────────────────────────────
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s  %(levelname)-7s  %(message)s",
+    datefmt="%H:%M:%S",
+)
+log = logging.getLogger("print-agent")
+
+# ─── Config ───────────────────────────────────────────────────────────────────
+
+POLL_INTERVAL   = 2      # seconds between polls
+PRINT_TIMEOUT   = 5      # TCP socket timeout when sending to printer
+LOGIN_RETRY     = 30     # seconds to wait before retrying a failed login
+MAX_JOB_AGE_S   = 300    # ignore jobs older than 5 minutes (avoids reprinting stale jobs)
+
+
+# ─── Printer send ─────────────────────────────────────────────────────────────
+
+def send_to_printer(ip: str, port: int, data: bytes) -> bool:
+    """Open a raw TCP socket to the printer and send ESC/POS bytes."""
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(PRINT_TIMEOUT)
+            s.connect((ip, port))
+            s.sendall(data)
+        return True
+    except OSError as e:
+        log.error("Printer %s:%d — %s", ip, port, e)
+        return False
+
+
+# ─── Auth ─────────────────────────────────────────────────────────────────────
+
+def login(session: requests.Session, server: str, username: str, password: str) -> bool:
+    """Log in to the POS server. Returns True on success."""
+    try:
+        r = session.post(
+            f"{server}/api/auth/login",
+            json={"username": username, "password": password},
+            timeout=10,
+        )
+        if r.status_code == 200:
+            log.info("Logged in as '%s' ✓", username)
+            return True
+        log.error("Login failed (%d): %s", r.status_code, r.text[:200])
+        return False
+    except requests.RequestException as e:
+        log.error("Login request failed: %s", e)
+        return False
+
+
+# ─── Main poll loop ───────────────────────────────────────────────────────────
+
+def run(server: str, username: str, password: str):
+    session = requests.Session()
+    session.verify = False          # allow self-signed / Replit certs
+    requests.packages.urllib3.disable_warnings()  # suppress SSL warnings
+
+    log.info("=== RestaurantPOS Print Agent ===")
+    log.info("Server   : %s", server)
+    log.info("Username : %s", username)
+    log.info("Polling every %ds", POLL_INTERVAL)
+
+    # Login loop — keep trying until server is reachable
+    while not login(session, server, username, password):
+        log.warning("Retrying login in %ds…", LOGIN_RETRY)
+        time.sleep(LOGIN_RETRY)
+
+    import datetime
+
+    consecutive_errors = 0
+
+    while True:
+        time.sleep(POLL_INTERVAL)
+
+        try:
+            r = session.get(f"{server}/api/print-jobs/pending", timeout=10)
+
+            # Re-login if session expired
+            if r.status_code == 401:
+                log.warning("Session expired — logging in again…")
+                if login(session, server, username, password):
+                    continue
+                else:
+                    time.sleep(LOGIN_RETRY)
+                    continue
+
+            if r.status_code != 200:
+                log.error("Unexpected status %d from server", r.status_code)
+                consecutive_errors += 1
+                if consecutive_errors >= 5:
+                    log.warning("5 consecutive errors — sleeping 30s")
+                    time.sleep(30)
+                    consecutive_errors = 0
+                continue
+
+            consecutive_errors = 0
+            jobs = r.json()
+
+            if not jobs:
+                continue  # nothing to print
+
+            log.info("%d pending job(s)", len(jobs))
+
+            for job in jobs:
+                job_id     = job["id"]
+                ip         = job["printerIp"]
+                port       = job["printerPort"]
+                kot_number = job.get("kotNumber", job_id)
+                created    = job.get("createdAt", "")
+
+                # Skip jobs that are too old (agent was offline)
+                try:
+                    age = (datetime.datetime.utcnow() -
+                           datetime.datetime.fromisoformat(created.replace("Z", "+00:00"))
+                           .replace(tzinfo=None)).total_seconds()
+                    if age > MAX_JOB_AGE_S:
+                        log.warning("Skipping stale job %s (%.0fs old)", kot_number, age)
+                        session.post(f"{server}/api/print-jobs/{job_id}/failed", timeout=5)
+                        continue
+                except Exception:
+                    pass  # if we can't parse age, proceed anyway
+
+                # Decode ESC/POS bytes
+                try:
+                    raw_bytes = base64.b64decode(job["escposData"])
+                except Exception as e:
+                    log.error("Bad escposData for job %s: %s", job_id, e)
+                    session.post(f"{server}/api/print-jobs/{job_id}/failed", timeout=5)
+                    continue
+
+                # Send to printer
+                log.info("Printing %s → %s:%d", kot_number, ip, port)
+                success = send_to_printer(ip, port, raw_bytes)
+
+                # Report result back to server
+                endpoint = "done" if success else "failed"
+                try:
+                    session.post(f"{server}/api/print-jobs/{job_id}/{endpoint}", timeout=5)
+                except requests.RequestException:
+                    pass  # best-effort — server will retry pending jobs anyway
+
+                if success:
+                    log.info("✓ %s printed", kot_number)
+                else:
+                    log.error("✗ %s FAILED — check printer power and WiFi", kot_number)
+
+        except requests.RequestException as e:
+            log.error("Network error: %s", e)
+            consecutive_errors += 1
+
+
+# ─── Entry point ──────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(description="RestaurantPOS Local Print Agent")
+    parser.add_argument("--server",   required=True,  help="POS server URL, e.g. https://yourpos.replit.dev")
+    parser.add_argument("--username", required=True,  help="POS login username")
+    parser.add_argument("--password", required=True,  help="POS login password")
+    args = parser.parse_args()
+
+    # Strip trailing slash
+    server = args.server.rstrip("/")
+
+    try:
+        run(server, args.username, args.password)
+    except KeyboardInterrupt:
+        log.info("Agent stopped.")
+
+
+if __name__ == "__main__":
+    main()
