@@ -732,18 +732,18 @@ export default function BillingPage() {
         return;
       }
 
+      const shouldPrint = pendingKotAction === "kot-print";
+
       const checkoutResponse = await checkoutMutation.mutateAsync({ 
         orderId: orderId, 
         paymentMode: paymentMethod,
         taxRate,
         serviceCharge: serviceChargeRate,
         splitPayments: undefined,
-        print: false 
+        print: shouldPrint 
       });
 
       if (pendingKotAction !== "none") {
-        const shouldPrint = pendingKotAction === "kot-print";
-        
         if (shouldPrint && checkoutResponse.invoice) {
           try {
             const pdfUrl = `/api/invoices/${checkoutResponse.invoice.id}/pdf`;
@@ -775,7 +775,7 @@ export default function BillingPage() {
         
         toast({
           title: "Order completed!",
-          description: shouldPrint ? "Invoice downloaded successfully" : "Order marked as completed",
+          description: shouldPrint ? "Invoice downloaded & bill sent to printer" : "Order marked as completed",
         });
         
         setPendingKotAction("none");
@@ -895,18 +895,18 @@ export default function BillingPage() {
           }))
         : undefined;
 
+      const shouldPrint = pendingKotAction === "kot-print";
+
       const checkoutResponse = await checkoutMutation.mutateAsync({ 
         orderId: orderId, 
         paymentMode: paymentMethod,
         taxRate,
         serviceCharge: serviceChargeRate,
         splitPayments: splitPaymentsData,
-        print: false 
+        print: shouldPrint 
       });
 
       if (pendingKotAction !== "none") {
-        const shouldPrint = pendingKotAction === "kot-print";
-        
         if (shouldPrint && checkoutResponse.invoice) {
           try {
             const pdfUrl = `/api/invoices/${checkoutResponse.invoice.id}/pdf`;
