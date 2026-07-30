@@ -3,6 +3,7 @@ import { type DigitalMenuOrder, type DigitalMenuCustomer } from '@shared/schema'
 import { type IStorage } from './storage';
 import { ObjectId } from 'mongodb';
 import { computeBillTotals, DEFAULT_TAX_SETTINGS } from '@shared/tax';
+import { mongoStorage } from './mongo-storage';
 
 // If a claim (syncedToPOS set, no posOrderId yet) is older than this, assume
 // the process that claimed it crashed before finishing and allow it to be
@@ -456,6 +457,50 @@ export class DigitalMenuSyncService {
     }
 
     await this.storage.updateOrderTotal(posOrder.id, orderTotal);
+
+    // Increment KOT count and enqueue auto-print jobs for every KOT printer
+    // that has autoPrint enabled — mirrors what POST /api/orders/:id/kot does
+    // for manually-sent orders so digital-menu orders print without staff action.
+    try {
+      const updatedOrder = await this.storage.incrementKotCount(posOrder.id) ?? posOrder;
+      const kotPrinters = (await mongoStorage.getPrinters()).filter(
+        (p) => p.type === 'KOT' && p.autoPrint
+      );
+      if (kotPrinters.length > 0) {
+        const { buildKOTEscPos } = await import('./utils/escpos');
+        const orderItems = await this.storage.getOrderItems(posOrder.id);
+        let tableNumber: string | undefined;
+        let floorName: string | undefined;
+        if (tableId) {
+          const tbl = await this.storage.getTable(tableId);
+          tableNumber = tbl?.tableNumber;
+          if (tbl?.floorId) floorName = (await this.storage.getFloor(tbl.floorId))?.name;
+        }
+        const kotNumber = `KOT-${updatedOrder.id.substring(0, 8).toUpperCase()}`;
+        const escData = buildKOTEscPos({
+          order: updatedOrder,
+          items: orderItems,
+          tableNumber,
+          floorName,
+          kotNumber,
+          isUpdated: false,
+        });
+        const escBase64 = Buffer.from(escData).toString('base64');
+        for (const printer of kotPrinters) {
+          await mongoStorage.createPrintJob({
+            orderId: updatedOrder.id,
+            kotNumber,
+            printerIp: printer.ip,
+            printerPort: printer.port,
+            escposData: escBase64,
+            status: 'pending',
+          });
+          console.log(`[PrintJob] Queued ${kotNumber} → ${printer.ip}:${printer.port} (digital menu order)`);
+        }
+      }
+    } catch (e) {
+      console.error('[PrintJob] Failed to enqueue KOT for digital menu order:', e);
+    }
 
     // Update customer's initial table status to "occupied" when order is first created
     if (digitalOrder.customerPhone) {
