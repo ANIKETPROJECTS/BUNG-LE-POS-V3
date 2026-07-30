@@ -119,6 +119,155 @@ export function buildKOTEscPos(opts: {
   return Buffer.concat(parts);
 }
 
+export interface BillItem {
+  name: string;
+  quantity: number;
+  price: number;
+  notes?: string;
+}
+
+export function buildBillEscPos(opts: {
+  restaurantName?: string;
+  invoiceNumber: string;
+  date: Date;
+  tableNumber?: string | null;
+  floorName?: string | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  orderType?: string;
+  items: BillItem[];
+  subtotal: number;
+  cgst: number;
+  sgst: number;
+  serviceCharge: number;
+  total: number;
+  paymentMode?: string;
+  gstEnabled?: boolean;
+  gstNumber?: string;
+}): Buffer {
+  const {
+    restaurantName = "Restaurant POS",
+    invoiceNumber,
+    date,
+    tableNumber,
+    floorName,
+    customerName,
+    customerPhone,
+    orderType,
+    items,
+    subtotal,
+    cgst,
+    sgst,
+    serviceCharge,
+    total,
+    paymentMode = "Cash",
+    gstEnabled = false,
+    gstNumber = "",
+  } = opts;
+
+  const sep  = "--------------------------------";
+  const sep2 = "================================";
+  const dateStr = date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  const timeStr = date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+
+  const parts: Buffer[] = [];
+
+  // Init
+  parts.push(cmd(ESC, 0x40));
+
+  // Center + large restaurant name
+  parts.push(cmd(ESC, 0x61, 0x01));
+  parts.push(cmd(ESC, 0x21, 0x30));
+  parts.push(text(restaurantName + "\n"));
+  parts.push(cmd(ESC, 0x21, 0x00));
+  parts.push(text("TAX INVOICE\n"));
+  if (gstEnabled && gstNumber) {
+    parts.push(text(`GSTIN: ${gstNumber}\n`));
+  }
+  parts.push(text(sep + "\n"));
+
+  // Left align for details
+  parts.push(cmd(ESC, 0x61, 0x00));
+  parts.push(text(`Invoice : ${invoiceNumber}\n`));
+  parts.push(text(`Date    : ${dateStr}  ${timeStr}\n`));
+
+  if (orderType === "dine-in" && tableNumber) {
+    parts.push(text(`Table   : ${tableNumber}${floorName ? `  (${floorName})` : ""}\n`));
+  } else if (orderType === "delivery") {
+    parts.push(text(`Type    : Delivery\n`));
+  } else if (orderType === "pickup") {
+    parts.push(text(`Type    : Pickup\n`));
+  }
+
+  if (customerName) {
+    parts.push(text(`Customer: ${customerName}${customerPhone ? `  ${customerPhone}` : ""}\n`));
+  }
+
+  parts.push(text(sep + "\n"));
+
+  // Items header
+  parts.push(cmd(ESC, 0x45, 0x01));
+  parts.push(text("Item             Qty    Amount\n"));
+  parts.push(cmd(ESC, 0x45, 0x00));
+  parts.push(text(sep + "\n"));
+
+  // Items
+  items.forEach((item) => {
+    const name   = item.name.substring(0, 17).padEnd(17);
+    const qty    = String(item.quantity).padStart(3);
+    const amount = (item.price * item.quantity).toFixed(0).padStart(9);
+    parts.push(text(`${name}${qty}${amount}\n`));
+    if (item.notes) {
+      parts.push(text(`  >> ${item.notes}\n`));
+    }
+  });
+
+  parts.push(text(sep + "\n"));
+
+  // Totals
+  const row = (label: string, value: string) => {
+    const l = label.padEnd(20);
+    const v = value.padStart(12);
+    parts.push(text(`${l}${v}\n`));
+  };
+
+  row("Subtotal", `Rs.${subtotal.toFixed(2)}`);
+  if (gstEnabled && cgst > 0) {
+    row("CGST", `Rs.${cgst.toFixed(2)}`);
+    row("SGST", `Rs.${sgst.toFixed(2)}`);
+  } else if (!gstEnabled && (cgst + sgst) > 0) {
+    row("Tax", `Rs.${(cgst + sgst).toFixed(2)}`);
+  }
+  if (serviceCharge > 0) {
+    row("Service Charge", `Rs.${serviceCharge.toFixed(2)}`);
+  }
+
+  parts.push(text(sep2 + "\n"));
+
+  // Bold total
+  parts.push(cmd(ESC, 0x45, 0x01));
+  parts.push(cmd(ESC, 0x21, 0x10)); // double width
+  const totalLabel = "TOTAL".padEnd(13);
+  const totalVal   = `Rs.${total.toFixed(2)}`.padStart(18);
+  parts.push(text(`${totalLabel}${totalVal}\n`));
+  parts.push(cmd(ESC, 0x21, 0x00));
+  parts.push(cmd(ESC, 0x45, 0x00));
+
+  parts.push(text(sep2 + "\n"));
+  parts.push(text(`Payment : ${paymentMode.toUpperCase()}\n`));
+  parts.push(text(sep + "\n"));
+
+  // Footer
+  parts.push(cmd(ESC, 0x61, 0x01));
+  parts.push(text("Thank you! Visit again.\n"));
+
+  // Feed + cut
+  parts.push(lines(4));
+  parts.push(cmd(GS, 0x56, 0x42, 0x03));
+
+  return Buffer.concat(parts);
+}
+
 export interface PrintResult {
   success: boolean;
   error?: string;

@@ -66,6 +66,67 @@ async function getTaxSettings(st: IStorage): Promise<TaxSettings> {
   };
 }
 
+async function queueBillPrintJobs(opts: {
+  invoice: {
+    invoiceNumber: string;
+    tableNumber?: string | null;
+    floorName?: string | null;
+    customerName?: string | null;
+    customerPhone?: string | null;
+    subtotal: string;
+    cgst: string;
+    sgst: string;
+    serviceCharge: string;
+    total: string;
+    paymentMode?: string | null;
+    items: string;
+  };
+  orderType?: string;
+  taxSettings: TaxSettings;
+}): Promise<void> {
+  try {
+    const { buildBillEscPos } = await import("./utils/escpos");
+    const printers = await mongoStorage.getPrinters();
+    const billPrinters = printers.filter((p) => p.type === "Bill" && p.autoPrint);
+    if (billPrinters.length === 0) return;
+
+    const parsedItems = JSON.parse(opts.invoice.items || "[]");
+    const escData = buildBillEscPos({
+      invoiceNumber: opts.invoice.invoiceNumber,
+      date: new Date(),
+      tableNumber: opts.invoice.tableNumber,
+      floorName: opts.invoice.floorName,
+      customerName: opts.invoice.customerName,
+      customerPhone: opts.invoice.customerPhone,
+      orderType: opts.orderType,
+      items: parsedItems,
+      subtotal: parseFloat(opts.invoice.subtotal),
+      cgst: parseFloat(opts.invoice.cgst),
+      sgst: parseFloat(opts.invoice.sgst),
+      serviceCharge: parseFloat(opts.invoice.serviceCharge),
+      total: parseFloat(opts.invoice.total),
+      paymentMode: opts.invoice.paymentMode || "cash",
+      gstEnabled: opts.taxSettings.gstEnabled,
+      gstNumber: opts.taxSettings.gstNumber,
+    });
+
+    await Promise.all(
+      billPrinters.map((p) =>
+        mongoStorage.createPrintJob({
+          orderId: "bill",
+          kotNumber: opts.invoice.invoiceNumber,
+          printerIp: p.ip,
+          printerPort: p.port,
+          escposData: escData.toString("base64"),
+          status: "pending",
+        })
+      )
+    );
+  } catch (err) {
+    console.error("[BillPrint] Failed to queue bill print job:", err);
+  }
+}
+
 let wss: WebSocketServer;
 
 function getStorage(req: Request): IStorage {
@@ -887,6 +948,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       broadcastUpdate("invoice_created", invoice);
+      // Queue thermal bill print if any Bill printers are configured
+      await queueBillPrintJobs({ invoice, orderType: order.orderType, taxSettings });
     }
 
     broadcastUpdate("order_updated", order);
@@ -954,6 +1017,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     broadcastUpdate("order_updated", order);
     broadcastUpdate("invoice_created", invoice);
+    if (result.data.print) {
+      await queueBillPrintJobs({ invoice, orderType: order.orderType, taxSettings: await getTaxSettings(st) });
+    }
     res.json({ order, invoice, shouldPrint: result.data.print });
   });
 
@@ -1055,6 +1121,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     broadcastUpdate("order_paid", checkedOutOrder);
     broadcastUpdate("invoice_created", invoice);
+    if (result.data.print) {
+      await queueBillPrintJobs({ invoice, orderType: checkedOutOrder.orderType, taxSettings: await getTaxSettings(st) });
+    }
     res.json({ order: checkedOutOrder, invoice, shouldPrint: result.data.print });
   });
 
