@@ -789,6 +789,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const updatedOrder = await st.incrementKotCount(req.params.id) ?? order;
     console.log('[Server] Broadcasting order_updated for KOT, orderId:', updatedOrder.id, 'status:', updatedOrder.status, 'kotCount:', updatedOrder.kotCount);
     broadcastUpdate("order_updated", updatedOrder);
+
+    // Enqueue print jobs for every autoPrint KOT printer
+    (async () => {
+      try {
+        const kotPrinters = (await mongoStorage.getPrinters()).filter(p => p.type === "KOT" && p.autoPrint);
+        if (kotPrinters.length === 0) return;
+        const { buildKOTEscPos } = await import("./utils/escpos");
+        const orderItems = await st.getOrderItems(req.params.id);
+        let tableNumber: string | undefined;
+        let floorName: string | undefined;
+        if (updatedOrder.tableId) {
+          const tbl = await st.getTable(updatedOrder.tableId);
+          tableNumber = tbl?.tableNumber;
+          if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
+        }
+        const kotNumber = `KOT-${updatedOrder.id.substring(0, 8).toUpperCase()}`;
+        const escData = buildKOTEscPos({ order: updatedOrder, items: orderItems, tableNumber, floorName, kotNumber, isUpdated: (updatedOrder.kotCount ?? 0) > 1 });
+        const escBase64 = Buffer.from(escData).toString("base64");
+        for (const printer of kotPrinters) {
+          await mongoStorage.createPrintJob({
+            orderId: updatedOrder.id,
+            kotNumber,
+            printerIp: printer.ip,
+            printerPort: printer.port,
+            escposData: escBase64,
+            status: "pending",
+          });
+          console.log(`[PrintJob] Queued ${kotNumber} → ${printer.ip}:${printer.port}`);
+        }
+      } catch (e) {
+        console.error("[PrintJob] Failed to enqueue:", e);
+      }
+    })();
+
     res.json({ order: updatedOrder, shouldPrint: result.data.print });
   });
 
@@ -2367,6 +2401,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(result);
     } catch (e: any) {
       res.status(500).json({ success: false, error: e.message });
+    }
+  });
+
+  // ── Print Agent endpoints ──────────────────────────────────────────────────
+
+  // Agent polls this every few seconds to get pending print jobs
+  app.get("/api/print-jobs/pending", requireAuth, async (_req, res) => {
+    try {
+      const jobs = await mongoStorage.getPendingPrintJobs();
+      res.json(jobs);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // Agent calls this after successfully printing a job
+  app.post("/api/print-jobs/:id/done", requireAuth, async (req, res) => {
+    try {
+      await mongoStorage.markPrintJobDone(req.params.id);
+      res.json({ ok: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // Agent calls this if printing failed
+  app.post("/api/print-jobs/:id/failed", requireAuth, async (req, res) => {
+    try {
+      await mongoStorage.markPrintJobFailed(req.params.id);
+      res.json({ ok: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
     }
   });
 

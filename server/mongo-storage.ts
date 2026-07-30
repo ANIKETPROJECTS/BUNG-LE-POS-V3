@@ -41,6 +41,7 @@ import {
   type InsertDeliveryPerson,
   type PrinterDevice,
   type InsertPrinter,
+  type PrintJob,
 } from "@shared/schema";
 import { IStorage } from './storage';
 import { randomUUID } from 'crypto';
@@ -1395,6 +1396,40 @@ export class MongoStorage implements IStorage {
     await this.ensureConnection();
     const result = await mongodb.getCollection('printers').deleteOne({ id } as any);
     return result.deletedCount > 0;
+  }
+
+  // ── Print Jobs ────────────────────────────────────────────────────────────
+
+  async createPrintJob(job: Omit<PrintJob, 'id' | 'createdAt'>): Promise<PrintJob> {
+    await this.ensureConnection();
+    const newJob: PrintJob = { id: randomUUID(), ...job, createdAt: new Date() };
+    await mongodb.getCollection('print_jobs').insertOne(newJob as any);
+    return newJob;
+  }
+
+  async getPendingPrintJobs(): Promise<PrintJob[]> {
+    await this.ensureConnection();
+    const docs = await mongodb.getCollection<PrintJob>('print_jobs')
+      .find({ status: 'pending' } as any)
+      .sort({ createdAt: 1 } as any)
+      .toArray();
+    return docs.map(d => { const { _id, ...rest } = d as any; return rest as PrintJob; });
+  }
+
+  async markPrintJobDone(id: string): Promise<void> {
+    await this.ensureConnection();
+    await mongodb.getCollection('print_jobs').updateOne(
+      { id } as any,
+      { $set: { status: 'done', doneAt: new Date() } }
+    );
+  }
+
+  async markPrintJobFailed(id: string): Promise<void> {
+    await this.ensureConnection();
+    await mongodb.getCollection('print_jobs').updateOne(
+      { id } as any,
+      { $set: { status: 'failed', doneAt: new Date() } }
+    );
   }
 }
 
