@@ -130,7 +130,9 @@ export async function connectQZ(): Promise<void> {
     await qz.websocket.connect({
       host: "localhost",
       port: { secure: 8182, insecure: 8181 },
-      usingSecure: window.location.protocol === "https:",
+      // Chrome allows ws://localhost from HTTPS pages (localhost is a secure context).
+      // Port 8182 (wss) requires QZ Tray SSL cert to be installed — skip it.
+      usingSecure: false,
       keepAlive: 30,
       retries: 1,
     });
