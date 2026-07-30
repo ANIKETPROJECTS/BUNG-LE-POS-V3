@@ -2370,10 +2370,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Test print to a specific printer
+  // Test print to a specific printer — queues a job for the local print agent
   app.post("/api/printers/:id/test", requireAuth, async (req, res) => {
     try {
-      const { printToThermal, checkPrinterOnline } = await import("./utils/escpos");
       const printer = await mongoStorage.getPrinter(req.params.id);
       if (!printer) return res.status(404).json({ error: "Printer not found" });
 
@@ -2397,8 +2396,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         Buffer.from([GS, 0x56, 0x42, 0x03]),   // cut
       ];
       const data = Buffer.concat(parts);
-      const result = await printToThermal(printer.ip, printer.port, data);
-      res.json(result);
+
+      // Queue via print agent (cloud server cannot reach local-network printers directly)
+      await mongoStorage.createPrintJob({
+        orderId: "test",
+        kotNumber: "TEST",
+        printerIp: printer.ip,
+        printerPort: printer.port,
+        escposData: data.toString("base64"),
+        status: "pending",
+      });
+      res.json({ success: true, queued: true });
     } catch (e: any) {
       res.status(500).json({ success: false, error: e.message });
     }
