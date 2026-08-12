@@ -642,15 +642,35 @@ export default function TableManagementPage() {
       </AlertDialog>
       <Dialog open={!!qrTable} onOpenChange={(open) => !open && setQrTable(null)}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader><DialogTitle>Generate QR Code</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>Generate QR Token</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="rounded-md bg-muted/40 p-3 text-sm">
-              <div><span className="text-muted-foreground">Table:</span> <strong>{qrTable?.tableNumber}</strong></div>
-              <div><span className="text-muted-foreground">Floor:</span> <strong>{floors.find(f => f.id === qrTable?.floorId)?.name ?? "—"}</strong></div>
+            <div className="space-y-1">
+              <Label>Table name</Label>
+              <Input value={qrTable?.tableNumber ?? ""} readOnly />
             </div>
-            {qrMutation.isPending && <p className="text-center text-sm text-muted-foreground">Generating secure QR…</p>}
+            <div className="space-y-1">
+              <Label>Floor name</Label>
+              <Input value={floors.find(f => f.id === qrTable?.floorId)?.name ?? "—"} readOnly />
+            </div>
+            <div className="space-y-1">
+              <Label>Session secret</Label>
+              <Input type="password" value="server-managed-session-secret" readOnly autoComplete="off" />
+              <p className="text-xs text-muted-foreground">Stored and used only on the server.</p>
+            </div>
+            <Button className="bg-zinc-900 hover:bg-zinc-800" onClick={() => qrTable && qrMutation.mutate(qrTable.id)} disabled={qrMutation.isPending}>
+              {qrMutation.isPending ? "Generating…" : "Generate"}
+            </Button>
             {qrData && <>
-              <div className="flex gap-2"><Input value={qrData.url} readOnly /><Button size="icon" variant="outline" onClick={() => navigator.clipboard.writeText(qrData.url)} title="Copy"><Copy className="h-4 w-4" /></Button></div>
+              <div className="rounded-md bg-muted/50 p-4 space-y-3">
+                <div className="space-y-1">
+                  <Label>Token</Label>
+                  <div className="flex gap-2"><Input value={qrData.token} readOnly /><Button size="icon" variant="outline" onClick={() => navigator.clipboard.writeText(qrData.token)} title="Copy token"><Copy className="h-4 w-4" /></Button></div>
+                </div>
+                <div className="space-y-1">
+                  <Label>Full URL</Label>
+                  <div className="flex gap-2"><Input value={qrData.url} readOnly /><Button size="icon" variant="outline" onClick={() => navigator.clipboard.writeText(qrData.url)} title="Copy URL"><Copy className="h-4 w-4" /></Button></div>
+                </div>
+              </div>
               <img src={qrData.qrDataUrl} alt={`QR code for ${qrTable?.tableNumber}`} className="mx-auto h-64 w-64" />
               <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => qrTable && qrMutation.mutate(qrTable.id)}><RefreshCw className="mr-1 h-4 w-4" />Regenerate</Button><Button onClick={downloadQR}><Download className="mr-1 h-4 w-4" />Download QR</Button></div>
             </>}
