@@ -1,3 +1,476 @@
+var __defProp = Object.defineProperty;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+
+// shared/schema.ts
+var schema_exports = {};
+__export(schema_exports, {
+  categoryUnits: () => categoryUnits,
+  insertCustomerSchema: () => insertCustomerSchema,
+  insertDeliveryPersonSchema: () => insertDeliveryPersonSchema,
+  insertFeedbackSchema: () => insertFeedbackSchema,
+  insertFloorSchema: () => insertFloorSchema,
+  insertInventoryItemSchema: () => insertInventoryItemSchema,
+  insertInventoryUsageSchema: () => insertInventoryUsageSchema,
+  insertInvoiceSchema: () => insertInvoiceSchema,
+  insertMenuItemSchema: () => insertMenuItemSchema,
+  insertOrderItemSchema: () => insertOrderItemSchema,
+  insertOrderSchema: () => insertOrderSchema,
+  insertPrinterSchema: () => insertPrinterSchema,
+  insertPurchaseOrderItemSchema: () => insertPurchaseOrderItemSchema,
+  insertPurchaseOrderSchema: () => insertPurchaseOrderSchema,
+  insertRecipeIngredientSchema: () => insertRecipeIngredientSchema,
+  insertRecipeSchema: () => insertRecipeSchema,
+  insertReservationSchema: () => insertReservationSchema,
+  insertSupplierSchema: () => insertSupplierSchema,
+  insertTableSchema: () => insertTableSchema,
+  insertUserSchema: () => insertUserSchema,
+  insertWastageSchema: () => insertWastageSchema
+});
+import { z as z2 } from "zod";
+var insertUserSchema, insertFloorSchema, insertTableSchema, insertMenuItemSchema, insertOrderSchema, insertOrderItemSchema, insertInventoryItemSchema, insertRecipeSchema, insertRecipeIngredientSchema, insertSupplierSchema, insertPurchaseOrderSchema, insertPurchaseOrderItemSchema, insertWastageSchema, insertInvoiceSchema, insertReservationSchema, insertCustomerSchema, insertFeedbackSchema, insertInventoryUsageSchema, categoryUnits, insertPrinterSchema, insertDeliveryPersonSchema;
+var init_schema = __esm({
+  "shared/schema.ts"() {
+    "use strict";
+    insertUserSchema = z2.object({
+      username: z2.string(),
+      password: z2.string()
+    });
+    insertFloorSchema = z2.object({
+      name: z2.string(),
+      displayOrder: z2.number().default(0)
+    });
+    insertTableSchema = z2.object({
+      tableNumber: z2.string(),
+      seats: z2.number(),
+      status: z2.string().default("free"),
+      floorId: z2.string().nullable().optional()
+    });
+    insertMenuItemSchema = z2.object({
+      name: z2.string(),
+      category: z2.string(),
+      price: z2.string(),
+      cost: z2.string(),
+      available: z2.boolean().default(true),
+      isVeg: z2.boolean().default(true),
+      variants: z2.array(z2.string()).nullable().optional(),
+      image: z2.string().nullable().optional(),
+      description: z2.string().nullable().optional(),
+      quickCode: z2.string().nullable().optional()
+    });
+    insertOrderSchema = z2.object({
+      tableId: z2.string().nullable().optional(),
+      orderType: z2.string(),
+      status: z2.string().default("saved"),
+      total: z2.string().default("0"),
+      customerName: z2.string().nullable().optional(),
+      customerPhone: z2.string().nullable().optional(),
+      customerAddress: z2.string().nullable().optional(),
+      paymentMode: z2.string().nullable().optional(),
+      waiterId: z2.string().nullable().optional(),
+      deliveryPersonId: z2.string().nullable().optional(),
+      expectedPickupTime: z2.coerce.date().nullable().optional()
+    });
+    insertOrderItemSchema = z2.object({
+      orderId: z2.string(),
+      menuItemId: z2.string(),
+      name: z2.string(),
+      quantity: z2.number(),
+      price: z2.string(),
+      notes: z2.string().nullable().optional(),
+      status: z2.string().default("new"),
+      isVeg: z2.boolean().default(true)
+    });
+    insertInventoryItemSchema = z2.object({
+      name: z2.string(),
+      category: z2.string(),
+      currentStock: z2.string(),
+      unit: z2.string(),
+      minStock: z2.string().default("0"),
+      supplierId: z2.string().nullable().optional(),
+      costPerUnit: z2.string().default("0"),
+      image: z2.string().nullable().optional()
+    });
+    insertRecipeSchema = z2.object({
+      menuItemId: z2.string()
+    });
+    insertRecipeIngredientSchema = z2.object({
+      recipeId: z2.string(),
+      inventoryItemId: z2.string(),
+      quantity: z2.string(),
+      unit: z2.string()
+    });
+    insertSupplierSchema = z2.object({
+      name: z2.string(),
+      contactPerson: z2.string().nullable().optional(),
+      phone: z2.string(),
+      email: z2.string().nullable().optional(),
+      address: z2.string().nullable().optional(),
+      status: z2.string().default("active")
+    });
+    insertPurchaseOrderSchema = z2.object({
+      orderNumber: z2.string(),
+      supplierId: z2.string(),
+      orderDate: z2.coerce.date(),
+      expectedDeliveryDate: z2.coerce.date().nullable().optional(),
+      status: z2.string().default("pending"),
+      totalAmount: z2.string().default("0"),
+      notes: z2.string().nullable().optional()
+    });
+    insertPurchaseOrderItemSchema = z2.object({
+      purchaseOrderId: z2.string(),
+      inventoryItemId: z2.string(),
+      quantity: z2.string(),
+      unit: z2.string(),
+      costPerUnit: z2.string(),
+      totalCost: z2.string()
+    });
+    insertWastageSchema = z2.object({
+      inventoryItemId: z2.string(),
+      quantity: z2.string(),
+      unit: z2.string(),
+      reason: z2.string(),
+      reportedBy: z2.string().nullable().optional(),
+      notes: z2.string().nullable().optional()
+    });
+    insertInvoiceSchema = z2.object({
+      invoiceNumber: z2.string(),
+      orderId: z2.string(),
+      tableNumber: z2.string().nullable().optional(),
+      floorName: z2.string().nullable().optional(),
+      customerName: z2.string().nullable().optional(),
+      customerPhone: z2.string().nullable().optional(),
+      subtotal: z2.string(),
+      tax: z2.string(),
+      cgst: z2.string().default("0"),
+      sgst: z2.string().default("0"),
+      serviceCharge: z2.string().default("0"),
+      discount: z2.string().default("0"),
+      total: z2.string(),
+      paymentMode: z2.string(),
+      splitPayments: z2.string().nullable().optional(),
+      status: z2.string().default("Paid"),
+      items: z2.string(),
+      notes: z2.string().nullable().optional()
+    });
+    insertReservationSchema = z2.object({
+      tableId: z2.string(),
+      customerName: z2.string(),
+      customerPhone: z2.string(),
+      numberOfPeople: z2.number(),
+      timeSlot: z2.coerce.date(),
+      notes: z2.string().nullable().optional(),
+      status: z2.string().default("active")
+    });
+    insertCustomerSchema = z2.object({
+      name: z2.string(),
+      phone: z2.string(),
+      email: z2.string().nullable().optional(),
+      address: z2.string().nullable().optional()
+    });
+    insertFeedbackSchema = z2.object({
+      customerId: z2.string().nullable().optional(),
+      customerName: z2.string(),
+      rating: z2.number().min(1).max(5),
+      comment: z2.string(),
+      sentiment: z2.enum(["Positive", "Neutral", "Negative"]).default("Neutral")
+    });
+    insertInventoryUsageSchema = z2.object({
+      inventoryItemId: z2.string(),
+      itemName: z2.string(),
+      quantity: z2.string(),
+      unit: z2.string(),
+      source: z2.string().default("manual"),
+      notes: z2.string().nullable().optional()
+    });
+    categoryUnits = {
+      "Vegetables & Produce": ["kg", "g", "pcs", "bunch", "box"],
+      "Meat & Poultry": ["kg", "g", "pcs", "lb"],
+      "Fish & Seafood": ["kg", "g", "pcs", "lb"],
+      "Dairy & Cheese": ["L", "ml", "kg", "g", "pcs", "box"],
+      "Bakery & Bread": ["kg", "g", "pcs", "dozen", "box"],
+      "Grains & Pasta": ["kg", "g", "pcs", "bag"],
+      "Oils & Condiments": ["L", "ml", "kg", "bottle", "jar"],
+      "Spices & Seasonings": ["kg", "g", "ml", "jar"],
+      "Beverages": ["L", "ml", "pcs", "bottle", "can"],
+      "Fruits": ["kg", "g", "pcs", "bunch", "box"],
+      "Frozen Items": ["kg", "g", "pcs", "box"],
+      "Canned & Packaged": ["pcs", "can", "jar", "box", "kg"],
+      "Sauces & Dressings": ["L", "ml", "kg", "bottle", "jar"],
+      "Sugar & Sweeteners": ["kg", "g", "pcs", "box"],
+      "Coffee & Tea": ["kg", "g", "pcs", "box", "bag"],
+      "Eggs": ["pcs", "dozen", "crate"],
+      "Nuts & Seeds": ["kg", "g", "pcs", "bag"],
+      "Herbs & Aromatics": ["kg", "g", "bunch", "pcs"],
+      "Dry Goods": ["kg", "g", "pcs", "bag", "box"],
+      "Other": ["kg", "g", "L", "ml", "pcs", "box"]
+    };
+    insertPrinterSchema = z2.object({
+      name: z2.string().min(1),
+      ip: z2.string().min(1),
+      port: z2.number().default(9100),
+      type: z2.enum(["KOT", "Bill", "Label"]).default("KOT"),
+      autoPrint: z2.boolean().default(true)
+    });
+    insertDeliveryPersonSchema = z2.object({
+      name: z2.string(),
+      phone: z2.string(),
+      status: z2.string().default("available")
+    });
+  }
+});
+
+// server/utils/escpos.ts
+var escpos_exports = {};
+__export(escpos_exports, {
+  buildBillEscPos: () => buildBillEscPos,
+  buildKOTEscPos: () => buildKOTEscPos,
+  checkPrinterOnline: () => checkPrinterOnline,
+  printToThermal: () => printToThermal
+});
+import * as net from "net";
+function cmd(...bytes) {
+  return Buffer.from(bytes);
+}
+function text(str) {
+  return Buffer.from(str, "utf8");
+}
+function lines(n = 1) {
+  return Buffer.from(Array(n).fill(LF));
+}
+function buildKOTEscPos(opts) {
+  const { order, items, tableNumber, floorName, kotNumber, restaurantName = "Restaurant POS", isUpdated = false } = opts;
+  const now = new Date(order.createdAt);
+  const dateStr = now.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const sep = "--------------------------------";
+  const parts = [];
+  parts.push(cmd(ESC, 64));
+  parts.push(cmd(ESC, 97, 1));
+  parts.push(cmd(ESC, 33, 48));
+  parts.push(text(restaurantName + "\n"));
+  parts.push(cmd(ESC, 33, 0));
+  parts.push(text("Kitchen Order Ticket\n"));
+  if (isUpdated) {
+    parts.push(text(sep + "\n"));
+    parts.push(cmd(ESC, 33, 16));
+    parts.push(cmd(ESC, 69, 1));
+    parts.push(text("  *** UPDATED KOT ***\n"));
+    parts.push(cmd(ESC, 69, 0));
+    parts.push(cmd(ESC, 33, 0));
+  }
+  parts.push(text(sep + "\n"));
+  parts.push(cmd(ESC, 97, 0));
+  parts.push(cmd(ESC, 69, 1));
+  parts.push(text(`${kotNumber}
+`));
+  parts.push(cmd(ESC, 69, 0));
+  parts.push(text(`Date : ${dateStr}  ${timeStr}
+`));
+  if (order.orderType === "dine-in" && tableNumber) {
+    parts.push(text(`Table: ${tableNumber}${floorName ? `  (${floorName})` : ""}
+`));
+  } else {
+    const typeLabel = order.orderType === "delivery" ? "Delivery" : "Pickup";
+    parts.push(text(`Type : ${typeLabel}
+`));
+  }
+  if (order.customerName) {
+    parts.push(text(`Cust : ${order.customerName}${order.customerPhone ? `  ${order.customerPhone}` : ""}
+`));
+  }
+  parts.push(text(sep + "\n"));
+  parts.push(cmd(ESC, 69, 1));
+  parts.push(text("# Item                         Qty\n"));
+  parts.push(cmd(ESC, 69, 0));
+  parts.push(text(sep + "\n"));
+  items.forEach((item, idx) => {
+    const num = String(idx + 1).padEnd(2);
+    const name = item.name.substring(0, 24).padEnd(24);
+    const qty = String(item.quantity).padStart(3);
+    parts.push(cmd(ESC, 33, 8));
+    parts.push(text(`${num} ${name} ${qty}
+`));
+    parts.push(cmd(ESC, 33, 0));
+    if (item.notes) {
+      parts.push(text(`   >> ${item.notes}
+`));
+    }
+  });
+  parts.push(text(sep + "\n"));
+  parts.push(cmd(ESC, 97, 1));
+  parts.push(cmd(ESC, 69, 1));
+  parts.push(text("*** ORDERED ***\n"));
+  parts.push(cmd(ESC, 69, 0));
+  parts.push(lines(4));
+  parts.push(cmd(GS, 86, 66, 3));
+  return Buffer.concat(parts);
+}
+function buildBillEscPos(opts) {
+  const {
+    restaurantName = "Restaurant POS",
+    invoiceNumber,
+    date,
+    tableNumber,
+    floorName,
+    customerName,
+    customerPhone,
+    orderType,
+    items,
+    subtotal,
+    cgst,
+    sgst,
+    serviceCharge,
+    total,
+    paymentMode = "Cash",
+    gstEnabled = false,
+    gstNumber = ""
+  } = opts;
+  const sep = "--------------------------------";
+  const sep2 = "================================";
+  const dateStr = date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  const timeStr = date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const parts = [];
+  parts.push(cmd(ESC, 64));
+  parts.push(cmd(ESC, 97, 1));
+  parts.push(cmd(ESC, 33, 48));
+  parts.push(text(restaurantName + "\n"));
+  parts.push(cmd(ESC, 33, 0));
+  parts.push(text("TAX INVOICE\n"));
+  if (gstEnabled && gstNumber) {
+    parts.push(text(`GSTIN: ${gstNumber}
+`));
+  }
+  parts.push(text(sep + "\n"));
+  parts.push(cmd(ESC, 97, 0));
+  parts.push(text(`Invoice : ${invoiceNumber}
+`));
+  parts.push(text(`Date    : ${dateStr}  ${timeStr}
+`));
+  if (orderType === "dine-in" && tableNumber) {
+    parts.push(text(`Table   : ${tableNumber}${floorName ? `  (${floorName})` : ""}
+`));
+  } else if (orderType === "delivery") {
+    parts.push(text(`Type    : Delivery
+`));
+  } else if (orderType === "pickup") {
+    parts.push(text(`Type    : Pickup
+`));
+  }
+  if (customerName) {
+    parts.push(text(`Customer: ${customerName}${customerPhone ? `  ${customerPhone}` : ""}
+`));
+  }
+  parts.push(text(sep + "\n"));
+  parts.push(cmd(ESC, 69, 1));
+  parts.push(text("Item             Qty    Amount\n"));
+  parts.push(cmd(ESC, 69, 0));
+  parts.push(text(sep + "\n"));
+  items.forEach((item) => {
+    const name = item.name.substring(0, 17).padEnd(17);
+    const qty = String(item.quantity).padStart(3);
+    const amount = (item.price * item.quantity).toFixed(0).padStart(9);
+    parts.push(text(`${name}${qty}${amount}
+`));
+    if (item.notes) {
+      parts.push(text(`  >> ${item.notes}
+`));
+    }
+  });
+  parts.push(text(sep + "\n"));
+  const row = (label, value) => {
+    const l = label.padEnd(20);
+    const v = value.padStart(12);
+    parts.push(text(`${l}${v}
+`));
+  };
+  row("Subtotal", `Rs.${subtotal.toFixed(2)}`);
+  if (gstEnabled && cgst > 0) {
+    row("CGST", `Rs.${cgst.toFixed(2)}`);
+    row("SGST", `Rs.${sgst.toFixed(2)}`);
+  } else if (!gstEnabled && cgst + sgst > 0) {
+    row("Tax", `Rs.${(cgst + sgst).toFixed(2)}`);
+  }
+  if (serviceCharge > 0) {
+    row("Service Charge", `Rs.${serviceCharge.toFixed(2)}`);
+  }
+  parts.push(text(sep2 + "\n"));
+  parts.push(cmd(ESC, 69, 1));
+  parts.push(cmd(ESC, 33, 16));
+  const totalLabel = "TOTAL".padEnd(13);
+  const totalVal = `Rs.${total.toFixed(2)}`.padStart(18);
+  parts.push(text(`${totalLabel}${totalVal}
+`));
+  parts.push(cmd(ESC, 33, 0));
+  parts.push(cmd(ESC, 69, 0));
+  parts.push(text(sep2 + "\n"));
+  parts.push(text(`Payment : ${paymentMode.toUpperCase()}
+`));
+  parts.push(text(sep + "\n"));
+  parts.push(cmd(ESC, 97, 1));
+  parts.push(text("Thank you! Visit again.\n"));
+  parts.push(lines(4));
+  parts.push(cmd(GS, 86, 66, 3));
+  return Buffer.concat(parts);
+}
+function printToThermal(ip, port, data, timeoutMs = 5e3) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    let settled = false;
+    const done = (result) => {
+      if (settled) return;
+      settled = true;
+      socket.destroy();
+      resolve(result);
+    };
+    const timer = setTimeout(() => done({ success: false, error: "Connection timed out" }), timeoutMs);
+    socket.connect(port, ip, () => {
+      socket.write(data, (err) => {
+        clearTimeout(timer);
+        if (err) {
+          done({ success: false, error: err.message });
+        } else {
+          setTimeout(() => done({ success: true }), 300);
+        }
+      });
+    });
+    socket.on("error", (err) => {
+      clearTimeout(timer);
+      done({ success: false, error: err.message });
+    });
+  });
+}
+function checkPrinterOnline(ip, port, timeoutMs = 3e3) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    let done = false;
+    const finish = (result) => {
+      if (done) return;
+      done = true;
+      socket.destroy();
+      resolve(result);
+    };
+    setTimeout(() => finish(false), timeoutMs);
+    socket.connect(port, ip, () => finish(true));
+    socket.on("error", () => finish(false));
+  });
+}
+var ESC, GS, LF;
+var init_escpos = __esm({
+  "server/utils/escpos.ts"() {
+    "use strict";
+    ESC = 27;
+    GS = 29;
+    LF = 10;
+  }
+});
+
 // server/index.ts
 import express2 from "express";
 
@@ -287,7 +760,8 @@ var MemStorage = class {
       createdAt: /* @__PURE__ */ new Date(),
       completedAt: null,
       billedAt: null,
-      paidAt: null
+      paidAt: null,
+      kotCount: 0
     };
     this.orders.set(id, order);
     return order;
@@ -296,6 +770,13 @@ var MemStorage = class {
     const order = this.orders.get(id);
     if (!order) return void 0;
     const updated = { ...order, status };
+    this.orders.set(id, updated);
+    return updated;
+  }
+  async incrementKotCount(id) {
+    const order = this.orders.get(id);
+    if (!order) return void 0;
+    const updated = { ...order, kotCount: (order.kotCount ?? 0) + 1 };
     this.orders.set(id, updated);
     return updated;
   }
@@ -333,7 +814,7 @@ var MemStorage = class {
     if (!order) return void 0;
     const updated = {
       ...order,
-      status: "paid",
+      status: "completed",
       paymentMode: paymentMode ?? order.paymentMode,
       paidAt: /* @__PURE__ */ new Date(),
       completedAt: /* @__PURE__ */ new Date()
@@ -538,6 +1019,9 @@ var MemStorage = class {
       customerPhone: insertInvoice.customerPhone ?? null,
       subtotal: insertInvoice.subtotal,
       tax: insertInvoice.tax,
+      cgst: insertInvoice.cgst ?? "0",
+      sgst: insertInvoice.sgst ?? "0",
+      serviceCharge: insertInvoice.serviceCharge ?? "0",
       discount: insertInvoice.discount ?? "0",
       total: insertInvoice.total,
       paymentMode: insertInvoice.paymentMode,
@@ -662,11 +1146,28 @@ var MemStorage = class {
     this.orders.set(orderId, updated);
     return updated;
   }
+  // Printer stubs — MemStorage is a dev fallback; printers use MongoStorage
+  async getPrinters() {
+    return [];
+  }
+  async getPrinter(_id) {
+    return void 0;
+  }
+  async createPrinter(p) {
+    throw new Error("MemStorage does not support printers");
+  }
+  async updatePrinter(_id, _p) {
+    return void 0;
+  }
+  async deletePrinter(_id) {
+    return false;
+  }
 };
 var storage = new MemStorage();
 
 // server/auth-middleware.ts
 import session from "express-session";
+import MongoStore from "connect-mongo";
 
 // server/auth.ts
 import { z } from "zod";
@@ -743,9 +1244,8 @@ var DynamicMongoDBManager = class {
     try {
       const client = new MongoClient(mongodbUri);
       await client.connect();
-      const dbName = this.extractDatabaseName(mongodbUri);
-      const db = client.db(dbName);
-      console.log(`Connected to MongoDB for restaurant ${restaurantId}: ${dbName}`);
+      const db = client.db("POS");
+      console.log(`Connected to MongoDB for restaurant ${restaurantId}: POS`);
       this.connections.set(restaurantId, {
         client,
         db,
@@ -776,6 +1276,20 @@ var DynamicMongoDBManager = class {
       console.log(`Closed connection for restaurant: ${restaurantId}`);
     }
   }
+  /**
+   * Reads a settings document from any established restaurant connection.
+   * Used by background services that run without a request context.
+   */
+  async getSettingFromAnyConnection(key) {
+    for (const [, info] of this.connections.entries()) {
+      try {
+        const doc = await info.db.collection("settings").findOne({ key });
+        if (doc?.value) return doc.value;
+      } catch {
+      }
+    }
+    return void 0;
+  }
   async closeAll() {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
@@ -790,7 +1304,1278 @@ var DynamicMongoDBManager = class {
 var dynamicMongoDB = new DynamicMongoDBManager();
 
 // server/session-storage.ts
+import { ObjectId as ObjectId2 } from "mongodb";
+
+// server/mongodb.ts
+import { MongoClient as MongoClient2 } from "mongodb";
+var CUSTOMERS_DB_NAME = "customersdb";
+var MongoDBService = class {
+  client = null;
+  db = null;
+  async connect() {
+    if (this.client && this.db) {
+      return;
+    }
+    const uri = process.env.MONGODB_URI;
+    if (!uri) {
+      throw new Error("MONGODB_URI environment variable is not set");
+    }
+    try {
+      this.client = new MongoClient2(uri);
+      await this.client.connect();
+      this.db = this.client.db("POS");
+      console.log(`\u2705 Connected to MongoDB database: POS`);
+    } catch (error) {
+      console.error("\u274C MongoDB connection error:", error);
+      throw error;
+    }
+  }
+  getDatabase() {
+    if (!this.db) {
+      throw new Error("Database not connected. Call connect() first.");
+    }
+    return this.db;
+  }
+  getCollection(name) {
+    return this.getDatabase().collection(name);
+  }
+  /**
+   * Returns a collection from the shared `customersdb` database on the same
+   * cluster. The MongoClient is already connected; we just switch databases.
+   */
+  getCustomersCollection(name) {
+    if (!this.client) throw new Error("Database not connected. Call connect() first.");
+    return this.client.db(CUSTOMERS_DB_NAME).collection(name);
+  }
+  async disconnect() {
+    if (this.client) {
+      await this.client.close();
+      this.client = null;
+      this.db = null;
+      console.log("Disconnected from MongoDB");
+    }
+  }
+};
+var mongodb = new MongoDBService();
+
+// server/mongo-storage.ts
+import { ObjectId } from "mongodb";
 import { randomUUID as randomUUID2 } from "crypto";
+var MongoStorage = class {
+  async ensureConnection() {
+    await mongodb.connect();
+  }
+  stripMongoId(doc) {
+    if (!doc) return null;
+    const { _id, ...rest } = doc;
+    return rest;
+  }
+  async getUser(id) {
+    await this.ensureConnection();
+    const user = await mongodb.getCollection("users").findOne({ id });
+    return user ?? void 0;
+  }
+  async getUserByUsername(username) {
+    await this.ensureConnection();
+    const user = await mongodb.getCollection("users").findOne({ username });
+    return user ?? void 0;
+  }
+  async createUser(user) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const newUser = { id, ...user };
+    await mongodb.getCollection("users").insertOne(newUser);
+    return newUser;
+  }
+  async getFloors() {
+    await this.ensureConnection();
+    const floors = await mongodb.getCollection("floors").find().sort({ displayOrder: 1 }).toArray();
+    return floors;
+  }
+  async getFloor(id) {
+    await this.ensureConnection();
+    const floor = await mongodb.getCollection("floors").findOne({ id });
+    return floor ?? void 0;
+  }
+  async createFloor(insertFloor) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const floor = {
+      id,
+      name: insertFloor.name,
+      displayOrder: insertFloor.displayOrder ?? 0,
+      createdAt: /* @__PURE__ */ new Date()
+    };
+    await mongodb.getCollection("floors").insertOne(floor);
+    return floor;
+  }
+  async updateFloor(id, floorData) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("floors").findOneAndUpdate(
+      { id },
+      { $set: floorData },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async deleteFloor(id) {
+    await this.ensureConnection();
+    const tablesOnFloor = await mongodb.getCollection("tables").countDocuments({ floorId: id });
+    if (tablesOnFloor > 0) {
+      throw new Error(`Cannot delete floor: ${tablesOnFloor} table(s) are assigned to this floor`);
+    }
+    const result = await mongodb.getCollection("floors").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async getTables() {
+    await this.ensureConnection();
+    const tables = await mongodb.getCollection("tables").find().toArray();
+    return tables;
+  }
+  async getTable(id) {
+    await this.ensureConnection();
+    const table = await mongodb.getCollection("tables").findOne({ id });
+    return table ?? void 0;
+  }
+  async getTableByNumber(tableNumber) {
+    await this.ensureConnection();
+    const table = await mongodb.getCollection("tables").findOne({ tableNumber });
+    return table ?? void 0;
+  }
+  async createTable(insertTable) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const table = {
+      id,
+      tableNumber: insertTable.tableNumber,
+      seats: insertTable.seats,
+      status: insertTable.status ?? "free",
+      currentOrderId: null,
+      floorId: insertTable.floorId ?? null
+    };
+    await mongodb.getCollection("tables").insertOne(table);
+    return table;
+  }
+  async updateTable(id, tableData) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("tables").findOneAndUpdate(
+      { id },
+      { $set: tableData },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async updateTableStatus(id, status) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("tables").findOneAndUpdate(
+      { id },
+      { $set: { status } },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async updateTableOrder(id, orderId) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("tables").findOneAndUpdate(
+      { id },
+      { $set: { currentOrderId: orderId } },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async deleteTable(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("tables").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async getMenuItems() {
+    await this.ensureConnection();
+    const items = await mongodb.getCollection("menuItems").find().toArray();
+    return items;
+  }
+  async getMenuItem(id) {
+    await this.ensureConnection();
+    const item = await mongodb.getCollection("menuItems").findOne({ id });
+    return item ?? void 0;
+  }
+  async createMenuItem(item) {
+    await this.ensureConnection();
+    const normalizedQuickCode = item.quickCode ? item.quickCode.trim().toLowerCase() : null;
+    if (normalizedQuickCode) {
+      const existingItems = await mongodb.getCollection("menuItems").find().toArray();
+      const duplicate = existingItems.find(
+        (existing) => existing.quickCode && existing.quickCode.toLowerCase() === normalizedQuickCode
+      );
+      if (duplicate) {
+        throw new Error(`Quick code "${item.quickCode}" is already assigned to another item`);
+      }
+    }
+    const id = randomUUID2();
+    const menuItem = {
+      id,
+      name: item.name,
+      category: item.category,
+      price: item.price,
+      cost: item.cost,
+      available: item.available ?? true,
+      isVeg: item.isVeg ?? true,
+      variants: item.variants ?? null,
+      image: item.image ?? null,
+      description: item.description ?? null,
+      quickCode: normalizedQuickCode
+    };
+    await mongodb.getCollection("menuItems").insertOne(menuItem);
+    return menuItem;
+  }
+  async updateMenuItem(id, item) {
+    await this.ensureConnection();
+    const normalizedQuickCode = item.quickCode ? item.quickCode.trim().toLowerCase() : null;
+    const updateData = { ...item };
+    if (item.quickCode !== void 0) {
+      updateData.quickCode = normalizedQuickCode;
+    }
+    if (normalizedQuickCode) {
+      const existingItems = await mongodb.getCollection("menuItems").find().toArray();
+      const duplicate = existingItems.find(
+        (existing) => existing.id !== id && existing.quickCode && existing.quickCode.toLowerCase() === normalizedQuickCode
+      );
+      if (duplicate) {
+        throw new Error(`Quick code "${item.quickCode}" is already assigned to another item`);
+      }
+    }
+    const result = await mongodb.getCollection("menuItems").findOneAndUpdate(
+      { id },
+      { $set: updateData },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async deleteMenuItem(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("menuItems").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async getOrders() {
+    await this.ensureConnection();
+    const orders = await mongodb.getCollection("orders").find().toArray();
+    return orders;
+  }
+  async getOrder(id) {
+    await this.ensureConnection();
+    const order = await mongodb.getCollection("orders").findOne({ id });
+    return order ?? void 0;
+  }
+  async getOrdersByTable(tableId) {
+    await this.ensureConnection();
+    const orders = await mongodb.getCollection("orders").find({ tableId }).toArray();
+    return orders;
+  }
+  async getActiveOrders() {
+    await this.ensureConnection();
+    const orders = await mongodb.getCollection("orders").find({
+      status: { $in: ["sent_to_kitchen", "ready_to_bill", "billed"] }
+    }).toArray();
+    return orders;
+  }
+  async getCompletedOrders() {
+    await this.ensureConnection();
+    const orders = await mongodb.getCollection("orders").find({
+      status: { $in: ["paid", "completed"] }
+    }).toArray();
+    return orders;
+  }
+  async getDeliveryOrders() {
+    await this.ensureConnection();
+    const orders = await mongodb.getCollection("orders").find({
+      orderType: "delivery"
+    }).sort({ createdAt: -1 }).toArray();
+    return orders;
+  }
+  async createOrder(insertOrder) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const order = {
+      id,
+      tableId: insertOrder.tableId ?? null,
+      orderType: insertOrder.orderType,
+      status: insertOrder.status ?? "saved",
+      total: insertOrder.total ?? "0",
+      customerName: insertOrder.customerName ?? null,
+      customerPhone: insertOrder.customerPhone ?? null,
+      customerAddress: insertOrder.customerAddress ?? null,
+      paymentMode: insertOrder.paymentMode ?? null,
+      waiterId: insertOrder.waiterId ?? null,
+      deliveryPersonId: insertOrder.deliveryPersonId ?? null,
+      expectedPickupTime: insertOrder.expectedPickupTime ?? null,
+      createdAt: /* @__PURE__ */ new Date(),
+      completedAt: null,
+      billedAt: null,
+      paidAt: null,
+      kotCount: 0
+    };
+    await mongodb.getCollection("orders").insertOne(order);
+    return order;
+  }
+  async updateOrderStatus(id, status) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("orders").findOneAndUpdate(
+      { id },
+      { $set: { status } },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async incrementKotCount(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("orders").findOneAndUpdate(
+      { id },
+      { $inc: { kotCount: 1 } },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async updateOrderTotal(id, total) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("orders").findOneAndUpdate(
+      { id },
+      { $set: { total } },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async completeOrder(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("orders").findOneAndUpdate(
+      { id },
+      { $set: { status: "completed", completedAt: /* @__PURE__ */ new Date() } },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async billOrder(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("orders").findOneAndUpdate(
+      { id },
+      { $set: { status: "billed", billedAt: /* @__PURE__ */ new Date() } },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async checkoutOrder(id, paymentMode) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("orders").findOneAndUpdate(
+      { id },
+      {
+        $set: {
+          status: "completed",
+          paymentMode: paymentMode ?? null,
+          paidAt: /* @__PURE__ */ new Date(),
+          completedAt: /* @__PURE__ */ new Date()
+        }
+      },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async deleteOrder(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("orders").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async getOrderItems(orderId) {
+    await this.ensureConnection();
+    const items = await mongodb.getCollection("orderItems").find({ orderId }).toArray();
+    return items;
+  }
+  async getOrderItem(id) {
+    await this.ensureConnection();
+    const item = await mongodb.getCollection("orderItems").findOne({ id });
+    return item ?? void 0;
+  }
+  async createOrderItem(item) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const orderItem = {
+      id,
+      orderId: item.orderId,
+      menuItemId: item.menuItemId,
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+      notes: item.notes ?? null,
+      status: item.status ?? "new",
+      isVeg: item.isVeg ?? true
+    };
+    await mongodb.getCollection("orderItems").insertOne(orderItem);
+    return orderItem;
+  }
+  async updateOrderItemStatus(id, status) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("orderItems").findOneAndUpdate(
+      { id },
+      { $set: { status } },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async updateOrderItem(id, data) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("orderItems").findOneAndUpdate(
+      { id },
+      { $set: data },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async deleteOrderItem(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("orderItems").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async getInventoryItems() {
+    await this.ensureConnection();
+    const items = await mongodb.getCollection("inventory").find().toArray();
+    return items;
+  }
+  async getInventoryItem(id) {
+    await this.ensureConnection();
+    const item = await mongodb.getCollection("inventory").findOne({ id });
+    return item ?? void 0;
+  }
+  async createInventoryItem(item) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const inventoryItem = {
+      id,
+      name: item.name,
+      category: item.category,
+      currentStock: item.currentStock,
+      unit: item.unit,
+      minStock: item.minStock ?? "0",
+      supplierId: item.supplierId ?? null,
+      costPerUnit: item.costPerUnit ?? "0",
+      lastUpdated: /* @__PURE__ */ new Date()
+    };
+    await mongodb.getCollection("inventory").insertOne(inventoryItem);
+    return inventoryItem;
+  }
+  async updateInventoryItem(id, item) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("inventory").findOneAndUpdate(
+      { id },
+      { $set: { ...item, lastUpdated: /* @__PURE__ */ new Date() } },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async updateInventoryQuantity(id, quantity) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("inventory").findOneAndUpdate(
+      { id },
+      { $set: { currentStock: quantity, lastUpdated: /* @__PURE__ */ new Date() } },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async deleteInventoryItem(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("inventory").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async deductInventoryForOrder(orderId) {
+    await this.ensureConnection();
+    const orderItems = await this.getOrderItems(orderId);
+    for (const orderItem of orderItems) {
+      const recipe = await this.getRecipeByMenuItemId(orderItem.menuItemId);
+      if (!recipe) continue;
+      const recipeIngredients = await this.getRecipeIngredients(recipe.id);
+      for (const ingredient of recipeIngredients) {
+        const inventoryItem = await this.getInventoryItem(ingredient.inventoryItemId);
+        if (!inventoryItem) continue;
+        const quantityToDeduct = parseFloat(ingredient.quantity) * orderItem.quantity;
+        const newStock = parseFloat(inventoryItem.currentStock) - quantityToDeduct;
+        await this.updateInventoryQuantity(ingredient.inventoryItemId, newStock.toString());
+      }
+    }
+  }
+  async getRecipes() {
+    await this.ensureConnection();
+    const recipes = await mongodb.getCollection("recipes").find().toArray();
+    return recipes;
+  }
+  async getRecipe(id) {
+    await this.ensureConnection();
+    const recipe = await mongodb.getCollection("recipes").findOne({ id });
+    return recipe ?? void 0;
+  }
+  async getRecipeByMenuItemId(menuItemId) {
+    await this.ensureConnection();
+    const recipe = await mongodb.getCollection("recipes").findOne({ menuItemId }, {
+      sort: { createdAt: -1 }
+    });
+    return recipe ?? void 0;
+  }
+  async createRecipe(insertRecipe) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const recipe = {
+      id,
+      menuItemId: insertRecipe.menuItemId,
+      createdAt: /* @__PURE__ */ new Date()
+    };
+    await mongodb.getCollection("recipes").insertOne(recipe);
+    return recipe;
+  }
+  async deleteRecipe(id) {
+    await this.ensureConnection();
+    await mongodb.getCollection("recipeIngredients").deleteMany({ recipeId: id });
+    const result = await mongodb.getCollection("recipes").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async getRecipeIngredients(recipeId) {
+    await this.ensureConnection();
+    const ingredients = await mongodb.getCollection("recipeIngredients").find({ recipeId }).toArray();
+    return ingredients;
+  }
+  async getRecipeIngredient(id) {
+    await this.ensureConnection();
+    const ingredient = await mongodb.getCollection("recipeIngredients").findOne({ id });
+    return ingredient ?? void 0;
+  }
+  async createRecipeIngredient(insertIngredient) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const ingredient = {
+      id,
+      recipeId: insertIngredient.recipeId,
+      inventoryItemId: insertIngredient.inventoryItemId,
+      quantity: insertIngredient.quantity,
+      unit: insertIngredient.unit
+    };
+    await mongodb.getCollection("recipeIngredients").insertOne(ingredient);
+    return ingredient;
+  }
+  async updateRecipeIngredient(id, data) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("recipeIngredients").findOneAndUpdate(
+      { id },
+      { $set: data },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async deleteRecipeIngredient(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("recipeIngredients").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async getSuppliers() {
+    await this.ensureConnection();
+    const suppliers = await mongodb.getCollection("suppliers").find().toArray();
+    return suppliers;
+  }
+  async getSupplier(id) {
+    await this.ensureConnection();
+    const supplier = await mongodb.getCollection("suppliers").findOne({ id });
+    return supplier ?? void 0;
+  }
+  async createSupplier(insertSupplier) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const supplier = {
+      id,
+      name: insertSupplier.name,
+      contactPerson: insertSupplier.contactPerson ?? null,
+      phone: insertSupplier.phone,
+      email: insertSupplier.email ?? null,
+      address: insertSupplier.address ?? null,
+      status: insertSupplier.status ?? "active",
+      createdAt: /* @__PURE__ */ new Date()
+    };
+    await mongodb.getCollection("suppliers").insertOne(supplier);
+    return supplier;
+  }
+  async updateSupplier(id, data) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("suppliers").findOneAndUpdate(
+      { id },
+      { $set: data },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async deleteSupplier(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("suppliers").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async getPurchaseOrders() {
+    await this.ensureConnection();
+    const orders = await mongodb.getCollection("purchaseOrders").find().sort({ orderDate: -1 }).toArray();
+    return orders;
+  }
+  async getPurchaseOrder(id) {
+    await this.ensureConnection();
+    const order = await mongodb.getCollection("purchaseOrders").findOne({ id });
+    return order ?? void 0;
+  }
+  async createPurchaseOrder(insertOrder) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const order = {
+      id,
+      orderNumber: insertOrder.orderNumber,
+      supplierId: insertOrder.supplierId,
+      orderDate: insertOrder.orderDate,
+      expectedDeliveryDate: insertOrder.expectedDeliveryDate ?? null,
+      actualDeliveryDate: null,
+      status: insertOrder.status ?? "pending",
+      totalAmount: insertOrder.totalAmount ?? "0",
+      notes: insertOrder.notes ?? null,
+      createdAt: /* @__PURE__ */ new Date()
+    };
+    await mongodb.getCollection("purchaseOrders").insertOne(order);
+    return order;
+  }
+  async updatePurchaseOrder(id, data) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("purchaseOrders").findOneAndUpdate(
+      { id },
+      { $set: data },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async receivePurchaseOrder(id) {
+    await this.ensureConnection();
+    const purchaseOrderItems = await this.getPurchaseOrderItems(id);
+    for (const item of purchaseOrderItems) {
+      const inventoryItem = await this.getInventoryItem(item.inventoryItemId);
+      if (inventoryItem) {
+        const newStock = parseFloat(inventoryItem.currentStock) + parseFloat(item.quantity);
+        await this.updateInventoryQuantity(item.inventoryItemId, newStock.toString());
+      }
+    }
+    const result = await mongodb.getCollection("purchaseOrders").findOneAndUpdate(
+      { id },
+      { $set: { status: "received", actualDeliveryDate: /* @__PURE__ */ new Date() } },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async deletePurchaseOrder(id) {
+    await this.ensureConnection();
+    await mongodb.getCollection("purchaseOrderItems").deleteMany({ purchaseOrderId: id });
+    const result = await mongodb.getCollection("purchaseOrders").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async getPurchaseOrderItems(purchaseOrderId) {
+    await this.ensureConnection();
+    const items = await mongodb.getCollection("purchaseOrderItems").find({ purchaseOrderId }).toArray();
+    return items;
+  }
+  async getPurchaseOrderItem(id) {
+    await this.ensureConnection();
+    const item = await mongodb.getCollection("purchaseOrderItems").findOne({ id });
+    return item ?? void 0;
+  }
+  async createPurchaseOrderItem(insertItem) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const item = {
+      id,
+      purchaseOrderId: insertItem.purchaseOrderId,
+      inventoryItemId: insertItem.inventoryItemId,
+      quantity: insertItem.quantity,
+      unit: insertItem.unit,
+      costPerUnit: insertItem.costPerUnit,
+      totalCost: insertItem.totalCost
+    };
+    await mongodb.getCollection("purchaseOrderItems").insertOne(item);
+    return item;
+  }
+  async updatePurchaseOrderItem(id, data) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("purchaseOrderItems").findOneAndUpdate(
+      { id },
+      { $set: data },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async deletePurchaseOrderItem(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("purchaseOrderItems").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async getWastages() {
+    await this.ensureConnection();
+    const wastages = await mongodb.getCollection("wastages").find().sort({ createdAt: -1 }).toArray();
+    return wastages;
+  }
+  async getWastage(id) {
+    await this.ensureConnection();
+    const wastage = await mongodb.getCollection("wastages").findOne({ id });
+    return wastage ?? void 0;
+  }
+  async createWastage(insertWastage) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const wastage = {
+      id,
+      inventoryItemId: insertWastage.inventoryItemId,
+      quantity: insertWastage.quantity,
+      unit: insertWastage.unit,
+      reason: insertWastage.reason,
+      reportedBy: insertWastage.reportedBy ?? null,
+      notes: insertWastage.notes ?? null,
+      createdAt: /* @__PURE__ */ new Date()
+    };
+    const inventoryItem = await this.getInventoryItem(insertWastage.inventoryItemId);
+    if (inventoryItem) {
+      const newStock = parseFloat(inventoryItem.currentStock) - parseFloat(insertWastage.quantity);
+      await this.updateInventoryQuantity(insertWastage.inventoryItemId, newStock.toString());
+    }
+    await mongodb.getCollection("wastages").insertOne(wastage);
+    return wastage;
+  }
+  async deleteWastage(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("wastages").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async getInvoices() {
+    await this.ensureConnection();
+    const invoices = await mongodb.getCollection("invoices").find().sort({ createdAt: -1 }).toArray();
+    return invoices;
+  }
+  async getInvoice(id) {
+    await this.ensureConnection();
+    const invoice = await mongodb.getCollection("invoices").findOne({ id });
+    return invoice ?? void 0;
+  }
+  async getInvoiceByNumber(invoiceNumber) {
+    await this.ensureConnection();
+    const invoice = await mongodb.getCollection("invoices").findOne({ invoiceNumber });
+    return invoice ?? void 0;
+  }
+  async createInvoice(insertInvoice) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const invoice = {
+      id,
+      invoiceNumber: insertInvoice.invoiceNumber,
+      orderId: insertInvoice.orderId,
+      tableNumber: insertInvoice.tableNumber ?? null,
+      floorName: insertInvoice.floorName ?? null,
+      customerName: insertInvoice.customerName ?? null,
+      customerPhone: insertInvoice.customerPhone ?? null,
+      subtotal: insertInvoice.subtotal,
+      tax: insertInvoice.tax,
+      cgst: insertInvoice.cgst ?? "0",
+      sgst: insertInvoice.sgst ?? "0",
+      serviceCharge: insertInvoice.serviceCharge ?? "0",
+      discount: insertInvoice.discount ?? "0",
+      total: insertInvoice.total,
+      paymentMode: insertInvoice.paymentMode,
+      splitPayments: insertInvoice.splitPayments ?? null,
+      status: insertInvoice.status ?? "Paid",
+      items: insertInvoice.items,
+      notes: insertInvoice.notes ?? null,
+      createdAt: /* @__PURE__ */ new Date(),
+      updatedAt: /* @__PURE__ */ new Date()
+    };
+    await mongodb.getCollection("invoices").insertOne(invoice);
+    return invoice;
+  }
+  async updateInvoice(id, invoiceData) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("invoices").findOneAndUpdate(
+      { id },
+      { $set: { ...invoiceData, updatedAt: /* @__PURE__ */ new Date() } },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async deleteInvoice(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("invoices").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async getReservations() {
+    await this.ensureConnection();
+    const reservations = await mongodb.getCollection("reservations").find().sort({ timeSlot: 1 }).toArray();
+    return reservations;
+  }
+  async getReservation(id) {
+    await this.ensureConnection();
+    const reservation = await mongodb.getCollection("reservations").findOne({ id });
+    return reservation ?? void 0;
+  }
+  async getReservationsByTable(tableId) {
+    await this.ensureConnection();
+    const reservations = await mongodb.getCollection("reservations").find({
+      tableId,
+      status: "active"
+    }).toArray();
+    return reservations;
+  }
+  async createReservation(insertReservation) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const reservation = {
+      id,
+      tableId: insertReservation.tableId,
+      customerName: insertReservation.customerName,
+      customerPhone: insertReservation.customerPhone,
+      numberOfPeople: insertReservation.numberOfPeople,
+      timeSlot: insertReservation.timeSlot,
+      notes: insertReservation.notes ?? null,
+      status: insertReservation.status ?? "active",
+      createdAt: /* @__PURE__ */ new Date()
+    };
+    await mongodb.getCollection("reservations").insertOne(reservation);
+    return reservation;
+  }
+  async updateReservation(id, reservationData) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("reservations").findOneAndUpdate(
+      { id },
+      { $set: reservationData },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async deleteReservation(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("reservations").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  // ── Customer helpers ────────────────────────────────────────────────────
+  // Customers live in `customersdb.customers` on the shared cluster.
+  // External schema uses `contactNumber` instead of `phone`, plus
+  // `visitCount` / `lastVisitDate` / `updatedAt`.  We map on the way in/out.
+  customersCol() {
+    return mongodb.getCustomersCollection("customers");
+  }
+  docToCustomer(doc) {
+    return {
+      id: doc._id.toString(),
+      name: doc.name ?? "",
+      phone: doc.contactNumber ?? doc.phone ?? "",
+      email: doc.email ?? null,
+      address: doc.address ?? null,
+      createdAt: doc.createdAt ?? /* @__PURE__ */ new Date()
+    };
+  }
+  async getCustomers() {
+    await this.ensureConnection();
+    const docs = await this.customersCol().find({}).sort({ createdAt: -1 }).toArray();
+    return docs.map((d) => this.docToCustomer(d));
+  }
+  async getCustomer(id) {
+    await this.ensureConnection();
+    try {
+      const doc = await this.customersCol().findOne({ _id: new ObjectId(id) });
+      return doc ? this.docToCustomer(doc) : void 0;
+    } catch {
+      return void 0;
+    }
+  }
+  async getCustomerByPhone(phone) {
+    await this.ensureConnection();
+    const doc = await this.customersCol().findOne({ contactNumber: phone });
+    return doc ? this.docToCustomer(doc) : void 0;
+  }
+  async createCustomer(insertCustomer) {
+    await this.ensureConnection();
+    const now = /* @__PURE__ */ new Date();
+    const doc = {
+      name: insertCustomer.name,
+      contactNumber: insertCustomer.phone,
+      email: insertCustomer.email ?? null,
+      address: insertCustomer.address ?? null,
+      visitCount: 1,
+      lastVisitDate: now,
+      createdAt: now,
+      updatedAt: now
+    };
+    const result = await this.customersCol().insertOne(doc);
+    return this.docToCustomer({ _id: result.insertedId, ...doc });
+  }
+  async updateCustomer(id, customerData) {
+    await this.ensureConnection();
+    try {
+      const update = { updatedAt: /* @__PURE__ */ new Date() };
+      if (customerData.name !== void 0) update.name = customerData.name;
+      if (customerData.phone !== void 0) update.contactNumber = customerData.phone;
+      if (customerData.email !== void 0) update.email = customerData.email;
+      if (customerData.address !== void 0) update.address = customerData.address;
+      const result = await this.customersCol().findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $set: update },
+        { returnDocument: "after" }
+      );
+      return result ? this.docToCustomer(result) : void 0;
+    } catch {
+      return void 0;
+    }
+  }
+  async deleteCustomer(id) {
+    await this.ensureConnection();
+    try {
+      const result = await this.customersCol().deleteOne({ _id: new ObjectId(id) });
+      return result.deletedCount > 0;
+    } catch {
+      return false;
+    }
+  }
+  async getFeedbacks() {
+    await this.ensureConnection();
+    const feedbacks = await mongodb.getCollection("feedbacks").find().sort({ createdAt: -1 }).toArray();
+    return feedbacks;
+  }
+  async getFeedback(id) {
+    await this.ensureConnection();
+    const feedback = await mongodb.getCollection("feedbacks").findOne({ id });
+    return feedback ?? void 0;
+  }
+  async createFeedback(insertFeedback) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const feedback = {
+      id,
+      customerId: insertFeedback.customerId ?? null,
+      customerName: insertFeedback.customerName,
+      rating: insertFeedback.rating,
+      comment: insertFeedback.comment,
+      sentiment: insertFeedback.sentiment || "Neutral",
+      createdAt: /* @__PURE__ */ new Date()
+    };
+    await mongodb.getCollection("feedbacks").insertOne(feedback);
+    return feedback;
+  }
+  async deleteFeedback(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("feedbacks").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async getSetting(key) {
+    await this.ensureConnection();
+    const setting = await mongodb.getCollection("settings").findOne({ key });
+    return setting?.value;
+  }
+  async setSetting(key, value) {
+    await this.ensureConnection();
+    await mongodb.getCollection("settings").updateOne(
+      { key },
+      { $set: { key, value } },
+      { upsert: true }
+    );
+  }
+  async getInventoryUsages() {
+    await this.ensureConnection();
+    const usages = await mongodb.getCollection("inventoryUsages").find().sort({ usedAt: -1 }).toArray();
+    return usages;
+  }
+  async getInventoryUsagesByItem(inventoryItemId) {
+    await this.ensureConnection();
+    const usages = await mongodb.getCollection("inventoryUsages").find({ inventoryItemId }).sort({ usedAt: -1 }).toArray();
+    return usages;
+  }
+  async createInventoryUsage(usage) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const newUsage = {
+      id,
+      inventoryItemId: usage.inventoryItemId,
+      itemName: usage.itemName,
+      quantity: usage.quantity,
+      unit: usage.unit,
+      usedAt: /* @__PURE__ */ new Date(),
+      source: usage.source || "manual",
+      notes: usage.notes || null,
+      createdAt: /* @__PURE__ */ new Date()
+    };
+    await mongodb.getCollection("inventoryUsages").insertOne(newUsage);
+    return newUsage;
+  }
+  async getMostUsedItems(limit = 10) {
+    await this.ensureConnection();
+    const usages = await mongodb.getCollection("inventoryUsages").find().toArray();
+    const itemMap = /* @__PURE__ */ new Map();
+    for (const usage of usages) {
+      const key = usage.inventoryItemId;
+      const qty = parseFloat(usage.quantity) || 0;
+      if (!itemMap.has(key)) {
+        itemMap.set(key, { itemName: usage.itemName, totalQuantity: qty, count: 1 });
+      } else {
+        const existing = itemMap.get(key);
+        existing.totalQuantity += qty;
+        existing.count += 1;
+      }
+    }
+    const sorted = Array.from(itemMap.entries()).sort((a, b) => b[1].count - a[1].count).slice(0, limit).map(([itemId, data]) => ({
+      itemId,
+      itemName: data.itemName,
+      totalQuantity: data.totalQuantity.toString(),
+      count: data.count
+    }));
+    return sorted;
+  }
+  async seedInventoryAndRecipes() {
+    await this.ensureConnection();
+    const existingInventory = await this.getInventoryItems();
+    if (existingInventory.length > 0) {
+      return { inventoryCount: existingInventory.length, recipesCount: 0, suppliersCount: 0 };
+    }
+    const supplier1 = await this.createSupplier({
+      name: "Fresh Foods Inc.",
+      contactPerson: "John Smith",
+      phone: "+1-555-0101",
+      email: "john@freshfoods.com",
+      address: "123 Market Street, City, State 12345",
+      status: "active"
+    });
+    const supplier2 = await this.createSupplier({
+      name: "Quality Ingredients Co.",
+      contactPerson: "Sarah Johnson",
+      phone: "+1-555-0202",
+      email: "sarah@qualityingredients.com",
+      address: "456 Supply Lane, City, State 12345",
+      status: "active"
+    });
+    const inventoryItemsData = [
+      { name: "Chicken Breast", category: "Meat & Poultry", currentStock: "50000", unit: "g", minStock: "10000", costPerUnit: "0.015", supplierId: supplier1.id },
+      { name: "Baby Corn", category: "Vegetables", currentStock: "20000", unit: "g", minStock: "5000", costPerUnit: "0.008", supplierId: supplier1.id },
+      { name: "Cooking Oil", category: "Cooking Essentials", currentStock: "10000", unit: "ml", minStock: "2000", costPerUnit: "0.005", supplierId: supplier2.id },
+      { name: "Soy Sauce", category: "Condiments", currentStock: "5000", unit: "ml", minStock: "1000", costPerUnit: "0.010", supplierId: supplier2.id },
+      { name: "Spices Mix", category: "Spices", currentStock: "5000", unit: "g", minStock: "1000", costPerUnit: "0.020", supplierId: supplier2.id },
+      { name: "Wheat Flour", category: "Baking", currentStock: "30000", unit: "g", minStock: "5000", costPerUnit: "0.003", supplierId: supplier2.id },
+      { name: "Cheese", category: "Dairy", currentStock: "15000", unit: "g", minStock: "3000", costPerUnit: "0.012", supplierId: supplier1.id },
+      { name: "Mixed Vegetables", category: "Vegetables", currentStock: "25000", unit: "g", minStock: "5000", costPerUnit: "0.006", supplierId: supplier1.id },
+      { name: "Burger Buns", category: "Bakery", currentStock: "200", unit: "pcs", minStock: "50", costPerUnit: "0.50", supplierId: supplier1.id },
+      { name: "Pizza Dough", category: "Bakery", currentStock: "100", unit: "pcs", minStock: "20", costPerUnit: "1.20", supplierId: supplier1.id },
+      { name: "Tomato Sauce", category: "Condiments", currentStock: "8000", unit: "ml", minStock: "2000", costPerUnit: "0.008", supplierId: supplier2.id },
+      { name: "Potatoes", category: "Vegetables", currentStock: "40000", unit: "g", minStock: "10000", costPerUnit: "0.002", supplierId: supplier1.id },
+      { name: "Lettuce", category: "Vegetables", currentStock: "3000", unit: "g", minStock: "500", costPerUnit: "0.015", supplierId: supplier1.id },
+      { name: "Pasta", category: "Pasta & Grains", currentStock: "20000", unit: "g", minStock: "5000", costPerUnit: "0.004", supplierId: supplier2.id },
+      { name: "Cream", category: "Dairy", currentStock: "8000", unit: "ml", minStock: "2000", costPerUnit: "0.012", supplierId: supplier1.id },
+      { name: "Chocolate", category: "Desserts", currentStock: "5000", unit: "g", minStock: "1000", costPerUnit: "0.025", supplierId: supplier2.id },
+      { name: "Vanilla Extract", category: "Flavorings", currentStock: "2000", unit: "ml", minStock: "500", costPerUnit: "0.030", supplierId: supplier2.id },
+      { name: "Strawberries", category: "Fruits", currentStock: "3000", unit: "g", minStock: "1000", costPerUnit: "0.020", supplierId: supplier1.id },
+      { name: "Coca Cola Syrup", category: "Beverages", currentStock: "10000", unit: "ml", minStock: "2000", costPerUnit: "0.008", supplierId: supplier2.id }
+    ];
+    const inventoryItems = [];
+    for (const itemData of inventoryItemsData) {
+      const item = await this.createInventoryItem(itemData);
+      inventoryItems.push(item);
+    }
+    const inventoryMap = new Map(inventoryItems.map((item) => [item.name, item]));
+    const menuItems = await this.getMenuItems();
+    let recipesCreated = 0;
+    const recipeData = {
+      "Chicken Burger": {
+        ingredients: ["Chicken Breast", "Burger Buns", "Lettuce"],
+        quantities: ["150", "1", "30"],
+        units: ["g", "pcs", "g"]
+      },
+      "Veggie Pizza": {
+        ingredients: ["Pizza Dough", "Cheese", "Mixed Vegetables", "Tomato Sauce"],
+        quantities: ["1", "200", "150", "100"],
+        units: ["pcs", "g", "g", "ml"]
+      },
+      "French Fries": {
+        ingredients: ["Potatoes", "Cooking Oil"],
+        quantities: ["300", "50"],
+        units: ["g", "ml"]
+      },
+      "Coca Cola": {
+        ingredients: ["Coca Cola Syrup"],
+        quantities: ["30"],
+        units: ["ml"]
+      },
+      "Caesar Salad": {
+        ingredients: ["Lettuce", "Cheese", "Chicken Breast"],
+        quantities: ["100", "50", "80"],
+        units: ["g", "g", "g"]
+      },
+      "Pasta Alfredo": {
+        ingredients: ["Pasta", "Cream", "Cheese"],
+        quantities: ["200", "150", "80"],
+        units: ["g", "ml", "g"]
+      },
+      "Chocolate Cake": {
+        ingredients: ["Wheat Flour", "Chocolate", "Cream"],
+        quantities: ["150", "100", "50"],
+        units: ["g", "g", "ml"]
+      },
+      "Ice Cream": {
+        ingredients: ["Cream", "Vanilla Extract", "Strawberries"],
+        quantities: ["150", "10", "50"],
+        units: ["ml", "ml", "g"]
+      }
+    };
+    for (const menuItem of menuItems) {
+      const recipeInfo = recipeData[menuItem.name];
+      if (!recipeInfo) continue;
+      const recipe = await this.createRecipe({
+        menuItemId: menuItem.id
+      });
+      for (let i = 0; i < recipeInfo.ingredients.length; i++) {
+        const ingredientName = recipeInfo.ingredients[i];
+        const inventoryItem = inventoryMap.get(ingredientName);
+        if (!inventoryItem) continue;
+        await this.createRecipeIngredient({
+          recipeId: recipe.id,
+          inventoryItemId: inventoryItem.id,
+          quantity: recipeInfo.quantities[i],
+          unit: recipeInfo.units[i]
+        });
+      }
+      recipesCreated++;
+    }
+    return {
+      inventoryCount: inventoryItems.length,
+      recipesCount: recipesCreated,
+      suppliersCount: 2
+    };
+  }
+  async getDeliveryPersons() {
+    await this.ensureConnection();
+    return await mongodb.getCollection("deliveryPersons").find().toArray();
+  }
+  async getDeliveryPerson(id) {
+    await this.ensureConnection();
+    const person = await mongodb.getCollection("deliveryPersons").findOne({ id });
+    return person ?? void 0;
+  }
+  async createDeliveryPerson(person) {
+    await this.ensureConnection();
+    const id = randomUUID2();
+    const newPerson = {
+      id,
+      name: person.name,
+      phone: person.phone,
+      status: person.status || "available",
+      createdAt: /* @__PURE__ */ new Date()
+    };
+    await mongodb.getCollection("deliveryPersons").insertOne(newPerson);
+    return newPerson;
+  }
+  async updateDeliveryPerson(id, person) {
+    await this.ensureConnection();
+    const collection = mongodb.getCollection("deliveryPersons");
+    const existing = await collection.findOne({ id });
+    if (!existing) return void 0;
+    const update = {};
+    if (person.name !== void 0) update.name = person.name;
+    if (person.phone !== void 0) update.phone = person.phone;
+    if (person.status !== void 0) update.status = person.status;
+    await collection.updateOne({ id }, { $set: update });
+    const updated = await collection.findOne({ id });
+    return updated ?? void 0;
+  }
+  async deleteDeliveryPerson(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("deliveryPersons").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  async assignDeliveryPerson(orderId, deliveryPersonId) {
+    await this.ensureConnection();
+    const collection = mongodb.getCollection("orders");
+    const existing = await collection.findOne({ id: orderId });
+    if (!existing) return void 0;
+    await collection.updateOne({ id: orderId }, { $set: { deliveryPersonId } });
+    const updated = await collection.findOne({ id: orderId });
+    return updated ?? void 0;
+  }
+  // ── Printer CRUD ──────────────────────────────────────────────────────────
+  async getPrinters() {
+    await this.ensureConnection();
+    const docs = await mongodb.getCollection("printers").find({}).toArray();
+    return docs.map((d) => {
+      const { _id, ...rest } = d;
+      return rest;
+    });
+  }
+  async getPrinter(id) {
+    await this.ensureConnection();
+    const doc = await mongodb.getCollection("printers").findOne({ id });
+    if (!doc) return void 0;
+    const { _id, ...rest } = doc;
+    return rest;
+  }
+  async createPrinter(printer) {
+    await this.ensureConnection();
+    const newPrinter = {
+      id: randomUUID2(),
+      name: printer.name,
+      ip: printer.ip,
+      port: printer.port ?? 9100,
+      type: printer.type ?? "KOT",
+      autoPrint: printer.autoPrint ?? true,
+      createdAt: /* @__PURE__ */ new Date()
+    };
+    await mongodb.getCollection("printers").insertOne(newPrinter);
+    return newPrinter;
+  }
+  async updatePrinter(id, data) {
+    await this.ensureConnection();
+    const collection = mongodb.getCollection("printers");
+    const existing = await collection.findOne({ id });
+    if (!existing) return void 0;
+    const update = {};
+    if (data.name !== void 0) update.name = data.name;
+    if (data.ip !== void 0) update.ip = data.ip;
+    if (data.port !== void 0) update.port = data.port;
+    if (data.type !== void 0) update.type = data.type;
+    if (data.autoPrint !== void 0) update.autoPrint = data.autoPrint;
+    await collection.updateOne({ id }, { $set: update });
+    const updated = await collection.findOne({ id });
+    if (!updated) return void 0;
+    const { _id, ...rest } = updated;
+    return rest;
+  }
+  async deletePrinter(id) {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection("printers").deleteOne({ id });
+    return result.deletedCount > 0;
+  }
+  // ── Print Jobs ────────────────────────────────────────────────────────────
+  async createPrintJob(job) {
+    await this.ensureConnection();
+    const newJob = { id: randomUUID2(), ...job, createdAt: /* @__PURE__ */ new Date() };
+    await mongodb.getCollection("print_jobs").insertOne(newJob);
+    return newJob;
+  }
+  async getPendingPrintJobs() {
+    await this.ensureConnection();
+    const docs = await mongodb.getCollection("print_jobs").find({ status: "pending" }).sort({ createdAt: 1 }).toArray();
+    return docs.map((d) => {
+      const { _id, ...rest } = d;
+      return rest;
+    });
+  }
+  async markPrintJobDone(id) {
+    await this.ensureConnection();
+    await mongodb.getCollection("print_jobs").updateOne(
+      { id },
+      { $set: { status: "done", doneAt: /* @__PURE__ */ new Date() } }
+    );
+  }
+  async markPrintJobFailed(id) {
+    await this.ensureConnection();
+    await mongodb.getCollection("print_jobs").updateOne(
+      { id },
+      { $set: { status: "failed", doneAt: /* @__PURE__ */ new Date() } }
+    );
+  }
+};
+var mongoStorage = new MongoStorage();
+
+// server/session-storage.ts
+import { randomUUID as randomUUID3 } from "crypto";
 var SessionStorage = class {
   restaurantId;
   mongodbUri;
@@ -824,7 +2609,7 @@ var SessionStorage = class {
   }
   async createUser(user) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const newUser = { id, ...user };
     await this.getCollection("users").insertOne(newUser);
     return newUser;
@@ -841,7 +2626,7 @@ var SessionStorage = class {
   }
   async createFloor(insertFloor) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const floor = {
       id,
       name: insertFloor.name,
@@ -886,7 +2671,7 @@ var SessionStorage = class {
   }
   async createTable(insertTable) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const table = {
       id,
       tableNumber: insertTable.tableNumber,
@@ -942,7 +2727,7 @@ var SessionStorage = class {
   }
   async createMenuItem(insertItem) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const item = {
       id,
       name: insertItem.name,
@@ -995,7 +2780,7 @@ var SessionStorage = class {
   }
   async getCompletedOrders() {
     await this.ensureConnection();
-    const orders = await this.getCollection("orders").find({ status: "completed" }).sort({ completedAt: -1 }).toArray();
+    const orders = await this.getCollection("orders").find({ status: { $in: ["paid", "completed"] } }).sort({ completedAt: -1 }).toArray();
     return orders;
   }
   async getDeliveryOrders() {
@@ -1005,7 +2790,7 @@ var SessionStorage = class {
   }
   async createOrder(insertOrder) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const order = {
       id,
       tableId: insertOrder.tableId ?? null,
@@ -1022,7 +2807,8 @@ var SessionStorage = class {
       createdAt: /* @__PURE__ */ new Date(),
       completedAt: null,
       billedAt: null,
-      paidAt: null
+      paidAt: null,
+      kotCount: 0
     };
     await this.getCollection("orders").insertOne(order);
     return order;
@@ -1032,6 +2818,15 @@ var SessionStorage = class {
     const result = await this.getCollection("orders").findOneAndUpdate(
       { id },
       { $set: { status } },
+      { returnDocument: "after" }
+    );
+    return result ?? void 0;
+  }
+  async incrementKotCount(id) {
+    await this.ensureConnection();
+    const result = await this.getCollection("orders").findOneAndUpdate(
+      { id },
+      { $inc: { kotCount: 1 } },
       { returnDocument: "after" }
     );
     return result ?? void 0;
@@ -1094,7 +2889,7 @@ var SessionStorage = class {
   }
   async createOrderItem(insertItem) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const item = {
       id,
       orderId: insertItem.orderId,
@@ -1144,7 +2939,7 @@ var SessionStorage = class {
   }
   async createInventoryItem(insertItem) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const item = {
       id,
       name: insertItem.name,
@@ -1203,7 +2998,7 @@ var SessionStorage = class {
   }
   async createRecipe(insertRecipe) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const recipe = {
       id,
       menuItemId: insertRecipe.menuItemId,
@@ -1230,7 +3025,7 @@ var SessionStorage = class {
   }
   async createRecipeIngredient(insertIngredient) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const ingredient = {
       id,
       recipeId: insertIngredient.recipeId,
@@ -1267,7 +3062,7 @@ var SessionStorage = class {
   }
   async createSupplier(insertSupplier) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const supplier = {
       id,
       name: insertSupplier.name,
@@ -1307,7 +3102,7 @@ var SessionStorage = class {
   }
   async createPurchaseOrder(insertOrder) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const order = {
       id,
       orderNumber: insertOrder.orderNumber,
@@ -1359,7 +3154,7 @@ var SessionStorage = class {
   }
   async createPurchaseOrderItem(insertItem) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const item = {
       id,
       purchaseOrderId: insertItem.purchaseOrderId,
@@ -1398,7 +3193,7 @@ var SessionStorage = class {
   }
   async createWastage(insertWastage) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const wastage = {
       id,
       inventoryItemId: insertWastage.inventoryItemId,
@@ -1434,7 +3229,7 @@ var SessionStorage = class {
   }
   async createInvoice(insertInvoice) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const invoice = {
       id,
       invoiceNumber: insertInvoice.invoiceNumber,
@@ -1445,6 +3240,9 @@ var SessionStorage = class {
       customerPhone: insertInvoice.customerPhone ?? null,
       subtotal: insertInvoice.subtotal,
       tax: insertInvoice.tax,
+      cgst: insertInvoice.cgst ?? "0",
+      sgst: insertInvoice.sgst ?? "0",
+      serviceCharge: insertInvoice.serviceCharge ?? "0",
       discount: insertInvoice.discount ?? "0",
       total: insertInvoice.total,
       paymentMode: insertInvoice.paymentMode,
@@ -1489,7 +3287,7 @@ var SessionStorage = class {
   }
   async createReservation(insertReservation) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const reservation = {
       id,
       tableId: insertReservation.tableId,
@@ -1518,48 +3316,83 @@ var SessionStorage = class {
     const result = await this.getCollection("reservations").deleteOne({ id });
     return result.deletedCount > 0;
   }
+  // ── Customer helpers ────────────────────────────────────────────────────
+  // Customers live in `customersdb.customers` on the shared cluster.
+  // External schema: contactNumber (= phone), visitCount, lastVisitDate.
+  customersCol() {
+    return mongodb.getCustomersCollection("customers");
+  }
+  docToCustomer(doc) {
+    return {
+      id: doc._id.toString(),
+      name: doc.name ?? "",
+      phone: doc.contactNumber ?? doc.phone ?? "",
+      email: doc.email ?? null,
+      address: doc.address ?? null,
+      createdAt: doc.createdAt ?? /* @__PURE__ */ new Date()
+    };
+  }
   async getCustomers() {
     await this.ensureConnection();
-    const customers = await this.getCollection("customers").find().toArray();
-    return customers;
+    const docs = await this.customersCol().find({}).sort({ createdAt: -1 }).toArray();
+    return docs.map((d) => this.docToCustomer(d));
   }
   async getCustomer(id) {
     await this.ensureConnection();
-    const customer = await this.getCollection("customers").findOne({ id });
-    return customer ?? void 0;
+    try {
+      const doc = await this.customersCol().findOne({ _id: new ObjectId2(id) });
+      return doc ? this.docToCustomer(doc) : void 0;
+    } catch {
+      return void 0;
+    }
   }
   async getCustomerByPhone(phone) {
     await this.ensureConnection();
-    const customer = await this.getCollection("customers").findOne({ phone });
-    return customer ?? void 0;
+    const doc = await this.customersCol().findOne({ contactNumber: phone });
+    return doc ? this.docToCustomer(doc) : void 0;
   }
   async createCustomer(insertCustomer) {
     await this.ensureConnection();
-    const id = randomUUID2();
-    const customer = {
-      id,
+    const now = /* @__PURE__ */ new Date();
+    const doc = {
       name: insertCustomer.name,
-      phone: insertCustomer.phone,
+      contactNumber: insertCustomer.phone,
       email: insertCustomer.email ?? null,
       address: insertCustomer.address ?? null,
-      createdAt: /* @__PURE__ */ new Date()
+      visitCount: 1,
+      lastVisitDate: now,
+      createdAt: now,
+      updatedAt: now
     };
-    await this.getCollection("customers").insertOne(customer);
-    return customer;
+    const result = await this.customersCol().insertOne(doc);
+    return this.docToCustomer({ _id: result.insertedId, ...doc });
   }
   async updateCustomer(id, customerData) {
     await this.ensureConnection();
-    const result = await this.getCollection("customers").findOneAndUpdate(
-      { id },
-      { $set: customerData },
-      { returnDocument: "after" }
-    );
-    return result ?? void 0;
+    try {
+      const update = { updatedAt: /* @__PURE__ */ new Date() };
+      if (customerData.name !== void 0) update.name = customerData.name;
+      if (customerData.phone !== void 0) update.contactNumber = customerData.phone;
+      if (customerData.email !== void 0) update.email = customerData.email;
+      if (customerData.address !== void 0) update.address = customerData.address;
+      const result = await this.customersCol().findOneAndUpdate(
+        { _id: new ObjectId2(id) },
+        { $set: update },
+        { returnDocument: "after" }
+      );
+      return result ? this.docToCustomer(result) : void 0;
+    } catch {
+      return void 0;
+    }
   }
   async deleteCustomer(id) {
     await this.ensureConnection();
-    const result = await this.getCollection("customers").deleteOne({ id });
-    return result.deletedCount > 0;
+    try {
+      const result = await this.customersCol().deleteOne({ _id: new ObjectId2(id) });
+      return result.deletedCount > 0;
+    } catch {
+      return false;
+    }
   }
   async getFeedbacks() {
     await this.ensureConnection();
@@ -1573,7 +3406,7 @@ var SessionStorage = class {
   }
   async createFeedback(insertFeedback) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const feedback = {
       id,
       customerId: insertFeedback.customerId ?? null,
@@ -1616,7 +3449,7 @@ var SessionStorage = class {
   }
   async createInventoryUsage(insertUsage) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const usage = {
       id,
       inventoryItemId: insertUsage.inventoryItemId,
@@ -1668,7 +3501,7 @@ var SessionStorage = class {
   }
   async createDeliveryPerson(insertPerson) {
     await this.ensureConnection();
-    const id = randomUUID2();
+    const id = randomUUID3();
     const person = {
       id,
       name: insertPerson.name,
@@ -1702,6 +3535,22 @@ var SessionStorage = class {
     );
     return result ?? void 0;
   }
+  // Printers are global (not per-restaurant session) — delegate to shared mongoStorage
+  async getPrinters() {
+    return mongoStorage.getPrinters();
+  }
+  async getPrinter(id) {
+    return mongoStorage.getPrinter(id);
+  }
+  async createPrinter(p) {
+    return mongoStorage.createPrinter(p);
+  }
+  async updatePrinter(id, p) {
+    return mongoStorage.updatePrinter(id, p);
+  }
+  async deletePrinter(id) {
+    return mongoStorage.deletePrinter(id);
+  }
 };
 
 // server/auth-middleware.ts
@@ -1724,17 +3573,27 @@ function requireAuth(req, res, next) {
   }
   next();
 }
+var REMEMBER_ME_AGE = 30 * 24 * 60 * 60 * 1e3;
 function setupAuthRoutes(app2) {
+  const mongoUri = process.env.MONGODB_URI;
+  if (!mongoUri) throw new Error("MONGODB_URI environment variable is required");
   app2.use(session({
     secret: process.env.SESSION_SECRET || (() => {
       throw new Error("SESSION_SECRET environment variable is required");
     })(),
     resave: false,
     saveUninitialized: false,
+    store: MongoStore.create({
+      mongoUrl: mongoUri,
+      dbName: "restaurant_pos",
+      collectionName: "sessions",
+      ttl: REMEMBER_ME_AGE / 1e3
+      // max TTL in seconds; per-session cookie handles the client side
+    }),
     cookie: {
       secure: false,
-      httpOnly: true,
-      maxAge: 365 * 24 * 60 * 60 * 1e3
+      httpOnly: true
+      // No maxAge here — we set it per-login based on rememberMe
     }
   }));
   app2.post("/api/auth/login", async (req, res) => {
@@ -1744,6 +3603,7 @@ function setupAuthRoutes(app2) {
         return res.status(400).json({ error: "Invalid credentials format" });
       }
       const { username, password } = result.data;
+      const rememberMe = req.body.rememberMe === true;
       const account = validateCredentials(username, password);
       if (!account) {
         return res.status(401).json({ error: "Invalid username or password" });
@@ -1763,6 +3623,9 @@ function setupAuthRoutes(app2) {
       req.session.mongodbUri = account.mongodbUri;
       req.session.username = account.username;
       req.session.isAuthenticated = true;
+      if (rememberMe) {
+        req.session.cookie.maxAge = REMEMBER_ME_AGE;
+      }
       storageCache.set(account.id, storage2);
       res.json({
         success: true,
@@ -1805,167 +3668,12 @@ function setupAuthRoutes(app2) {
   });
 }
 
-// shared/schema.ts
-import { z as z2 } from "zod";
-var insertUserSchema = z2.object({
-  username: z2.string(),
-  password: z2.string()
-});
-var insertFloorSchema = z2.object({
-  name: z2.string(),
-  displayOrder: z2.number().default(0)
-});
-var insertTableSchema = z2.object({
-  tableNumber: z2.string(),
-  seats: z2.number(),
-  status: z2.string().default("free"),
-  floorId: z2.string().nullable().optional()
-});
-var insertMenuItemSchema = z2.object({
-  name: z2.string(),
-  category: z2.string(),
-  price: z2.string(),
-  cost: z2.string(),
-  available: z2.boolean().default(true),
-  isVeg: z2.boolean().default(true),
-  variants: z2.array(z2.string()).nullable().optional(),
-  image: z2.string().nullable().optional(),
-  description: z2.string().nullable().optional(),
-  quickCode: z2.string().nullable().optional()
-});
-var insertOrderSchema = z2.object({
-  tableId: z2.string().nullable().optional(),
-  orderType: z2.string(),
-  status: z2.string().default("saved"),
-  total: z2.string().default("0"),
-  customerName: z2.string().nullable().optional(),
-  customerPhone: z2.string().nullable().optional(),
-  customerAddress: z2.string().nullable().optional(),
-  paymentMode: z2.string().nullable().optional(),
-  waiterId: z2.string().nullable().optional(),
-  deliveryPersonId: z2.string().nullable().optional(),
-  expectedPickupTime: z2.coerce.date().nullable().optional()
-});
-var insertOrderItemSchema = z2.object({
-  orderId: z2.string(),
-  menuItemId: z2.string(),
-  name: z2.string(),
-  quantity: z2.number(),
-  price: z2.string(),
-  notes: z2.string().nullable().optional(),
-  status: z2.string().default("new"),
-  isVeg: z2.boolean().default(true)
-});
-var insertInventoryItemSchema = z2.object({
-  name: z2.string(),
-  category: z2.string(),
-  currentStock: z2.string(),
-  unit: z2.string(),
-  minStock: z2.string().default("0"),
-  supplierId: z2.string().nullable().optional(),
-  costPerUnit: z2.string().default("0"),
-  image: z2.string().nullable().optional()
-});
-var insertRecipeSchema = z2.object({
-  menuItemId: z2.string()
-});
-var insertRecipeIngredientSchema = z2.object({
-  recipeId: z2.string(),
-  inventoryItemId: z2.string(),
-  quantity: z2.string(),
-  unit: z2.string()
-});
-var insertSupplierSchema = z2.object({
-  name: z2.string(),
-  contactPerson: z2.string().nullable().optional(),
-  phone: z2.string(),
-  email: z2.string().nullable().optional(),
-  address: z2.string().nullable().optional(),
-  status: z2.string().default("active")
-});
-var insertPurchaseOrderSchema = z2.object({
-  orderNumber: z2.string(),
-  supplierId: z2.string(),
-  orderDate: z2.coerce.date(),
-  expectedDeliveryDate: z2.coerce.date().nullable().optional(),
-  status: z2.string().default("pending"),
-  totalAmount: z2.string().default("0"),
-  notes: z2.string().nullable().optional()
-});
-var insertPurchaseOrderItemSchema = z2.object({
-  purchaseOrderId: z2.string(),
-  inventoryItemId: z2.string(),
-  quantity: z2.string(),
-  unit: z2.string(),
-  costPerUnit: z2.string(),
-  totalCost: z2.string()
-});
-var insertWastageSchema = z2.object({
-  inventoryItemId: z2.string(),
-  quantity: z2.string(),
-  unit: z2.string(),
-  reason: z2.string(),
-  reportedBy: z2.string().nullable().optional(),
-  notes: z2.string().nullable().optional()
-});
-var insertInvoiceSchema = z2.object({
-  invoiceNumber: z2.string(),
-  orderId: z2.string(),
-  tableNumber: z2.string().nullable().optional(),
-  floorName: z2.string().nullable().optional(),
-  customerName: z2.string().nullable().optional(),
-  customerPhone: z2.string().nullable().optional(),
-  subtotal: z2.string(),
-  tax: z2.string(),
-  discount: z2.string().default("0"),
-  total: z2.string(),
-  paymentMode: z2.string(),
-  splitPayments: z2.string().nullable().optional(),
-  status: z2.string().default("Paid"),
-  items: z2.string(),
-  notes: z2.string().nullable().optional()
-});
-var insertReservationSchema = z2.object({
-  tableId: z2.string(),
-  customerName: z2.string(),
-  customerPhone: z2.string(),
-  numberOfPeople: z2.number(),
-  timeSlot: z2.coerce.date(),
-  notes: z2.string().nullable().optional(),
-  status: z2.string().default("active")
-});
-var insertCustomerSchema = z2.object({
-  name: z2.string(),
-  phone: z2.string(),
-  email: z2.string().nullable().optional(),
-  address: z2.string().nullable().optional()
-});
-var insertFeedbackSchema = z2.object({
-  customerId: z2.string().nullable().optional(),
-  customerName: z2.string(),
-  rating: z2.number().min(1).max(5),
-  comment: z2.string(),
-  sentiment: z2.enum(["Positive", "Neutral", "Negative"]).default("Neutral")
-});
-var insertInventoryUsageSchema = z2.object({
-  inventoryItemId: z2.string(),
-  itemName: z2.string(),
-  quantity: z2.string(),
-  unit: z2.string(),
-  source: z2.string().default("manual"),
-  notes: z2.string().nullable().optional()
-});
-var insertDeliveryPersonSchema = z2.object({
-  name: z2.string(),
-  phone: z2.string(),
-  status: z2.string().default("available")
-});
-
 // server/routes.ts
+init_schema();
 import { z as z3 } from "zod";
 
 // server/mongodbService.ts
-import { MongoClient as MongoClient2 } from "mongodb";
+import { MongoClient as MongoClient3 } from "mongodb";
 async function fetchMenuItemsFromMongoDB(mongoUri, databaseName) {
   let client = null;
   try {
@@ -1975,7 +3683,7 @@ async function fetchMenuItemsFromMongoDB(mongoUri, databaseName) {
     } else {
       dbName = extractDatabaseName(mongoUri);
     }
-    client = new MongoClient2(mongoUri);
+    client = new MongoClient3(mongoUri);
     await client.connect();
     const db = client.db(dbName);
     const collections = await db.listCollections().toArray();
@@ -2117,15 +3825,30 @@ function generateInvoicePDF(data) {
   yPosition = doc.lastAutoTable.finalY + 10;
   const subtotal = parseFloat(invoice.subtotal);
   const tax = parseFloat(invoice.tax);
+  const cgst = parseFloat(invoice.cgst || "0");
+  const sgst = parseFloat(invoice.sgst || "0");
+  const serviceCharge = parseFloat(invoice.serviceCharge || "0");
   const discount = parseFloat(invoice.discount || "0");
   const total = parseFloat(invoice.total);
+  const taxRatePercent = subtotal > 0 ? tax / subtotal * 100 : 0;
   doc.setFontSize(11);
   const summaryX = pageWidth - 70;
   doc.text("Subtotal:", summaryX, yPosition);
   doc.text(`\u20B9${subtotal.toFixed(2)}`, pageWidth - 15, yPosition, { align: "right" });
   yPosition += 7;
-  doc.text("Tax (5%):", summaryX, yPosition);
+  doc.text(`Tax (${taxRatePercent.toFixed(1)}%):`, summaryX, yPosition);
   doc.text(`\u20B9${tax.toFixed(2)}`, pageWidth - 15, yPosition, { align: "right" });
+  yPosition += 7;
+  doc.text(`CGST (${(taxRatePercent / 2).toFixed(1)}%):`, summaryX, yPosition);
+  doc.text(`\u20B9${cgst.toFixed(2)}`, pageWidth - 15, yPosition, { align: "right" });
+  yPosition += 7;
+  doc.text(`SGST (${(taxRatePercent / 2).toFixed(1)}%):`, summaryX, yPosition);
+  doc.text(`\u20B9${sgst.toFixed(2)}`, pageWidth - 15, yPosition, { align: "right" });
+  if (serviceCharge > 0) {
+    yPosition += 7;
+    doc.text("Service Charge:", summaryX, yPosition);
+    doc.text(`\u20B9${serviceCharge.toFixed(2)}`, pageWidth - 15, yPosition, { align: "right" });
+  }
   if (discount > 0) {
     yPosition += 7;
     doc.text("Discount:", summaryX, yPosition);
@@ -2172,24 +3895,46 @@ import { jsPDF as jsPDF2 } from "jspdf";
 import { format } from "date-fns";
 var C = {
   white: [255, 255, 255],
-  headerBg: [17, 24, 39],
-  // gray-900
-  headerText: [255, 255, 255],
+  pageBg: [255, 255, 255],
+  // meta table
   labelBg: [249, 250, 251],
   // gray-50
-  border: [229, 231, 235],
-  // gray-200
   labelText: [107, 114, 128],
   // gray-500
-  valueText: [17, 24, 39],
+  valueText: [31, 41, 55],
+  // gray-800
+  border: [229, 231, 235],
+  // gray-200  (table borders)
+  rowDiv: [243, 244, 246],
+  // gray-100  (row dividers)
+  // header/title
+  titleText: [17, 24, 39],
   // gray-900
-  footerBg: [249, 250, 251],
-  statusNew: [217, 119, 6],
-  // amber-600
-  statusDone: [75, 85, 99],
+  // items table header  ← matches UI bg-gray-50
+  tblHdrBg: [249, 250, 251],
+  // gray-50
+  tblHdrText: [75, 85, 99],
   // gray-600
-  vegGreen: [22, 163, 74],
-  nonVegRed: [220, 38, 38]
+  // status pills
+  statusAmber: [180, 83, 9],
+  // amber-700
+  statusBlue: [29, 78, 216],
+  // blue-700
+  statusGreen: [21, 128, 61],
+  // green-700
+  statusPurple: [109, 40, 217],
+  // purple-700
+  statusGray: [107, 114, 128],
+  // gray-500
+  // veg indicators  (border-green-600 / border-red-600, light bg)
+  vegBorder: [22, 163, 74],
+  // green-600
+  nonVegBorder: [220, 38, 38],
+  // red-600
+  vegFill: [240, 253, 244],
+  // green-50
+  nonVegFill: [254, 242, 242]
+  // red-50
 };
 function generateKOTPDF(data) {
   const {
@@ -2198,27 +3943,33 @@ function generateKOTPDF(data) {
     tableNumber,
     floorName,
     kotNumber = `KOT-${order.id.substring(0, 8).toUpperCase()}`,
-    restaurantName = "Restaurant POS"
+    restaurantName = "Restaurant POS",
+    isUpdated = false
   } = data;
   const doc = new jsPDF2({ unit: "mm", format: "a5" });
   const PW = doc.internal.pageSize.getWidth();
-  const margin = 12;
+  const margin = 14;
   const inner = PW - margin * 2;
   let y = margin;
-  const rect = (x, ry, w, h, fill, stroke) => {
+  const rect = (x, ry, w, h, fill, stroke, lw = 0.25) => {
     doc.setFillColor(...fill);
     if (stroke) {
       doc.setDrawColor(...stroke);
-      doc.setLineWidth(0.3);
+      doc.setLineWidth(lw);
       doc.rect(x, ry, w, h, "FD");
     } else {
       doc.rect(x, ry, w, h, "F");
     }
   };
-  const hline = (ry) => {
-    doc.setDrawColor(...C.border);
-    doc.setLineWidth(0.25);
+  const hline = (ry, color = C.rowDiv, lw = 0.2) => {
+    doc.setDrawColor(...color);
+    doc.setLineWidth(lw);
     doc.line(margin, ry, margin + inner, ry);
+  };
+  const vline = (x, ry, h, color = C.border, lw = 0.2) => {
+    doc.setDrawColor(...color);
+    doc.setLineWidth(lw);
+    doc.line(x, ry, x, ry + h);
   };
   const txt = (s, x, ry, size, style, color = C.valueText, align = "left") => {
     doc.setFontSize(size);
@@ -2227,113 +3978,150 @@ function generateKOTPDF(data) {
     doc.text(s, x, ry, { align });
   };
   y += 4;
-  txt(restaurantName.toUpperCase(), PW / 2, y, 13, "bold", C.headerBg, "center");
-  y += 6;
+  txt(restaurantName.toUpperCase(), PW / 2, y, 13, "bold", C.titleText, "center");
+  y += 5.5;
   txt("Kitchen Order Ticket", PW / 2, y, 8, "normal", C.labelText, "center");
   y += 5;
-  hline(y);
+  if (isUpdated) {
+    const bannerH = 7;
+    const bannerBg = [255, 237, 213];
+    const bannerText = [194, 65, 12];
+    const bannerBorder = [234, 88, 12];
+    rect(margin, y, inner, bannerH, bannerBg, bannerBorder, 0.4);
+    txt("\u2605  UPDATED KOT  \u2605", PW / 2, y + bannerH * 0.67, 8, "bold", bannerText, "center");
+    y += bannerH + 3;
+  }
+  doc.setDrawColor(...C.border);
+  doc.setLineWidth(0.3);
+  doc.line(margin, y, margin + inner, y);
   y += 6;
   const orderDate = order.createdAt instanceof Date ? order.createdAt : new Date(order.createdAt || Date.now());
   const typeLabel = order.orderType === "dine-in" ? "Dine-In" : order.orderType === "delivery" ? "Delivery" : "Pickup";
-  const statusLabel = order.status === "completed" ? "Completed" : order.status === "sent_to_kitchen" ? "New" : order.status === "preparing" ? "Preparing" : order.status === "ready" ? "Ready" : order.status === "served" ? "Served" : order.status;
+  const statusLabel = order.status === "completed" ? "Completed" : order.status === "sent_to_kitchen" ? "New" : order.status === "preparing" ? "Preparing" : order.status === "ready" ? "Ready" : order.status === "served" ? "Served" : "New";
+  const statusColor = statusLabel === "New" ? C.statusAmber : statusLabel === "Preparing" ? C.statusBlue : statusLabel === "Ready" ? C.statusGreen : statusLabel === "Served" ? C.statusPurple : C.statusGray;
+  const statusBg = statusLabel === "New" ? [255, 251, 235] : (
+    // amber-50
+    statusLabel === "Preparing" ? [239, 246, 255] : (
+      // blue-50
+      statusLabel === "Ready" ? [240, 253, 244] : (
+        // green-50
+        statusLabel === "Served" ? [250, 245, 255] : (
+          // purple-50
+          [243, 244, 246]
+        )
+      )
+    )
+  );
   const metaRows = [
-    ["KOT No", kotNumber],
-    ["Order Date", format(orderDate, "dd/MM/yyyy, hh:mm a")],
-    ["Type", typeLabel]
+    ["KOT No", kotNumber, false],
+    ["Order Date", format(orderDate, "dd/MM/yyyy, hh:mm a"), false],
+    ["Type", typeLabel, false]
   ];
   if (order.orderType === "dine-in" && tableNumber) {
-    metaRows.push(["Table", tableNumber]);
-    if (floorName) metaRows.push(["Floor", floorName]);
+    metaRows.push(["Table", tableNumber, false]);
+    if (floorName) metaRows.push(["Floor", floorName, false]);
   }
-  if (order.customerName) metaRows.push(["Customer", order.customerName]);
-  if (order.customerPhone) metaRows.push(["Phone", order.customerPhone]);
-  metaRows.push(["Status", statusLabel]);
-  const rowH = 7;
-  const labelW = 35;
+  if (order.customerName) metaRows.push(["Customer", order.customerName, false]);
+  if (order.customerPhone) metaRows.push(["Phone", order.customerPhone, false]);
+  metaRows.push(["Status", statusLabel, true]);
+  const rowH = 7.5;
+  const labelW = 36;
   doc.setDrawColor(...C.border);
   doc.setLineWidth(0.3);
   doc.rect(margin, y, inner, rowH * metaRows.length, "S");
-  metaRows.forEach(([label, value], idx) => {
+  metaRows.forEach(([label, value, isStatus], idx) => {
     const ry = y + idx * rowH;
-    rect(margin, ry, labelW, rowH, C.labelBg, C.border);
-    txt(label, margin + 2, ry + rowH * 0.65, 7.5, "normal", C.labelText);
+    rect(margin, ry, labelW, rowH, C.labelBg);
     rect(margin + labelW, ry, inner - labelW, rowH, C.white);
-    if (label === "Status") {
-      const pillColor = ["New", "Preparing"].includes(value) ? C.statusNew : C.statusDone;
-      txt(value, margin + inner - 2, ry + rowH * 0.65, 7.5, "bold", pillColor, "right");
+    txt(label, margin + 3, ry + rowH * 0.65, 7.5, "normal", C.labelText);
+    if (isStatus) {
+      const pillW = 22;
+      const pillH = 4.5;
+      const pillX = margin + inner - pillW - 2;
+      const pillY = ry + (rowH - pillH) / 2;
+      doc.setFillColor(...statusBg);
+      doc.setDrawColor(...statusBg);
+      doc.roundedRect(pillX, pillY, pillW, pillH, 1.5, 1.5, "F");
+      txt(value, margin + inner - pillW / 2 - 2, ry + rowH * 0.65, 7, "bold", statusColor, "center");
     } else {
-      txt(value, margin + inner - 2, ry + rowH * 0.65, 7.5, "normal", C.valueText, "right");
+      const isBold = label === "KOT No";
+      txt(value, margin + inner - 3, ry + rowH * 0.65, 7.5, isBold ? "bold" : "normal", C.valueText, "right");
     }
-    if (idx < metaRows.length - 1) hline(ry + rowH);
-    doc.setDrawColor(...C.border);
-    doc.setLineWidth(0.25);
-    doc.line(margin + labelW, ry, margin + labelW, ry + rowH);
+    if (idx < metaRows.length - 1) {
+      doc.setDrawColor(...C.rowDiv);
+      doc.setLineWidth(0.2);
+      doc.line(margin, ry + rowH, margin + inner, ry + rowH);
+    }
+    vline(margin + labelW, ry, rowH, C.border, 0.25);
   });
   y += rowH * metaRows.length + 7;
-  const colW = { num: 8, item: inner - 8 - 14, qty: 14 };
+  const colW = { num: 10, qty: 14 };
+  const itemColW = inner - colW.num - colW.qty;
   const headerH = 8;
-  rect(margin, y, colW.num, headerH, C.headerBg, C.border);
-  rect(margin + colW.num, y, colW.item, headerH, C.headerBg, C.border);
-  rect(margin + colW.num + colW.item, y, colW.qty, headerH, C.headerBg, C.border);
-  txt("#", margin + colW.num / 2, y + headerH * 0.68, 8, "bold", C.headerText, "center");
-  txt("Item", margin + colW.num + colW.item / 2, y + headerH * 0.68, 8, "bold", C.headerText, "center");
-  txt("Qty", margin + colW.num + colW.item + colW.qty / 2, y + headerH * 0.68, 8, "bold", C.headerText, "center");
+  rect(margin, y, colW.num, headerH, C.tblHdrBg, C.border, 0.3);
+  rect(margin + colW.num, y, itemColW, headerH, C.tblHdrBg, C.border, 0.3);
+  rect(margin + colW.num + itemColW, y, colW.qty, headerH, C.tblHdrBg, C.border, 0.3);
+  txt("#", margin + colW.num / 2, y + headerH * 0.67, 8, "bold", C.tblHdrText, "center");
+  txt("Item", margin + colW.num + 3, y + headerH * 0.67, 8, "bold", C.tblHdrText, "left");
+  txt("Qty", margin + colW.num + itemColW + colW.qty / 2, y + headerH * 0.67, 8, "bold", C.tblHdrText, "center");
   y += headerH;
   orderItems.forEach((item, idx) => {
     const hasNotes = !!(item.notes && item.notes.trim());
-    const itemH = hasNotes ? 10 : 7.5;
-    rect(margin, y, colW.num, itemH, C.white, C.border);
-    rect(margin + colW.num, y, colW.item, itemH, C.white, C.border);
-    rect(margin + colW.num + colW.item, y, colW.qty, itemH, C.white, C.border);
-    doc.setDrawColor(...C.border);
-    doc.setLineWidth(0.2);
-    doc.line(margin + colW.num, y, margin + colW.num, y + itemH);
-    doc.line(margin + colW.num + colW.item, y, margin + colW.num + colW.item, y + itemH);
+    const itemH = hasNotes ? 11 : 8;
+    rect(margin, y, colW.num, itemH, C.white, C.border, 0.25);
+    rect(margin + colW.num, y, itemColW, itemH, C.white, C.border, 0.25);
+    rect(margin + colW.num + itemColW, y, colW.qty, itemH, C.white, C.border, 0.25);
+    vline(margin + colW.num, y, itemH, C.border, 0.2);
+    vline(margin + colW.num + itemColW, y, itemH, C.border, 0.2);
     txt(String(idx + 1), margin + colW.num / 2, y + itemH * 0.6, 7.5, "normal", C.labelText, "center");
-    const dotX = margin + colW.num + 2;
-    const dotY = y + (hasNotes ? 3.5 : itemH / 2);
-    doc.setFillColor(...item.isVeg ? C.vegGreen : C.nonVegRed);
-    doc.setDrawColor(...item.isVeg ? C.vegGreen : C.nonVegRed);
-    doc.rect(dotX, dotY - 1.2, 2.2, 2.2, "FD");
-    const nameX = dotX + 3.5;
-    const nameY = hasNotes ? y + 3.8 : y + itemH * 0.62;
-    const maxW = colW.item - 7;
-    const lines = doc.splitTextToSize(item.name, maxW);
-    txt(lines[0], nameX, nameY, 7.5, "normal", C.valueText);
+    const dotSize = 2.8;
+    const dotX = margin + colW.num + 3;
+    const dotY = y + (hasNotes ? 3.2 : itemH / 2) - dotSize / 2;
+    const vegBorder = item.isVeg ? C.vegBorder : C.nonVegBorder;
+    const vegFill = item.isVeg ? C.vegFill : C.nonVegFill;
+    doc.setFillColor(...vegFill);
+    doc.setDrawColor(...vegBorder);
+    doc.setLineWidth(0.4);
+    doc.roundedRect(dotX, dotY, dotSize, dotSize, 0.4, 0.4, "FD");
+    const nameX = dotX + dotSize + 2;
+    const nameW = itemColW - (nameX - (margin + colW.num)) - 2;
+    const nameY = hasNotes ? y + 4.2 : y + itemH * 0.63;
+    const lines2 = doc.splitTextToSize(item.name, nameW);
+    txt(lines2[0], nameX, nameY, 7.5, "normal", C.valueText);
     if (hasNotes) {
-      txt(item.notes, nameX, y + 7.5, 6.5, "italic", C.labelText);
+      txt(item.notes, nameX, y + 8, 6.5, "italic", C.labelText);
     }
     txt(
       String(item.quantity),
-      margin + colW.num + colW.item + colW.qty / 2,
-      y + itemH * 0.62,
+      margin + colW.num + itemColW + colW.qty / 2,
+      y + itemH * 0.63,
       8,
       "bold",
       C.valueText,
       "center"
     );
-    hline(y + itemH);
+    hline(y + itemH, C.rowDiv, 0.2);
     y += itemH;
   });
-  const footH = 7.5;
-  rect(margin, y, inner, footH, C.labelBg, C.border);
+  const footH = 8;
+  rect(margin, y, inner, footH, C.labelBg, C.border, 0.3);
   const totalQty = orderItems.reduce((s, i) => s + i.quantity, 0);
-  txt("Total Items :", margin + 2, y + footH * 0.68, 7.5, "bold", C.labelText);
-  txt(String(totalQty), margin + inner - 2, y + footH * 0.68, 8, "bold", C.valueText, "right");
+  txt("Total Items :", margin + colW.num + 3, y + footH * 0.67, 7.5, "bold", C.labelText);
+  txt(String(totalQty), margin + inner - 3, y + footH * 0.67, 8, "bold", C.valueText, "right");
   y += footH;
   const totalAmt = orderItems.reduce((s, i) => s + parseFloat(i.price) * i.quantity, 0);
   if (totalAmt > 0) {
-    const amtH = 7.5;
-    rect(margin, y, inner, amtH, C.white, C.border);
-    txt("Total Amount :", margin + 2, y + amtH * 0.68, 7.5, "bold", C.labelText);
-    txt(`Rs. ${totalAmt.toFixed(2)}`, margin + inner - 2, y + amtH * 0.68, 8, "bold", C.valueText, "right");
+    const amtH = 8;
+    rect(margin, y, inner, amtH, C.white, C.border, 0.25);
+    txt("Total Amount :", margin + colW.num + 3, y + amtH * 0.67, 7.5, "bold", C.labelText);
+    txt(`\u20B9${totalAmt.toFixed(2)}`, margin + inner - 3, y + amtH * 0.67, 8, "bold", C.valueText, "right");
     y += amtH;
   }
   y += 8;
   doc.setDrawColor(...C.border);
   doc.setLineWidth(0.25);
   doc.line(margin, y, margin + inner, y);
-  y += 4;
+  y += 4.5;
   txt(
     `Printed: ${format(/* @__PURE__ */ new Date(), "dd/MM/yyyy, hh:mm a")}`,
     PW / 2,
@@ -2346,64 +4134,30 @@ function generateKOTPDF(data) {
   return Buffer.from(doc.output("arraybuffer"));
 }
 
-// server/mongodb.ts
-import { MongoClient as MongoClient3 } from "mongodb";
-var MongoDBService = class {
-  client = null;
-  db = null;
-  async connect() {
-    if (this.client && this.db) {
-      return;
-    }
-    const uri = process.env.MONGODB_URI;
-    if (!uri) {
-      throw new Error("MONGODB_URI environment variable is not set");
-    }
-    try {
-      this.client = new MongoClient3(uri);
-      await this.client.connect();
-      const dbName = this.extractDatabaseName(uri);
-      this.db = this.client.db(dbName);
-      console.log(`\u2705 Connected to MongoDB database: ${dbName}`);
-    } catch (error) {
-      console.error("\u274C MongoDB connection error:", error);
-      throw error;
-    }
-  }
-  extractDatabaseName(uri) {
-    try {
-      const url = new URL(uri);
-      const pathname = url.pathname.substring(1);
-      if (pathname && pathname !== "") {
-        return pathname.split("?")[0];
-      }
-      return "restaurant_pos";
-    } catch (error) {
-      return "restaurant_pos";
-    }
-  }
-  getDatabase() {
-    if (!this.db) {
-      throw new Error("Database not connected. Call connect() first.");
-    }
-    return this.db;
-  }
-  getCollection(name) {
-    return this.getDatabase().collection(name);
-  }
-  async disconnect() {
-    if (this.client) {
-      await this.client.close();
-      this.client = null;
-      this.db = null;
-      console.log("Disconnected from MongoDB");
-    }
-  }
+// server/digital-menu-sync.ts
+import { ObjectId as ObjectId3 } from "mongodb";
+
+// shared/tax.ts
+var DEFAULT_TAX_SETTINGS = {
+  taxRate: 18,
+  serviceCharge: 0,
+  gstEnabled: true,
+  gstNumber: ""
 };
-var mongodb = new MongoDBService();
+function computeBillTotals(subtotal, taxRatePercent, serviceChargePercent) {
+  const safeSubtotal = Number.isFinite(subtotal) ? subtotal : 0;
+  const safeTaxRate = Number.isFinite(taxRatePercent) ? taxRatePercent : 0;
+  const safeServiceChargeRate = Number.isFinite(serviceChargePercent) ? serviceChargePercent : 0;
+  const tax = safeSubtotal * safeTaxRate / 100;
+  const cgst = tax / 2;
+  const sgst = tax / 2;
+  const serviceCharge = safeSubtotal * safeServiceChargeRate / 100;
+  const total = safeSubtotal + tax + serviceCharge;
+  return { subtotal: safeSubtotal, tax, cgst, sgst, serviceCharge, total };
+}
 
 // server/digital-menu-sync.ts
-import { ObjectId } from "mongodb";
+var STALE_CLAIM_MS = 2 * 60 * 1e3;
 var DigitalMenuSyncService = class {
   storage;
   syncInterval = null;
@@ -2445,7 +4199,9 @@ var DigitalMenuSyncService = class {
         for (const order of customerDoc.orders) {
           if (order.syncedToPOS === true) {
             const orderId = order._id?.toString() || `${customerDoc._id.toString()}_${order.orderDate}`;
-            this.processedOrderIds.add(orderId);
+            if (order.posOrderId) {
+              this.processedOrderIds.add(orderId);
+            }
             this.orderStatusMap.set(orderId, order.status);
             this.orderPaymentStatusMap.set(orderId, order.paymentStatus || "pending");
             syncedCount++;
@@ -2476,14 +4232,51 @@ var DigitalMenuSyncService = class {
       for (const customerDoc of customerDocs) {
         if (!customerDoc.orders || !Array.isArray(customerDoc.orders)) continue;
         for (const digitalOrder of customerDoc.orders) {
-          if (digitalOrder.syncedToPOS === true) continue;
+          if (digitalOrder.syncedToPOS === true) {
+            const claimedAt = digitalOrder.syncClaimedAt ? new Date(digitalOrder.syncClaimedAt).getTime() : 0;
+            const isStaleClaim = !digitalOrder.posOrderId && !digitalOrder.linkWriteFailed && Date.now() - claimedAt > STALE_CLAIM_MS;
+            if (!isStaleClaim) continue;
+          }
           if (digitalOrder.status !== "pending" && digitalOrder.status !== "confirmed") continue;
           const orderId = digitalOrder._id?.toString() || `${customerDoc._id.toString()}_${digitalOrder.orderDate}`;
           if (this.processedOrderIds.has(orderId)) continue;
           try {
-            this.processedOrderIds.add(orderId);
             this.orderStatusMap.set(orderId, digitalOrder.status);
             this.orderPaymentStatusMap.set(orderId, digitalOrder.paymentStatus || "pending");
+            const staleClaimCutoff = new Date(Date.now() - STALE_CLAIM_MS);
+            const claimResult = await collection.updateOne(
+              { _id: customerDoc._id },
+              {
+                $set: {
+                  "orders.$[elem].syncedToPOS": true,
+                  "orders.$[elem].syncClaimedAt": /* @__PURE__ */ new Date()
+                }
+              },
+              {
+                arrayFilters: [
+                  {
+                    "elem._id": digitalOrder._id,
+                    $or: [
+                      { "elem.syncedToPOS": { $ne: true } },
+                      {
+                        "elem.syncedToPOS": true,
+                        "elem.posOrderId": { $exists: false },
+                        "elem.linkWriteFailed": { $ne: true },
+                        $or: [
+                          { "elem.syncClaimedAt": { $exists: false } },
+                          { "elem.syncClaimedAt": { $lt: staleClaimCutoff } }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            );
+            if (claimResult.modifiedCount === 0) {
+              console.log(`\u23ED\uFE0F  Order ${orderId} already claimed elsewhere, skipping`);
+              continue;
+            }
+            this.processedOrderIds.add(orderId);
             const orderWithCustomer = {
               ...digitalOrder,
               _id: digitalOrder._id || orderId,
@@ -2491,34 +4284,53 @@ var DigitalMenuSyncService = class {
               customerName: customerDoc.customerName,
               customerPhone: customerDoc.customerPhone
             };
-            const posOrderId = await this.convertAndCreatePOSOrder(orderWithCustomer);
-            synced++;
-            console.log(`\u2705 Synced digital menu order ${orderId} for ${customerDoc.customerName}`);
-            await collection.updateOne(
-              {
-                _id: customerDoc._id,
-                "orders._id": digitalOrder._id
-              },
-              {
-                $set: {
-                  "orders.$.syncedToPOS": true,
-                  "orders.$.syncedAt": /* @__PURE__ */ new Date(),
-                  "orders.$.posOrderId": posOrderId
+            let createdPosOrderId = null;
+            try {
+              createdPosOrderId = await this.convertAndCreatePOSOrder(orderWithCustomer);
+              synced++;
+              console.log(`\u2705 Synced digital menu order ${orderId} for ${customerDoc.customerName}`);
+              await collection.updateOne(
+                {
+                  _id: customerDoc._id,
+                  "orders._id": digitalOrder._id
+                },
+                {
+                  $set: {
+                    "orders.$.syncedAt": /* @__PURE__ */ new Date(),
+                    "orders.$.posOrderId": createdPosOrderId
+                  }
                 }
+              );
+              if (this.broadcastFn) {
+                this.broadcastFn("digital_menu_order_synced", {
+                  orderId,
+                  customerName: customerDoc.customerName,
+                  status: digitalOrder.status
+                });
               }
-            );
-            if (this.broadcastFn) {
-              this.broadcastFn("digital_menu_order_synced", {
-                orderId,
-                customerName: customerDoc.customerName,
-                status: digitalOrder.status
-              });
+            } catch (error) {
+              console.error(`\u274C Failed to sync order ${orderId}:`, error);
+              this.processedOrderIds.delete(orderId);
+              this.orderStatusMap.delete(orderId);
+              this.orderPaymentStatusMap.delete(orderId);
+              if (createdPosOrderId) {
+                console.error(`\u274C POS order ${createdPosOrderId} was created for ${orderId} but linking it back failed \u2014 leaving claimed for manual reconciliation`);
+                await collection.updateOne(
+                  { _id: customerDoc._id, "orders._id": digitalOrder._id },
+                  { $set: { "orders.$.posOrderId": createdPosOrderId, "orders.$.linkWriteFailed": true } }
+                ).catch(() => {
+                });
+              } else {
+                await collection.updateOne(
+                  { _id: customerDoc._id, "orders._id": digitalOrder._id },
+                  { $set: { "orders.$.syncedToPOS": false }, $unset: { "orders.$.syncClaimedAt": "" } }
+                ).catch(() => {
+                });
+              }
             }
-          } catch (error) {
-            console.error(`\u274C Failed to sync order ${orderId}:`, error);
+          } catch (outerError) {
+            console.error(`\u274C Unexpected error processing order ${orderId}:`, outerError);
             this.processedOrderIds.delete(orderId);
-            this.orderStatusMap.delete(orderId);
-            this.orderPaymentStatusMap.delete(orderId);
           }
         }
       }
@@ -2540,7 +4352,7 @@ var DigitalMenuSyncService = class {
           if (needsCheckout && digitalOrder.posOrderId) {
             try {
               const posOrder = await this.storage.getOrder(digitalOrder.posOrderId);
-              if (posOrder && posOrder.status !== "paid" && posOrder.status !== "billed") {
+              if (posOrder && posOrder.status !== "completed" && posOrder.status !== "paid" && posOrder.status !== "billed") {
                 console.log(`\u{1F4B3} Order ${orderId} has invoice_generated payment status but not checked out - processing now`);
                 const orderWithCustomer = {
                   ...digitalOrder,
@@ -2681,6 +4493,46 @@ var DigitalMenuSyncService = class {
       console.warn(`\u26A0\uFE0F  Order total mismatch for ${digitalOrder.customerName}: Digital Menu=${orderTotal}, Calculated=${calculatedTotal}`);
     }
     await this.storage.updateOrderTotal(posOrder.id, orderTotal);
+    try {
+      const updatedOrder = await this.storage.incrementKotCount(posOrder.id) ?? posOrder;
+      const kotPrinters = (await mongoStorage.getPrinters()).filter(
+        (p) => p.type === "KOT" && p.autoPrint
+      );
+      if (kotPrinters.length > 0) {
+        const { buildKOTEscPos: buildKOTEscPos2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
+        const orderItems = await this.storage.getOrderItems(posOrder.id);
+        let tableNumber;
+        let floorName;
+        if (tableId) {
+          const tbl = await this.storage.getTable(tableId);
+          tableNumber = tbl?.tableNumber;
+          if (tbl?.floorId) floorName = (await this.storage.getFloor(tbl.floorId))?.name;
+        }
+        const kotNumber = `KOT-${updatedOrder.id.substring(0, 8).toUpperCase()}`;
+        const escData = buildKOTEscPos2({
+          order: updatedOrder,
+          items: orderItems,
+          tableNumber,
+          floorName,
+          kotNumber,
+          isUpdated: false
+        });
+        const escBase64 = Buffer.from(escData).toString("base64");
+        for (const printer of kotPrinters) {
+          await mongoStorage.createPrintJob({
+            orderId: updatedOrder.id,
+            kotNumber,
+            printerIp: printer.ip,
+            printerPort: printer.port,
+            escposData: escBase64,
+            status: "pending"
+          });
+          console.log(`[PrintJob] Queued ${kotNumber} \u2192 ${printer.ip}:${printer.port} (digital menu order)`);
+        }
+      }
+    } catch (e) {
+      console.error("[PrintJob] Failed to enqueue KOT for digital menu order:", e);
+    }
     if (digitalOrder.customerPhone) {
       await this.updateCustomerTableStatus(digitalOrder.customerPhone, "occupied");
     }
@@ -2754,8 +4606,13 @@ var DigitalMenuSyncService = class {
         (sum, item) => sum + parseFloat(item.price) * item.quantity,
         0
       );
-      const tax = subtotal * 0.05;
-      const total = subtotal + tax;
+      const taxRateSetting = await this.storage.getSetting("tax_rate");
+      const serviceChargeSetting = await this.storage.getSetting("service_charge");
+      const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(
+        subtotal,
+        taxRateSetting !== void 0 ? parseFloat(taxRateSetting) : DEFAULT_TAX_SETTINGS.taxRate,
+        serviceChargeSetting !== void 0 ? parseFloat(serviceChargeSetting) : DEFAULT_TAX_SETTINGS.serviceCharge
+      );
       const paymentMode = (digitalOrder.paymentMethod || "cash").toLowerCase();
       const checkedOutOrder = await this.storage.checkoutOrder(posOrder.id, paymentMode);
       if (!checkedOutOrder) {
@@ -2793,6 +4650,9 @@ var DigitalMenuSyncService = class {
         customerPhone: checkedOutOrder.customerPhone,
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
+        cgst: cgst.toFixed(2),
+        sgst: sgst.toFixed(2),
+        serviceCharge: serviceCharge.toFixed(2),
         discount: "0",
         total: total.toFixed(2),
         paymentMode,
@@ -2801,6 +4661,7 @@ var DigitalMenuSyncService = class {
         items: JSON.stringify(invoiceItemsData),
         notes: null
       });
+      await this.markDigitalOrderCompleted(digitalOrder._id.toString());
       if (this.broadcastFn) {
         this.broadcastFn("order_paid", checkedOutOrder);
         this.broadcastFn("invoice_created", invoice);
@@ -2810,12 +4671,37 @@ var DigitalMenuSyncService = class {
       console.error(`\u274C Failed to auto-generate invoice:`, error);
     }
   }
+  async markDigitalOrderCompleted(orderId) {
+    try {
+      await mongodb.connect();
+      const collection = mongodb.getCollection("digital_menu_customer_orders");
+      const result = await collection.updateOne(
+        { _id: new ObjectId3(orderId) },
+        {
+          $set: {
+            status: "completed",
+            paymentStatus: "paid"
+          }
+        }
+      );
+      if (result.modifiedCount === 0) {
+        console.warn(`\u26A0\uFE0F  Failed to mark digital menu order ${orderId} as completed - no document matched`);
+      } else {
+        this.orderStatusMap.set(orderId, "completed");
+        if (this.broadcastFn) {
+          this.broadcastFn("digital_menu_order_updated", { orderId, status: "completed" });
+        }
+      }
+    } catch (error) {
+      console.error(`\u274C Failed to mark digital menu order ${orderId} as completed:`, error);
+    }
+  }
   async markOrderAsSynced(orderId, posOrderId) {
     try {
       await mongodb.connect();
       const collection = mongodb.getCollection("digital_menu_customer_orders");
       const result = await collection.updateOne(
-        { _id: new ObjectId(orderId) },
+        { _id: new ObjectId3(orderId) },
         {
           $set: {
             syncedToPOS: true,
@@ -2919,19 +4805,602 @@ var DigitalMenuSyncService = class {
   }
 };
 
+// server/external-orders-sync.ts
+import { MongoClient as MongoClient4 } from "mongodb";
+var EXTERNAL_DB_NAME = "Orders";
+var EXTERNAL_COLL = "orders";
+var STALE_CLAIM_MS2 = 2 * 60 * 1e3;
+var ExternalOrdersSyncService = class {
+  storage;
+  client = null;
+  db = null;
+  currentUri = null;
+  syncInterval = null;
+  processedIds = /* @__PURE__ */ new Set();
+  isRunning = false;
+  broadcastFn = null;
+  constructor(storage2) {
+    this.storage = storage2;
+  }
+  setBroadcastFunction(fn) {
+    this.broadcastFn = fn;
+  }
+  /* ── lifecycle ──────────────────────────────────────────────────── */
+  async start(intervalMs = 5e3) {
+    if (this.isRunning) return;
+    this.isRunning = true;
+    console.log("\u{1F504} [ExternalOrders] Starting external orders sync service...");
+    await this.connect().catch(
+      (err) => console.warn("\u26A0\uFE0F [ExternalOrders] Initial connect failed (will retry):", err.message)
+    );
+    await this.sync();
+    this.syncInterval = setInterval(() => this.sync(), intervalMs);
+    console.log(`\u2705 [ExternalOrders] Sync running every ${intervalMs / 1e3}s`);
+  }
+  stop() {
+    if (this.syncInterval) {
+      clearInterval(this.syncInterval);
+      this.syncInterval = null;
+    }
+    this.isRunning = false;
+    console.log("\u{1F6D1} [ExternalOrders] Sync stopped");
+  }
+  getStatus() {
+    return { isRunning: this.isRunning, processedOrders: this.processedIds.size };
+  }
+  /* ── internal helpers ───────────────────────────────────────────── */
+  /**
+   * Resolve the URI for the external Orders database.
+   *
+   * Since the POS and digital menu now share the same MongoDB cluster,
+   * MONGODB_URI is used for both. The POS stores its data in the "POS"
+   * database; digital menu orders live in the "Orders" database on the
+   * same cluster. No separate URI setting is needed.
+   */
+  async resolveUri() {
+    if (process.env.MONGODB_URI)
+      return { uri: process.env.MONGODB_URI, source: "MONGODB_URI (shared cluster)" };
+    throw new Error("MONGODB_URI is not set");
+  }
+  async connect() {
+    const { uri, source } = await this.resolveUri();
+    if (this.client && this.currentUri === uri) return;
+    if (this.client) {
+      console.log("\u{1F504} [ExternalOrders] URI changed \u2014 reconnecting...");
+      await this.client.close().catch(() => {
+      });
+      this.client = null;
+      this.db = null;
+    }
+    this.currentUri = uri;
+    this.client = new MongoClient4(uri);
+    await this.client.connect();
+    this.db = this.client.db(EXTERNAL_DB_NAME);
+    console.log(`\u2705 [ExternalOrders] Connected to "${EXTERNAL_DB_NAME}" database (via ${source})`);
+    await this.loadAlreadySynced();
+  }
+  collection() {
+    if (!this.db) throw new Error("Not connected to external DB");
+    return this.db.collection(EXTERNAL_COLL);
+  }
+  /**
+   * Mark already-synced orders so we don't re-process them on restart.
+   * Only orders with a `posOrderId` are truly finished — a doc with
+   * `syncedToPOS: true` but no `posOrderId` is just a claim (possibly from a
+   * process that crashed before finishing). Adding claim-only docs here would
+   * make the in-memory guard permanently skip them, silently defeating the
+   * stale-claim reclaim logic in `sync()`.
+   */
+  async loadAlreadySynced() {
+    try {
+      const docs = await this.collection().find({ syncedToPOS: true, posOrderId: { $exists: true } }, { projection: { _id: 1 } }).toArray();
+      docs.forEach((d) => this.processedIds.add(d._id.toString()));
+      console.log(`\u{1F4CA} [ExternalOrders] Loaded ${docs.length} already-synced orders`);
+    } catch (err) {
+      console.error("[ExternalOrders] Failed to load sync state:", err);
+    }
+  }
+  /** Main poll cycle */
+  async sync() {
+    try {
+      await this.connect();
+      const coll = this.collection();
+      const staleClaimCutoff = new Date(Date.now() - STALE_CLAIM_MS2);
+      const staleClaimClause = {
+        syncedToPOS: true,
+        posOrderId: { $exists: false },
+        linkWriteFailed: { $ne: true },
+        $or: [
+          { syncClaimedAt: { $exists: false } },
+          { syncClaimedAt: { $lt: staleClaimCutoff } }
+        ]
+      };
+      const docs = await coll.find({
+        $or: [
+          { syncedToPOS: { $ne: true } },
+          staleClaimClause
+        ],
+        status: { $nin: ["cancelled", "rejected", "cancel", "reject"] }
+      }).sort({ createdAt: 1 }).toArray();
+      const totalUnsynced = await coll.countDocuments({ syncedToPOS: { $ne: true } });
+      if (totalUnsynced !== docs.length) {
+        console.log(`\u{1F50D} [ExternalOrders] ${totalUnsynced} total unsynced (${totalUnsynced - docs.length} skipped by status filter)`);
+      }
+      if (docs.length > 0) {
+        console.log(`\u{1F50D} [ExternalOrders] Found ${docs.length} unsynced document(s) to process`);
+      }
+      let synced = 0;
+      for (const doc of docs) {
+        const id = doc._id.toString();
+        if (this.processedIds.has(id)) {
+          console.log(`\u23ED\uFE0F  [ExternalOrders] Skipping ${id} \u2014 already in processedIds`);
+          continue;
+        }
+        const claimResult = await coll.updateOne(
+          {
+            _id: doc._id,
+            $or: [
+              { syncedToPOS: { $ne: true } },
+              staleClaimClause
+            ]
+          },
+          { $set: { syncedToPOS: true, syncClaimedAt: /* @__PURE__ */ new Date() } }
+        );
+        if (claimResult.modifiedCount === 0) {
+          console.log(`\u23ED\uFE0F  [ExternalOrders] ${id} already claimed elsewhere, skipping`);
+          continue;
+        }
+        this.processedIds.add(id);
+        console.log(`\u2699\uFE0F  [ExternalOrders] Processing order ${id} (customer: ${doc.customerName}, table: ${doc.tableId}, floor: ${doc.floorId})`);
+        let createdPosOrderId = null;
+        try {
+          createdPosOrderId = await this.createPOSOrder(doc);
+          await coll.updateOne(
+            { _id: doc._id },
+            { $set: { syncedAt: /* @__PURE__ */ new Date(), posOrderId: createdPosOrderId } }
+          );
+          synced++;
+          console.log(`\u2705 [ExternalOrders] Synced order ${id} \u2192 POS order ${createdPosOrderId}`);
+          this.broadcastFn?.("external_order_synced", {
+            externalOrderId: id,
+            posOrderId: createdPosOrderId,
+            customerName: doc.customerName,
+            customerPhone: doc.customerPhone
+          });
+        } catch (err) {
+          this.processedIds.delete(id);
+          if (createdPosOrderId) {
+            console.error(`\u274C [ExternalOrders] POS order ${createdPosOrderId} was created for ${id} but linking it back failed \u2014 leaving claimed for manual reconciliation:`, err);
+            await coll.updateOne(
+              { _id: doc._id },
+              { $set: { posOrderId: createdPosOrderId, linkWriteFailed: true } }
+            ).catch(() => {
+            });
+          } else {
+            await coll.updateOne(
+              { _id: doc._id },
+              { $set: { syncedToPOS: false }, $unset: { syncClaimedAt: "" } }
+            ).catch(() => {
+            });
+            console.error(`\u274C [ExternalOrders] Failed to sync order ${id}:`, err);
+          }
+        }
+      }
+      if (synced > 0) {
+        console.log(`\u{1F4E6} [ExternalOrders] ${synced} new order(s) synced to POS`);
+        this.broadcastFn?.("external_orders_batch_synced", { count: synced });
+      }
+      return synced;
+    } catch (err) {
+      console.error("[ExternalOrders] Sync cycle error:", err);
+      return 0;
+    }
+  }
+  /**
+   * Resolve a table in the POS by matching:
+   *   doc.floorId  →  floor.name  (case-insensitive)
+   *   doc.tableId  →  table.tableNumber  (case-insensitive, then numeric normalisation)
+   *
+   * If floorId is provided, prefer the table that belongs to that floor.
+   * Falls back to any table that matches the name/number if floor lookup fails.
+   */
+  async resolveTable(doc) {
+    const rawTableRef = (doc.tableId || doc.tableNumber || doc.table || "").toString().trim();
+    const rawFloorRef = (doc.floorId || doc.floorName || doc.floor || "").toString().trim();
+    if (!rawTableRef) return null;
+    const allTables = await this.storage.getTables();
+    const nameLower = rawTableRef.toLowerCase();
+    let candidates = allTables.filter(
+      (t) => t.tableNumber.toLowerCase() === nameLower
+    );
+    if (candidates.length === 0) {
+      const numMatch = rawTableRef.match(/\d+/);
+      if (numMatch) {
+        const normalised = `T${parseInt(numMatch[0], 10)}`;
+        candidates = allTables.filter(
+          (t) => t.tableNumber.toLowerCase() === normalised.toLowerCase()
+        );
+      }
+    }
+    if (candidates.length === 0) {
+      console.warn(`\u26A0\uFE0F  [ExternalOrders] No table found matching "${rawTableRef}"`);
+      return null;
+    }
+    if (rawFloorRef && candidates.length > 1) {
+      const floors = await this.storage.getFloors();
+      const floor = floors.find(
+        (f) => f.name.toLowerCase() === rawFloorRef.toLowerCase()
+      );
+      if (floor) {
+        const floorMatch = candidates.find((t) => t.floorId === floor.id);
+        if (floorMatch) {
+          console.log(`\u{1FA91} [ExternalOrders] Matched table "${rawTableRef}" on floor "${rawFloorRef}" \u2192 ${floorMatch.tableNumber} (id: ${floorMatch.id})`);
+          return floorMatch;
+        }
+      }
+    }
+    if (rawFloorRef) {
+      const floors = await this.storage.getFloors();
+      const floor = floors.find(
+        (f) => f.name.toLowerCase() === rawFloorRef.toLowerCase()
+      );
+      if (floor) {
+        const floorMatch = candidates.find((t) => t.floorId === floor.id);
+        if (floorMatch) {
+          console.log(`\u{1FA91} [ExternalOrders] Matched table "${rawTableRef}" on floor "${rawFloorRef}" \u2192 ${floorMatch.tableNumber} (id: ${floorMatch.id})`);
+          return floorMatch;
+        }
+      }
+    }
+    const fallback = candidates[0];
+    console.log(`\u{1FA91} [ExternalOrders] Matched table "${rawTableRef}" \u2192 ${fallback.tableNumber} (id: ${fallback.id})`);
+    return fallback;
+  }
+  /* ── backward sync helpers (POS → external DB) ─────────────────── */
+  /**
+   * Find the external DB document that was synced as a given POS order.
+   * Returns null silently if the POS order didn't come from the external DB.
+   */
+  async findExternalDoc(posOrderId) {
+    try {
+      await this.connect();
+      return await this.collection().findOne({ posOrderId });
+    } catch {
+      return null;
+    }
+  }
+  /**
+   * Delete the external-DB order that corresponds to `posOrderId`.
+   * Called when a KOT order is deleted from the POS.
+   */
+  async deleteExternalOrder(posOrderId) {
+    try {
+      await this.connect();
+      const result = await this.collection().deleteOne({ posOrderId });
+      if (result.deletedCount > 0) {
+        console.log(`\u{1F5D1}\uFE0F  [ExternalOrders] Deleted external order for POS order ${posOrderId}`);
+      }
+    } catch (err) {
+      console.error(`\u26A0\uFE0F  [ExternalOrders] Could not delete external order for POS order ${posOrderId}:`, err);
+    }
+  }
+  /**
+   * Update an item (quantity / notes) inside the external-DB order that
+   * corresponds to `posOrderId`. Matches by item name.
+   */
+  async syncItemUpdate(posOrderId, itemName, updates) {
+    try {
+      const doc = await this.findExternalDoc(posOrderId);
+      if (!doc) return;
+      const items = doc.items || [];
+      const idx = items.findIndex(
+        (i) => (i.name || i.menuItemName || i.itemName || "") === itemName
+      );
+      if (idx === -1) {
+        console.warn(`\u26A0\uFE0F  [ExternalOrders] syncItemUpdate: item "${itemName}" not found in external order for POS ${posOrderId}`);
+        return;
+      }
+      const setFields = {};
+      if (updates.quantity !== void 0) setFields[`items.${idx}.quantity`] = updates.quantity;
+      if (updates.notes !== void 0) setFields[`items.${idx}.notes`] = updates.notes;
+      const updatedItems = items.map((item, i) => ({
+        ...item,
+        ...i === idx ? updates : {}
+      }));
+      const newTotal = updatedItems.reduce(
+        (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1),
+        0
+      );
+      setFields["total"] = newTotal;
+      await this.collection().updateOne({ posOrderId }, { $set: setFields });
+      console.log(`\u270F\uFE0F  [ExternalOrders] Updated item "${itemName}" in external order for POS ${posOrderId}`);
+    } catch (err) {
+      console.error(`\u26A0\uFE0F  [ExternalOrders] Could not update item in external order for POS ${posOrderId}:`, err);
+    }
+  }
+  /**
+   * Remove an item from the external-DB order that corresponds to `posOrderId`.
+   * Matches by item name; removes the first match.
+   */
+  async syncItemDelete(posOrderId, itemName) {
+    try {
+      const doc = await this.findExternalDoc(posOrderId);
+      if (!doc) return;
+      const items = doc.items || [];
+      const idx = items.findIndex(
+        (i) => (i.name || i.menuItemName || i.itemName || "") === itemName
+      );
+      if (idx === -1) {
+        console.warn(`\u26A0\uFE0F  [ExternalOrders] syncItemDelete: item "${itemName}" not found in external order for POS ${posOrderId}`);
+        return;
+      }
+      const updatedItems = items.filter((_, i) => i !== idx);
+      const newTotal = updatedItems.reduce(
+        (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1),
+        0
+      );
+      await this.collection().updateOne(
+        { posOrderId },
+        { $set: { items: updatedItems, total: newTotal } }
+      );
+      console.log(`\u{1F5D1}\uFE0F  [ExternalOrders] Removed item "${itemName}" from external order for POS ${posOrderId}`);
+    } catch (err) {
+      console.error(`\u26A0\uFE0F  [ExternalOrders] Could not remove item from external order for POS ${posOrderId}:`, err);
+    }
+  }
+  /**
+   * Add a new item to the external-DB order that corresponds to `posOrderId`.
+   * Called when an item is added to a KOT order from the POS.
+   */
+  async syncItemAdd(posOrderId, item) {
+    try {
+      const doc = await this.findExternalDoc(posOrderId);
+      if (!doc) return;
+      const newItem = {
+        name: item.name,
+        price: item.price,
+        quantity: item.quantity,
+        notes: item.notes ?? null,
+        isVeg: item.isVeg ?? true
+      };
+      const existingItems = doc.items || [];
+      const newTotal = existingItems.reduce(
+        (sum, i) => sum + Number(i.price || 0) * Number(i.quantity || 1),
+        0
+      ) + item.price * item.quantity;
+      await this.collection().updateOne(
+        { posOrderId },
+        { $push: { items: newItem }, $set: { total: newTotal } }
+      );
+      console.log(`\u2795 [ExternalOrders] Added item "${item.name}" to external order for POS ${posOrderId}`);
+    } catch (err) {
+      console.error(`\u26A0\uFE0F  [ExternalOrders] Could not add item to external order for POS ${posOrderId}:`, err);
+    }
+  }
+  /** Convert an external order document into POS entities */
+  async createPOSOrder(doc) {
+    const phone = (doc.customerPhone || doc.phone || "").toString().trim();
+    const name = (doc.customerName || doc.name || "Guest").toString().trim();
+    if (phone) {
+      const existing = await this.storage.getCustomerByPhone(phone);
+      if (!existing) {
+        await this.storage.createCustomer({
+          name,
+          phone,
+          email: doc.customerEmail || doc.email || null,
+          address: doc.customerAddress || doc.address || null
+        });
+        console.log(`\u{1F464} [ExternalOrders] Registered new customer: ${name} (${phone})`);
+        this.broadcastFn?.("customer_registered", { name, phone });
+      } else {
+        console.log(`\u{1F464} [ExternalOrders] Existing customer: ${name} (${phone})`);
+      }
+    }
+    const hasTableRef = !!(doc.tableId || doc.tableNumber || doc.table);
+    const rawType = (doc.orderType || doc.type || (hasTableRef ? "dine-in" : "delivery")).toLowerCase();
+    const orderType = rawType.includes("dine") || rawType.includes("table") ? "dine-in" : rawType.includes("pick") || rawType.includes("take") ? "pickup" : "delivery";
+    console.log(`\u{1F4CB} [ExternalOrders] Order type: ${orderType}`);
+    const resolvedTable = orderType === "dine-in" ? await this.resolveTable(doc) : null;
+    const resolvedTableId = resolvedTable?.id ?? null;
+    const isPaid = (doc.paymentStatus || "").toLowerCase() === "paid";
+    const posStatus = isPaid ? "billed" : "sent_to_kitchen";
+    const posOrder = await this.storage.createOrder({
+      tableId: resolvedTableId,
+      orderType,
+      status: posStatus,
+      total: "0",
+      customerName: name || null,
+      customerPhone: phone || null,
+      customerAddress: doc.customerAddress || doc.address || null,
+      paymentMode: doc.paymentMode || doc.paymentMethod || null,
+      waiterId: null,
+      deliveryPersonId: null,
+      expectedPickupTime: null
+    });
+    console.log(`\u{1F4DD} [ExternalOrders] Created POS order ${posOrder.id} (status: ${posStatus})`);
+    this.broadcastFn?.("order_created", posOrder);
+    if (resolvedTable) {
+      await this.storage.updateTableStatus(resolvedTable.id, "occupied");
+      await this.storage.updateTableOrder(resolvedTable.id, posOrder.id);
+      console.log(`\u{1FA91} [ExternalOrders] Table ${resolvedTable.tableNumber} \u2192 occupied, linked to order ${posOrder.id}`);
+      this.broadcastFn?.("table_updated", {
+        id: resolvedTable.id,
+        tableNumber: resolvedTable.tableNumber,
+        status: "occupied",
+        currentOrderId: posOrder.id
+      });
+    }
+    const items = doc.items || doc.orderItems || doc.cart || [];
+    let subtotal = 0;
+    const parseBoolFlag = (v) => {
+      if (typeof v === "boolean") return v;
+      if (typeof v === "number") return v !== 0;
+      const s = String(v).toLowerCase().trim();
+      return s !== "false" && s !== "0" && s !== "no";
+    };
+    const isNonVegCategory = (s) => /non[-_\s]?veg/i.test(s);
+    for (const item of items) {
+      const itemName = item.name || item.menuItemName || item.itemName || "Unknown Item";
+      const qty = Number(item.quantity || item.qty || 1);
+      const price = Number(item.price || item.unitPrice || item.rate || 0);
+      let isVeg;
+      if (item.isVeg !== void 0) isVeg = parseBoolFlag(item.isVeg);
+      else if (item.vegetarian !== void 0) isVeg = parseBoolFlag(item.vegetarian);
+      else if (item.category) isVeg = !isNonVegCategory(String(item.category));
+      else if (item.type) isVeg = !isNonVegCategory(String(item.type));
+      else isVeg = true;
+      const notes = item.notes || item.instructions || item.specialRequest || null;
+      subtotal += qty * price;
+      const created = await this.storage.createOrderItem({
+        orderId: posOrder.id,
+        menuItemId: "external",
+        name: itemName,
+        quantity: qty,
+        price: price.toFixed(2),
+        notes,
+        status: "new",
+        isVeg
+      });
+      console.log(`  \u{1F37D}\uFE0F  [ExternalOrders] Item: ${itemName} x${qty} (${isVeg ? "veg" : "non-veg"})`);
+      this.broadcastFn?.("order_item_added", { orderId: posOrder.id, item: created });
+    }
+    const total = doc.total ?? doc.totalAmount ?? doc.grandTotal ?? subtotal;
+    const totalStr = Number(total).toFixed(2);
+    await this.storage.updateOrderTotal(posOrder.id, totalStr);
+    console.log(`\u{1F4B0} [ExternalOrders] Order total: \u20B9${totalStr}`);
+    const finalOrder = await this.storage.getOrder(posOrder.id);
+    if (finalOrder) {
+      this.broadcastFn?.("order_updated", finalOrder);
+      this.broadcastFn?.("kot_created", {
+        orderId: posOrder.id,
+        tableNumber: resolvedTable?.tableNumber ?? null,
+        customerName: name,
+        itemCount: items.length
+      });
+    }
+    console.log(`\u{1F3AB} [ExternalOrders] Auto-KOT broadcast for order ${posOrder.id}`);
+    try {
+      const updatedOrder = await this.storage.incrementKotCount(posOrder.id) ?? posOrder;
+      const kotPrinters = (await mongoStorage.getPrinters()).filter(
+        (p) => p.type === "KOT" && p.autoPrint
+      );
+      if (kotPrinters.length > 0) {
+        const { buildKOTEscPos: buildKOTEscPos2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
+        const orderItems = await this.storage.getOrderItems(posOrder.id);
+        let tableNumber = resolvedTable?.tableNumber;
+        let floorName;
+        if (resolvedTable?.floorId) {
+          floorName = (await this.storage.getFloor(resolvedTable.floorId))?.name;
+        }
+        const kotNumber = `KOT-${updatedOrder.id.substring(0, 8).toUpperCase()}`;
+        const escData = buildKOTEscPos2({
+          order: updatedOrder,
+          items: orderItems,
+          tableNumber,
+          floorName,
+          kotNumber,
+          isUpdated: false
+        });
+        const escBase64 = Buffer.from(escData).toString("base64");
+        for (const printer of kotPrinters) {
+          await mongoStorage.createPrintJob({
+            orderId: updatedOrder.id,
+            kotNumber,
+            printerIp: printer.ip,
+            printerPort: printer.port,
+            escposData: escBase64,
+            status: "pending"
+          });
+          console.log(`[PrintJob] Queued ${kotNumber} \u2192 ${printer.ip}:${printer.port} (external order)`);
+        }
+      }
+    } catch (e) {
+      console.error("[PrintJob] Failed to enqueue KOT for external order:", e);
+    }
+    return posOrder.id;
+  }
+};
+
 // server/routes.ts
 var orderActionSchema = z3.object({
-  print: z3.boolean().optional().default(false)
+  print: z3.boolean().optional().default(false),
+  taxRate: z3.number().min(0).max(100).optional(),
+  serviceCharge: z3.number().min(0).max(100).optional()
 });
 var checkoutSchema = z3.object({
   paymentMode: z3.string().optional(),
   print: z3.boolean().optional().default(false),
+  taxRate: z3.number().min(0).max(100).optional(),
+  serviceCharge: z3.number().min(0).max(100).optional(),
   splitPayments: z3.array(z3.object({
     person: z3.number(),
     amount: z3.number(),
     paymentMode: z3.string()
   })).optional()
 });
+async function getTaxSettings(st) {
+  const [taxRate, serviceCharge, gstEnabled, gstNumber] = await Promise.all([
+    st.getSetting("tax_rate"),
+    st.getSetting("service_charge"),
+    st.getSetting("gst_enabled"),
+    st.getSetting("gst_number")
+  ]);
+  return {
+    taxRate: taxRate !== void 0 ? parseFloat(taxRate) : DEFAULT_TAX_SETTINGS.taxRate,
+    serviceCharge: serviceCharge !== void 0 ? parseFloat(serviceCharge) : DEFAULT_TAX_SETTINGS.serviceCharge,
+    gstEnabled: gstEnabled !== void 0 ? gstEnabled === "true" : DEFAULT_TAX_SETTINGS.gstEnabled,
+    gstNumber: gstNumber !== void 0 ? gstNumber : DEFAULT_TAX_SETTINGS.gstNumber
+  };
+}
+async function upsertInvoice(st, orderId, data) {
+  const existing = (await st.getInvoices()).find((inv) => inv.orderId === orderId);
+  if (existing) {
+    const updated = await st.updateInvoice(existing.id, data);
+    return updated ?? existing;
+  }
+  return st.createInvoice(data);
+}
+async function queueBillPrintJobs(opts) {
+  try {
+    const { buildBillEscPos: buildBillEscPos2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
+    const printers = await mongoStorage.getPrinters();
+    const billPrinters = printers.filter((p) => p.type === "Bill" && p.autoPrint);
+    if (billPrinters.length === 0) return;
+    const parsedItems = JSON.parse(opts.invoice.items || "[]");
+    const escData = buildBillEscPos2({
+      invoiceNumber: opts.invoice.invoiceNumber,
+      date: /* @__PURE__ */ new Date(),
+      tableNumber: opts.invoice.tableNumber,
+      floorName: opts.invoice.floorName,
+      customerName: opts.invoice.customerName,
+      customerPhone: opts.invoice.customerPhone,
+      orderType: opts.orderType,
+      items: parsedItems,
+      subtotal: parseFloat(opts.invoice.subtotal),
+      cgst: parseFloat(opts.invoice.cgst),
+      sgst: parseFloat(opts.invoice.sgst),
+      serviceCharge: parseFloat(opts.invoice.serviceCharge),
+      total: parseFloat(opts.invoice.total),
+      paymentMode: opts.invoice.paymentMode || "cash",
+      gstEnabled: opts.taxSettings.gstEnabled,
+      gstNumber: opts.taxSettings.gstNumber
+    });
+    await Promise.all(
+      billPrinters.map(
+        (p) => mongoStorage.createPrintJob({
+          orderId: "bill",
+          kotNumber: opts.invoice.invoiceNumber,
+          printerIp: p.ip,
+          printerPort: p.port,
+          escposData: escData.toString("base64"),
+          status: "pending"
+        })
+      )
+    );
+  } catch (err) {
+    console.error("[BillPrint] Failed to queue bill print job:", err);
+  }
+}
 var wss;
 function getStorage(req) {
   const sessionStorage = getStorageForSession(req);
@@ -2952,6 +5421,7 @@ function broadcastUpdate(type, data) {
   });
 }
 async function registerRoutes(app2) {
+  const externalOrdersSync = new ExternalOrdersSyncService(mongoStorage);
   app2.get("/api/floors", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const floors = await st.getFloors();
@@ -2971,12 +5441,32 @@ async function registerRoutes(app2) {
     if (!result.success) {
       return res.status(400).json({ error: result.error });
     }
+    const existingFloors = await st.getFloors();
+    if (existingFloors.some((f) => f.name.trim().toLowerCase() === result.data.name.trim().toLowerCase())) {
+      return res.status(409).json({ error: "A floor with this name already exists" });
+    }
     const floor = await st.createFloor(result.data);
     broadcastUpdate("floor_created", floor);
     res.json(floor);
   });
   app2.patch("/api/floors/:id", requireAuth, async (req, res) => {
     const st = getStorage(req);
+    if (req.body.name !== void 0) {
+      if (typeof req.body.name !== "string") {
+        return res.status(400).json({ error: "Floor name must be a string" });
+      }
+      const trimmedName = req.body.name.trim();
+      if (!trimmedName) {
+        return res.status(400).json({ error: "Floor name cannot be empty" });
+      }
+      const existingFloors = await st.getFloors();
+      const conflict = existingFloors.find(
+        (f) => f.id !== req.params.id && f.name.trim().toLowerCase() === trimmedName.toLowerCase()
+      );
+      if (conflict) {
+        return res.status(409).json({ error: "A floor with this name already exists" });
+      }
+    }
     const floor = await st.updateFloor(req.params.id, req.body);
     if (!floor) {
       return res.status(404).json({ error: "Floor not found" });
@@ -3012,12 +5502,40 @@ async function registerRoutes(app2) {
     if (!result.success) {
       return res.status(400).json({ error: result.error });
     }
+    const existingTables = await st.getTables();
+    const floorId = result.data.floorId ?? null;
+    const conflict = existingTables.find(
+      (t) => t.floorId === floorId && t.tableNumber.trim().toLowerCase() === result.data.tableNumber.trim().toLowerCase()
+    );
+    if (conflict) {
+      return res.status(409).json({ error: "A table with this name already exists on this floor" });
+    }
     const table = await st.createTable(result.data);
     broadcastUpdate("table_created", table);
     res.json(table);
   });
   app2.patch("/api/tables/:id", requireAuth, async (req, res) => {
     const st = getStorage(req);
+    if (req.body.tableNumber !== void 0 && typeof req.body.tableNumber !== "string") {
+      return res.status(400).json({ error: "Table number must be a string" });
+    }
+    if (req.body.tableNumber !== void 0 || req.body.floorId !== void 0) {
+      const currentTable = await st.getTable(req.params.id);
+      if (currentTable) {
+        const existingTables = await st.getTables();
+        const floorId = req.body.floorId !== void 0 ? req.body.floorId : currentTable.floorId;
+        const tableNumber = (req.body.tableNumber !== void 0 ? req.body.tableNumber : currentTable.tableNumber).trim();
+        if (!tableNumber) {
+          return res.status(400).json({ error: "Table number cannot be empty" });
+        }
+        const conflict = existingTables.find(
+          (t) => t.id !== req.params.id && t.floorId === floorId && t.tableNumber.trim().toLowerCase() === tableNumber.toLowerCase()
+        );
+        if (conflict) {
+          return res.status(409).json({ error: "A table with this name already exists on this floor" });
+        }
+      }
+    }
     const table = await st.updateTable(req.params.id, req.body);
     if (!table) {
       return res.status(404).json({ error: "Table not found" });
@@ -3405,7 +5923,8 @@ async function registerRoutes(app2) {
         orderItems,
         tableNumber: tableInfo?.tableNumber || void 0,
         floorName: tableInfo?.floorId ? (await st.getFloor(tableInfo.floorId))?.name || void 0 : void 0,
-        restaurantName: "Restaurant POS"
+        restaurantName: "Restaurant POS",
+        isUpdated: (order.kotCount ?? 0) > 1
       });
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="KOT-${order.id.substring(0, 8)}.pdf"`);
@@ -3457,19 +5976,7 @@ async function registerRoutes(app2) {
     await st.updateOrderTotal(req.params.id, total.toFixed(2));
     const order = await st.getOrder(req.params.id);
     if (order && order.tableId) {
-      const hasNew = orderItems.some((i) => i.status === "new");
-      const hasPreparing = orderItems.some((i) => i.status === "preparing");
-      const allReady = orderItems.every((i) => i.status === "ready" || i.status === "served");
-      const allServed = orderItems.every((i) => i.status === "served");
-      if (allServed) {
-        await st.updateTableStatus(order.tableId, "served");
-      } else if (allReady) {
-        await st.updateTableStatus(order.tableId, "ready");
-      } else if (hasPreparing) {
-        await st.updateTableStatus(order.tableId, "preparing");
-      } else if (hasNew) {
-        await st.updateTableStatus(order.tableId, "occupied");
-      }
+      await st.updateTableStatus(order.tableId, "occupied");
       const updatedTable = await st.getTable(order.tableId);
       if (updatedTable) {
         broadcastUpdate("table_updated", updatedTable);
@@ -3477,6 +5984,14 @@ async function registerRoutes(app2) {
     }
     console.log("[Server] Broadcasting order_item_added for orderId:", req.params.id);
     broadcastUpdate("order_item_added", { orderId: req.params.id, item });
+    externalOrdersSync.syncItemAdd(req.params.id, {
+      name: item.name,
+      price: parseFloat(item.price),
+      quantity: item.quantity,
+      notes: item.notes ?? null,
+      isVeg: item.isVeg
+    }).catch(() => {
+    });
     res.json(item);
   });
   app2.patch("/api/orders/:id/status", requireAuth, async (req, res) => {
@@ -3513,9 +6028,41 @@ async function registerRoutes(app2) {
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
-    console.log("[Server] Broadcasting order_updated for KOT, orderId:", order.id, "status:", order.status);
-    broadcastUpdate("order_updated", order);
-    res.json({ order, shouldPrint: result.data.print });
+    const updatedOrder = await st.incrementKotCount(req.params.id) ?? order;
+    console.log("[Server] Broadcasting order_updated for KOT, orderId:", updatedOrder.id, "status:", updatedOrder.status, "kotCount:", updatedOrder.kotCount);
+    broadcastUpdate("order_updated", updatedOrder);
+    (async () => {
+      try {
+        const kotPrinters = (await mongoStorage.getPrinters()).filter((p) => p.type === "KOT" && p.autoPrint);
+        if (kotPrinters.length === 0) return;
+        const { buildKOTEscPos: buildKOTEscPos2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
+        const orderItems = await st.getOrderItems(req.params.id);
+        let tableNumber;
+        let floorName;
+        if (updatedOrder.tableId) {
+          const tbl = await st.getTable(updatedOrder.tableId);
+          tableNumber = tbl?.tableNumber;
+          if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
+        }
+        const kotNumber = `KOT-${updatedOrder.id.substring(0, 8).toUpperCase()}`;
+        const escData = buildKOTEscPos2({ order: updatedOrder, items: orderItems, tableNumber, floorName, kotNumber, isUpdated: (updatedOrder.kotCount ?? 0) > 1 });
+        const escBase64 = Buffer.from(escData).toString("base64");
+        for (const printer of kotPrinters) {
+          await mongoStorage.createPrintJob({
+            orderId: updatedOrder.id,
+            kotNumber,
+            printerIp: printer.ip,
+            printerPort: printer.port,
+            escposData: escBase64,
+            status: "pending"
+          });
+          console.log(`[PrintJob] Queued ${kotNumber} \u2192 ${printer.ip}:${printer.port}`);
+        }
+      } catch (e) {
+        console.error("[PrintJob] Failed to enqueue:", e);
+      }
+    })();
+    res.json({ order: updatedOrder, shouldPrint: result.data.print });
   });
   app2.post("/api/orders/:id/save", requireAuth, async (req, res) => {
     const st = getStorage(req);
@@ -3534,8 +6081,10 @@ async function registerRoutes(app2) {
         (sum, item) => sum + parseFloat(item.price) * item.quantity,
         0
       );
-      const tax = subtotal * 0.05;
-      const total = subtotal + tax;
+      const taxSettings = await getTaxSettings(st);
+      const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
+      const effectiveServiceCharge = result.data.serviceCharge ?? taxSettings.serviceCharge;
+      const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, effectiveTaxRate, effectiveServiceCharge);
       let tableInfo = null;
       if (order.tableId) {
         tableInfo = await st.getTable(order.tableId);
@@ -3549,7 +6098,7 @@ async function registerRoutes(app2) {
         isVeg: item.isVeg,
         notes: item.notes || void 0
       }));
-      invoice = await st.createInvoice({
+      invoice = await upsertInvoice(st, order.id, {
         invoiceNumber,
         orderId: order.id,
         tableNumber: tableInfo?.tableNumber || null,
@@ -3558,6 +6107,9 @@ async function registerRoutes(app2) {
         customerPhone: order.customerPhone,
         subtotal: subtotal.toFixed(2),
         tax: tax.toFixed(2),
+        cgst: cgst.toFixed(2),
+        sgst: sgst.toFixed(2),
+        serviceCharge: serviceCharge.toFixed(2),
         discount: "0",
         total: total.toFixed(2),
         paymentMode: order.paymentMode || "cash",
@@ -3567,6 +6119,7 @@ async function registerRoutes(app2) {
         notes: null
       });
       broadcastUpdate("invoice_created", invoice);
+      await queueBillPrintJobs({ invoice, orderType: order.orderType, taxSettings });
     }
     broadcastUpdate("order_updated", order);
     res.json({ order, invoice, shouldPrint: result.data.print });
@@ -3586,8 +6139,10 @@ async function registerRoutes(app2) {
       (sum, item) => sum + parseFloat(item.price) * item.quantity,
       0
     );
-    const tax = subtotal * 0.05;
-    const total = subtotal + tax;
+    const taxSettings = await getTaxSettings(st);
+    const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
+    const effectiveServiceCharge = result.data.serviceCharge ?? taxSettings.serviceCharge;
+    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, effectiveTaxRate, effectiveServiceCharge);
     let tableInfo = null;
     if (order.tableId) {
       tableInfo = await st.getTable(order.tableId);
@@ -3601,7 +6156,7 @@ async function registerRoutes(app2) {
       isVeg: item.isVeg,
       notes: item.notes || void 0
     }));
-    const invoice = await st.createInvoice({
+    const invoice = await upsertInvoice(st, order.id, {
       invoiceNumber,
       orderId: order.id,
       tableNumber: tableInfo?.tableNumber || null,
@@ -3610,6 +6165,9 @@ async function registerRoutes(app2) {
       customerPhone: order.customerPhone,
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
+      cgst: cgst.toFixed(2),
+      sgst: sgst.toFixed(2),
+      serviceCharge: serviceCharge.toFixed(2),
       discount: "0",
       total: total.toFixed(2),
       paymentMode: order.paymentMode || "cash",
@@ -3620,6 +6178,9 @@ async function registerRoutes(app2) {
     });
     broadcastUpdate("order_updated", order);
     broadcastUpdate("invoice_created", invoice);
+    if (result.data.print) {
+      await queueBillPrintJobs({ invoice, orderType: order.orderType, taxSettings: await getTaxSettings(st) });
+    }
     res.json({ order, invoice, shouldPrint: result.data.print });
   });
   app2.post("/api/orders/:id/checkout", requireAuth, async (req, res) => {
@@ -3637,8 +6198,10 @@ async function registerRoutes(app2) {
       (sum, item) => sum + parseFloat(item.price) * item.quantity,
       0
     );
-    const tax = subtotal * 0.05;
-    const total = subtotal + tax;
+    const taxSettings = await getTaxSettings(st);
+    const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
+    const effectiveServiceCharge = result.data.serviceCharge ?? taxSettings.serviceCharge;
+    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, effectiveTaxRate, effectiveServiceCharge);
     if (result.data.splitPayments && result.data.splitPayments.length > 0) {
       const splitSum = result.data.splitPayments.reduce((sum, split) => sum + split.amount, 0);
       const tolerance = 0.01;
@@ -3677,7 +6240,7 @@ async function registerRoutes(app2) {
       isVeg: item.isVeg,
       notes: item.notes || void 0
     }));
-    const invoice = await st.createInvoice({
+    const invoice = await upsertInvoice(st, checkedOutOrder.id, {
       invoiceNumber,
       orderId: checkedOutOrder.id,
       tableNumber: tableInfo?.tableNumber || null,
@@ -3686,6 +6249,9 @@ async function registerRoutes(app2) {
       customerPhone: checkedOutOrder.customerPhone,
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
+      cgst: cgst.toFixed(2),
+      sgst: sgst.toFixed(2),
+      serviceCharge: serviceCharge.toFixed(2),
       discount: "0",
       total: total.toFixed(2),
       paymentMode: result.data.paymentMode || "cash",
@@ -3702,6 +6268,9 @@ async function registerRoutes(app2) {
     }
     broadcastUpdate("order_paid", checkedOutOrder);
     broadcastUpdate("invoice_created", invoice);
+    if (result.data.print) {
+      await queueBillPrintJobs({ invoice, orderType: checkedOutOrder.orderType, taxSettings: await getTaxSettings(st) });
+    }
     res.json({ order: checkedOutOrder, invoice, shouldPrint: result.data.print });
   });
   app2.get("/api/invoices/:id/pdf", requireAuth, async (req, res) => {
@@ -3716,6 +6285,7 @@ async function registerRoutes(app2) {
         return res.status(404).json({ error: "Order not found" });
       }
       const orderItems = await st.getOrderItems(invoice.orderId);
+      const taxSettings = await getTaxSettings(st);
       const pdfBuffer = generateInvoicePDF({
         invoice,
         order,
@@ -3723,7 +6293,7 @@ async function registerRoutes(app2) {
         restaurantName: "Restaurant POS",
         restaurantAddress: "123 Main Street, City, State 12345",
         restaurantPhone: "+1 (555) 123-4567",
-        restaurantGSTIN: "GSTIN1234567890"
+        restaurantGSTIN: taxSettings.gstEnabled ? taxSettings.gstNumber : ""
       });
       res.setHeader("Content-Type", "application/pdf");
       res.setHeader("Content-Disposition", `attachment; filename="${invoice.invoiceNumber}.pdf"`);
@@ -3746,6 +6316,8 @@ async function registerRoutes(app2) {
     const total = orderItems.reduce((s, i) => s + parseFloat(i.price) * i.quantity, 0);
     await st.updateOrderTotal(item.orderId, total.toFixed(2));
     broadcastUpdate("order_item_updated", item);
+    externalOrdersSync.syncItemUpdate(item.orderId, item.name, data).catch(() => {
+    });
     res.json(item);
   });
   app2.delete("/api/orders/:id", requireAuth, async (req, res) => {
@@ -3762,6 +6334,8 @@ async function registerRoutes(app2) {
     }
     await st.deleteOrder(req.params.id);
     broadcastUpdate("order_updated", { id: req.params.id, deleted: true });
+    externalOrdersSync.deleteExternalOrder(req.params.id).catch(() => {
+    });
     res.json({ success: true });
   });
   app2.patch("/api/order-items/:id/status", requireAuth, async (req, res) => {
@@ -3774,29 +6348,10 @@ async function registerRoutes(app2) {
     const order = await st.getOrder(item.orderId);
     if (order && order.tableId) {
       const allItems = await st.getOrderItems(item.orderId);
-      const hasNew = allItems.some((i) => i.status === "new");
-      const hasPreparing = allItems.some((i) => i.status === "preparing");
-      const allReady = allItems.every((i) => i.status === "ready" || i.status === "served");
-      const allServed = allItems.every((i) => i.status === "served");
-      let newTableStatus = null;
-      if (allServed) {
-        newTableStatus = "served";
-        await st.updateTableStatus(order.tableId, "served");
-      } else if (allReady) {
-        newTableStatus = "ready";
-        await st.updateTableStatus(order.tableId, "ready");
-      } else if (hasPreparing) {
-        newTableStatus = "preparing";
-        await st.updateTableStatus(order.tableId, "preparing");
-      } else if (hasNew) {
-        newTableStatus = "occupied";
-        await st.updateTableStatus(order.tableId, "occupied");
-      }
-      if (newTableStatus) {
-        const updatedTable = await st.getTable(order.tableId);
-        if (updatedTable) {
-          broadcastUpdate("table_updated", updatedTable);
-        }
+      await st.updateTableStatus(order.tableId, "occupied");
+      const updatedTable = await st.getTable(order.tableId);
+      if (updatedTable) {
+        broadcastUpdate("table_updated", updatedTable);
       }
     }
     if (order && order.customerPhone) {
@@ -3821,6 +6376,8 @@ async function registerRoutes(app2) {
     }, 0);
     await st.updateOrderTotal(item.orderId, total.toFixed(2));
     broadcastUpdate("order_item_deleted", { id: req.params.id, orderId: item.orderId });
+    externalOrdersSync.syncItemDelete(item.orderId, item.name).catch(() => {
+    });
     res.json({ success: true });
   });
   app2.get("/api/inventory", requireAuth, async (req, res) => {
@@ -4178,6 +6735,32 @@ async function registerRoutes(app2) {
     }
     await st.setSetting("mongodb_uri", uri);
     res.json({ success: true });
+  });
+  app2.get("/api/settings/tax", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    const settings = await getTaxSettings(st);
+    res.json(settings);
+  });
+  const taxSettingsSchema = z3.object({
+    taxRate: z3.number().min(0).max(100),
+    serviceCharge: z3.number().min(0).max(100),
+    gstEnabled: z3.boolean(),
+    gstNumber: z3.string().optional().default("")
+  });
+  app2.post("/api/settings/tax", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    const result = taxSettingsSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+    const { taxRate, serviceCharge, gstEnabled, gstNumber } = result.data;
+    await Promise.all([
+      st.setSetting("tax_rate", String(taxRate)),
+      st.setSetting("service_charge", String(serviceCharge)),
+      st.setSetting("gst_enabled", String(gstEnabled)),
+      st.setSetting("gst_number", gstNumber)
+    ]);
+    res.json({ taxRate, serviceCharge, gstEnabled, gstNumber });
   });
   app2.post("/api/menu/sync-from-mongodb", requireAuth, async (req, res) => {
     const st = getStorage(req);
@@ -4739,6 +7322,183 @@ async function registerRoutes(app2) {
     }
   });
   digitalMenuSync.start(5e3);
+  externalOrdersSync.setBroadcastFunction(broadcastUpdate);
+  app2.get("/api/external-orders/status", requireAuth, async (_req, res) => {
+    res.json(externalOrdersSync.getStatus());
+  });
+  app2.post("/api/external-orders/sync-now", requireAuth, async (_req, res) => {
+    try {
+      const synced = await externalOrdersSync.sync();
+      res.json({ success: true, syncedOrders: synced });
+    } catch (error) {
+      res.status(500).json({ error: error instanceof Error ? error.message : "Sync failed" });
+    }
+  });
+  app2.get("/api/printers", requireAuth, async (req, res) => {
+    try {
+      const printers = await mongoStorage.getPrinters();
+      res.json(printers);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to fetch printers" });
+    }
+  });
+  app2.post("/api/printers", requireAuth, async (req, res) => {
+    try {
+      const { insertPrinterSchema: insertPrinterSchema2 } = await Promise.resolve().then(() => (init_schema(), schema_exports));
+      const result = insertPrinterSchema2.safeParse(req.body);
+      if (!result.success) return res.status(400).json({ error: result.error });
+      const printer = await mongoStorage.createPrinter(result.data);
+      res.json(printer);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to create printer" });
+    }
+  });
+  app2.patch("/api/printers/:id", requireAuth, async (req, res) => {
+    try {
+      const printer = await mongoStorage.updatePrinter(req.params.id, req.body);
+      if (!printer) return res.status(404).json({ error: "Printer not found" });
+      res.json(printer);
+    } catch (e) {
+      res.status(500).json({ error: "Failed to update printer" });
+    }
+  });
+  app2.delete("/api/printers/:id", requireAuth, async (req, res) => {
+    try {
+      const ok = await mongoStorage.deletePrinter(req.params.id);
+      if (!ok) return res.status(404).json({ error: "Printer not found" });
+      res.json({ success: true });
+    } catch (e) {
+      res.status(500).json({ error: "Failed to delete printer" });
+    }
+  });
+  app2.get("/api/printers/:id/status", requireAuth, async (req, res) => {
+    try {
+      const { checkPrinterOnline: checkPrinterOnline2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
+      const printer = await mongoStorage.getPrinter(req.params.id);
+      if (!printer) return res.status(404).json({ error: "Printer not found" });
+      const online = await checkPrinterOnline2(printer.ip, printer.port);
+      res.json({ id: printer.id, online });
+    } catch (e) {
+      res.json({ id: req.params.id, online: false });
+    }
+  });
+  app2.post("/api/printers/print-kot/:orderId", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    try {
+      const { buildKOTEscPos: buildKOTEscPos2, printToThermal: printToThermal2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
+      const { printerIds } = req.body;
+      const order = await st.getOrder(req.params.orderId);
+      if (!order) return res.status(404).json({ error: "Order not found" });
+      const orderItems = await st.getOrderItems(req.params.orderId);
+      let tableNumber;
+      let floorName;
+      if (order.tableId) {
+        const tbl = await st.getTable(order.tableId);
+        tableNumber = tbl?.tableNumber;
+        if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
+      }
+      const allPrinters = await mongoStorage.getPrinters();
+      const targets = printerIds?.length ? allPrinters.filter((p) => printerIds.includes(p.id)) : allPrinters.filter((p) => p.type === "KOT");
+      if (targets.length === 0) {
+        return res.json({ results: [], allFailed: true });
+      }
+      const kotNumber = `KOT-${order.id.substring(0, 8).toUpperCase()}`;
+      const escData = buildKOTEscPos2({ order, items: orderItems, tableNumber, floorName, kotNumber, isUpdated: (order.kotCount ?? 0) > 1 });
+      const results = await Promise.all(
+        targets.map(async (p) => {
+          const result = await printToThermal2(p.ip, p.port, escData);
+          return { id: p.id, name: p.name, ...result };
+        })
+      );
+      const allFailed = results.every((r) => !r.success);
+      res.json({ results, allFailed });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+  app2.post("/api/printers/:id/test", requireAuth, async (req, res) => {
+    try {
+      const printer = await mongoStorage.getPrinter(req.params.id);
+      if (!printer) return res.status(404).json({ error: "Printer not found" });
+      const ESC2 = 27, GS2 = 29, LF2 = 10;
+      const now = (/* @__PURE__ */ new Date()).toLocaleString("en-IN");
+      const parts = [
+        Buffer.from([ESC2, 64]),
+        // init
+        Buffer.from([ESC2, 97, 1]),
+        // center
+        Buffer.from([ESC2, 33, 48]),
+        // double size
+        Buffer.from("TEST PRINT\n", "utf8"),
+        Buffer.from([ESC2, 33, 0]),
+        // normal
+        Buffer.from(`${printer.name}
+`, "utf8"),
+        Buffer.from(`IP: ${printer.ip}:${printer.port}
+`, "utf8"),
+        Buffer.from(`Type: ${printer.type}
+`, "utf8"),
+        Buffer.from(`Time: ${now}
+`, "utf8"),
+        Buffer.from("--------------------------------\n", "utf8"),
+        Buffer.from([ESC2, 69, 1]),
+        // bold
+        Buffer.from("Printer is Online!\n", "utf8"),
+        Buffer.from([ESC2, 69, 0]),
+        Buffer.from([LF2, LF2, LF2, LF2]),
+        Buffer.from([GS2, 86, 66, 3])
+        // cut
+      ];
+      const data = Buffer.concat(parts);
+      await mongoStorage.createPrintJob({
+        orderId: "test",
+        kotNumber: "TEST",
+        printerIp: printer.ip,
+        printerPort: printer.port,
+        escposData: data.toString("base64"),
+        status: "pending"
+      });
+      res.json({ success: true, queued: true });
+    } catch (e) {
+      res.status(500).json({ success: false, error: e.message });
+    }
+  });
+  app2.get("/api/print-jobs/pending", requireAuth, async (_req, res) => {
+    try {
+      const jobs = await mongoStorage.getPendingPrintJobs();
+      res.json(jobs);
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+  app2.post("/api/print-jobs/:id/done", requireAuth, async (req, res) => {
+    try {
+      await mongoStorage.markPrintJobDone(req.params.id);
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+  app2.post("/api/print-jobs/:id/failed", requireAuth, async (req, res) => {
+    try {
+      await mongoStorage.markPrintJobFailed(req.params.id);
+      res.json({ ok: true });
+    } catch (e) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+  app2.post("/api/printers/:id/check", requireAuth, async (req, res) => {
+    try {
+      const { checkPrinterOnline: checkPrinterOnline2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
+      const printer = await mongoStorage.getPrinter(req.params.id);
+      if (!printer) return res.status(404).json({ error: "Printer not found" });
+      const online = await checkPrinterOnline2(printer.ip, printer.port);
+      res.json({ online });
+    } catch (e) {
+      res.status(500).json({ online: false, error: e.message });
+    }
+  });
+  externalOrdersSync.start(1e3);
   const httpServer = createServer(app2);
   wss = new WebSocketServer({ server: httpServer, path: "/api/ws" });
   wss.on("connection", (ws) => {
