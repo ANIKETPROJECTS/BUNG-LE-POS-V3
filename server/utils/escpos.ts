@@ -51,7 +51,7 @@ export function buildKOTEscPos(opts: {
     hour12: true,
     timeZone: "Asia/Kolkata",
   });
-  const sep = "--------------------------------";
+  const sep = "-".repeat(48);
 
   const parts: Buffer[] = [];
 
@@ -112,7 +112,7 @@ export function buildKOTEscPos(opts: {
 
   // Items header
   parts.push(cmd(ESC, 0x45, 0x01));
-  parts.push(text("# Item                         Qty\n"));
+  parts.push(text("# Item                              Qty\n"));
   parts.push(cmd(ESC, 0x45, 0x00));
   parts.push(text(sep + "\n"));
 
@@ -124,7 +124,7 @@ export function buildKOTEscPos(opts: {
     const nameLines: string[] = [];
     let line = "";
     for (const word of words) {
-      if ((line + (line ? " " : "") + word).length > 24 && line) {
+      if ((line + (line ? " " : "") + word).length > 34 && line) {
         nameLines.push(line);
         line = word;
       } else line += (line ? " " : "") + word;
@@ -135,7 +135,7 @@ export function buildKOTEscPos(opts: {
       const prefix = lineIndex === 0 ? `${num} ` : "   ";
       const itemText = `${prefix}${nameLine}`;
       const suffix = lineIndex === nameLines.length - 1 ? qty : "";
-      parts.push(text(`${itemText.padEnd(29)}${suffix}\n`));
+      parts.push(text(`${itemText.padEnd(39)}${suffix}\n`));
     });
     parts.push(cmd(ESC, 0x21, 0x00));
     if (item.notes) {
@@ -204,8 +204,8 @@ export function buildBillEscPos(opts: {
     gstNumber = "",
   } = opts;
 
-  const sep = "--------------------------------";
-  const sep2 = "================================";
+  const sep = "-".repeat(48);
+  const sep2 = "=".repeat(48);
   const dateStr = date.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -262,7 +262,7 @@ export function buildBillEscPos(opts: {
 
   // Items header
   parts.push(cmd(ESC, 0x45, 0x01));
-  parts.push(text("Item             Qty    Amount\n"));
+  parts.push(text("Item                           Qty    Amount\n"));
   parts.push(cmd(ESC, 0x45, 0x00));
   parts.push(text(sep + "\n"));
 
@@ -272,7 +272,7 @@ export function buildBillEscPos(opts: {
     const nameLines: string[] = [];
     let line = "";
     for (const word of words) {
-      if ((line + (line ? " " : "") + word).length > 17 && line) {
+      if ((line + (line ? " " : "") + word).length > 27 && line) {
         nameLines.push(line);
         line = word;
       } else {
@@ -286,7 +286,7 @@ export function buildBillEscPos(opts: {
       const suffix = lineIndex === nameLines.length - 1
         ? `${qty.padStart(8)}${amount}`
         : "";
-      parts.push(text(`${nameLine.padEnd(17)}${suffix}\n`));
+      parts.push(text(`${nameLine.padEnd(27)}${suffix}\n`));
     });
     if (item.notes) {
       parts.push(text(`  >> ${item.notes}\n`));
@@ -297,8 +297,8 @@ export function buildBillEscPos(opts: {
 
   // Totals
   const row = (label: string, value: string) => {
-    const l = label.padEnd(20);
-    const v = value.padStart(12);
+    const l = label.padEnd(32);
+    const v = value.padStart(16);
     parts.push(text(`${l}${v}\n`));
   };
 

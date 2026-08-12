@@ -267,7 +267,7 @@ function buildKOTEscPos(opts) {
     hour12: true,
     timeZone: "Asia/Kolkata"
   });
-  const sep = "--------------------------------";
+  const sep = "-".repeat(48);
   const parts = [];
   parts.push(cmd(ESC, 64));
   parts.push(cmd(ESC, 97, 1));
@@ -312,7 +312,7 @@ function buildKOTEscPos(opts) {
   }
   parts.push(text(sep + "\n"));
   parts.push(cmd(ESC, 69, 1));
-  parts.push(text("# Item                         Qty\n"));
+  parts.push(text("# Item                              Qty\n"));
   parts.push(cmd(ESC, 69, 0));
   parts.push(text(sep + "\n"));
   items.forEach((item, idx) => {
@@ -322,7 +322,7 @@ function buildKOTEscPos(opts) {
     const nameLines = [];
     let line = "";
     for (const word of words) {
-      if ((line + (line ? " " : "") + word).length > 24 && line) {
+      if ((line + (line ? " " : "") + word).length > 34 && line) {
         nameLines.push(line);
         line = word;
       } else line += (line ? " " : "") + word;
@@ -333,7 +333,7 @@ function buildKOTEscPos(opts) {
       const prefix = lineIndex === 0 ? `${num} ` : "   ";
       const itemText = `${prefix}${nameLine}`;
       const suffix = lineIndex === nameLines.length - 1 ? qty : "";
-      parts.push(text(`${itemText.padEnd(29)}${suffix}
+      parts.push(text(`${itemText.padEnd(39)}${suffix}
 `));
     });
     parts.push(cmd(ESC, 33, 0));
@@ -371,8 +371,8 @@ function buildBillEscPos(opts) {
     gstEnabled = false,
     gstNumber = ""
   } = opts;
-  const sep = "--------------------------------";
-  const sep2 = "================================";
+  const sep = "-".repeat(48);
+  const sep2 = "=".repeat(48);
   const dateStr = date.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -424,7 +424,7 @@ function buildBillEscPos(opts) {
   }
   parts.push(text(sep + "\n"));
   parts.push(cmd(ESC, 69, 1));
-  parts.push(text("Item             Qty    Amount\n"));
+  parts.push(text("Item                           Qty    Amount\n"));
   parts.push(cmd(ESC, 69, 0));
   parts.push(text(sep + "\n"));
   items.forEach((item) => {
@@ -432,7 +432,7 @@ function buildBillEscPos(opts) {
     const nameLines = [];
     let line = "";
     for (const word of words) {
-      if ((line + (line ? " " : "") + word).length > 17 && line) {
+      if ((line + (line ? " " : "") + word).length > 27 && line) {
         nameLines.push(line);
         line = word;
       } else {
@@ -444,7 +444,7 @@ function buildBillEscPos(opts) {
     const amount = (item.price * item.quantity).toFixed(0).padStart(9);
     nameLines.forEach((nameLine, lineIndex) => {
       const suffix = lineIndex === nameLines.length - 1 ? `${qty.padStart(8)}${amount}` : "";
-      parts.push(text(`${nameLine.padEnd(17)}${suffix}
+      parts.push(text(`${nameLine.padEnd(27)}${suffix}
 `));
     });
     if (item.notes) {
@@ -454,8 +454,8 @@ function buildBillEscPos(opts) {
   });
   parts.push(text(sep + "\n"));
   const row = (label, value) => {
-    const l = label.padEnd(20);
-    const v = value.padStart(12);
+    const l = label.padEnd(32);
+    const v = value.padStart(16);
     parts.push(text(`${l}${v}
 `));
   };
@@ -5445,6 +5445,11 @@ async function getDailyBillingNumber(st, order) {
   const sequence = Math.max(1, dayOrders.findIndex((o) => o.id === order.id) + 1);
   return `BG${yymmdd}${String(sequence).padStart(2, "0")}`;
 }
+async function getDailyKotSequence(st, order) {
+  const day = new Date(order.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const orders = (await st.getOrders()).filter((o) => new Date(o.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) === day).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  return orders.filter((o) => new Date(o.createdAt).getTime() < new Date(order.createdAt).getTime() || o.createdAt === order.createdAt && o.id !== order.id).reduce((total, o) => total + (o.kotCount ?? 0), 0) + (order.kotCount ?? 1);
+}
 async function queueBillPrintJobs(opts) {
   try {
     const { buildBillEscPos: buildBillEscPos2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
@@ -6226,8 +6231,7 @@ async function registerRoutes(app2) {
           if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
         }
         const baseKotNumber = await getDailyBillingNumber(st, updatedOrder);
-        const baseSequence = Number(baseKotNumber.slice(-2));
-        const kotSequence = baseSequence + Math.max(0, (updatedOrder.kotCount ?? 1) - 1);
+        const kotSequence = await getDailyKotSequence(st, updatedOrder);
         const kotNumber = baseKotNumber;
         const escData = buildKOTEscPos2({
           order: updatedOrder,
@@ -7805,7 +7809,7 @@ async function registerRoutes(app2) {
           return res.json({ results: [], allFailed: true });
         }
         const baseKotNumber = await getDailyBillingNumber(st, order);
-        const kotSequence = Number(baseKotNumber.slice(-2)) + Math.max(0, (order.kotCount ?? 1) - 1);
+        const kotSequence = await getDailyKotSequence(st, order);
         const kotNumber = baseKotNumber;
         const escData = buildKOTEscPos2({
           order,

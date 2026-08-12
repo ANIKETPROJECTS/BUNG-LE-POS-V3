@@ -118,6 +118,17 @@ async function getDailyBillingNumber(st: IStorage, order: import("@shared/schema
   return `BG${yymmdd}${String(sequence).padStart(2, "0")}`;
 }
 
+async function getDailyKotSequence(st: IStorage, order: import("@shared/schema").Order): Promise<number> {
+  const day = new Date(order.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+  const orders = (await st.getOrders())
+    .filter((o) => new Date(o.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) === day)
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  return orders
+    .filter((o) => new Date(o.createdAt).getTime() < new Date(order.createdAt).getTime() ||
+      (o.createdAt === order.createdAt && o.id !== order.id))
+    .reduce((total, o) => total + (o.kotCount ?? 0), 0) + (order.kotCount ?? 1);
+}
+
 async function queueBillPrintJobs(opts: {
   invoice: {
     invoiceNumber: string;
@@ -1071,8 +1082,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
         }
         const baseKotNumber = await getDailyBillingNumber(st, updatedOrder);
-        const baseSequence = Number(baseKotNumber.slice(-2));
-        const kotSequence = baseSequence + Math.max(0, (updatedOrder.kotCount ?? 1) - 1);
+        const kotSequence = await getDailyKotSequence(st, updatedOrder);
         const kotNumber = baseKotNumber;
         const escData = buildKOTEscPos({
           order: updatedOrder,
@@ -3071,7 +3081,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const baseKotNumber = await getDailyBillingNumber(st, order);
-        const kotSequence = Number(baseKotNumber.slice(-2)) + Math.max(0, (order.kotCount ?? 1) - 1);
+        const kotSequence = await getDailyKotSequence(st, order);
         const kotNumber = baseKotNumber;
         const escData = buildKOTEscPos({
           order,
