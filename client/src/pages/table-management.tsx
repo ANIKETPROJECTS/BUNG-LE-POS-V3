@@ -313,6 +313,7 @@ export default function TableManagementPage() {
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<{ type: "floor" | "table"; id: string; name: string } | null>(null);
   const [qrTable, setQrTable] = useState<Table | null>(null);
+  const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [qrData, setQrData] = useState<{ url: string; token: string; qrDataUrl: string } | null>(null);
   const [qrForm, setQrForm] = useState({ tableName: "", floorName: "", sessionSecret: "" });
   const qrMutation = useMutation({
@@ -324,12 +325,18 @@ export default function TableManagementPage() {
     onError: (err) => toast({ title: extractErrorMessage(err), variant: "destructive" }),
   });
   const openQR = (table: Table) => {
-    setQrTable(table); setQrData(null);
+    setQrTable(table); setQrData(null); setQrDialogOpen(true);
     setQrForm({
       tableName: table.tableNumber,
       floorName: floors.find(f => f.id === table.floorId)?.name ?? "",
       sessionSecret: "",
     });
+  };
+  const openQRGenerator = () => {
+    setQrTable(null);
+    setQrData(null);
+    setQrForm({ tableName: "", floorName: "", sessionSecret: "" });
+    setQrDialogOpen(true);
   };
   const downloadQR = () => {
     if (!qrData) return;
@@ -465,6 +472,9 @@ export default function TableManagementPage() {
             {floors.length} floor{floors.length !== 1 ? "s" : ""} · {tables.length} table{tables.length !== 1 ? "s" : ""}
           </p>
         </div>
+        <Button size="sm" className="ml-auto" onClick={openQRGenerator}>
+          <QrCode className="mr-1.5 h-4 w-4" /> QR Generator
+        </Button>
       </div>
 
       {/* Content */}
@@ -648,7 +658,7 @@ export default function TableManagementPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-      <Dialog open={!!qrTable} onOpenChange={(open) => !open && setQrTable(null)}>
+      <Dialog open={qrDialogOpen} onOpenChange={(open) => { setQrDialogOpen(open); if (!open) setQrTable(null); }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Generate QR Token</DialogTitle></DialogHeader>
           <div className="space-y-4">
