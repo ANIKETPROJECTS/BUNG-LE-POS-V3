@@ -30,7 +30,11 @@ import { generateKOTPDF } from "./utils/kotGenerator";
 import { DigitalMenuSyncService } from "./digital-menu-sync";
 import { ExternalOrdersSyncService } from "./external-orders-sync";
 import { mongoStorage } from "./mongo-storage";
-import { computeBillTotals, DEFAULT_TAX_SETTINGS, type TaxSettings } from "@shared/tax";
+import {
+  computeBillTotals,
+  DEFAULT_TAX_SETTINGS,
+  type TaxSettings,
+} from "@shared/tax";
 
 const orderActionSchema = z.object({
   print: z.boolean().optional().default(false),
@@ -43,11 +47,15 @@ const checkoutSchema = z.object({
   print: z.boolean().optional().default(false),
   taxRate: z.number().min(0).max(100).optional(),
   serviceCharge: z.number().min(0).max(100).optional(),
-  splitPayments: z.array(z.object({
-    person: z.number(),
-    amount: z.number(),
-    paymentMode: z.string(),
-  })).optional(),
+  splitPayments: z
+    .array(
+      z.object({
+        person: z.number(),
+        amount: z.number(),
+        paymentMode: z.string(),
+      }),
+    )
+    .optional(),
 });
 
 async function getTaxSettings(st: IStorage): Promise<TaxSettings> {
@@ -59,10 +67,20 @@ async function getTaxSettings(st: IStorage): Promise<TaxSettings> {
   ]);
 
   return {
-    taxRate: taxRate !== undefined ? parseFloat(taxRate) : DEFAULT_TAX_SETTINGS.taxRate,
-    serviceCharge: serviceCharge !== undefined ? parseFloat(serviceCharge) : DEFAULT_TAX_SETTINGS.serviceCharge,
-    gstEnabled: gstEnabled !== undefined ? gstEnabled === "true" : DEFAULT_TAX_SETTINGS.gstEnabled,
-    gstNumber: gstNumber !== undefined ? gstNumber : DEFAULT_TAX_SETTINGS.gstNumber,
+    taxRate:
+      taxRate !== undefined
+        ? parseFloat(taxRate)
+        : DEFAULT_TAX_SETTINGS.taxRate,
+    serviceCharge:
+      serviceCharge !== undefined
+        ? parseFloat(serviceCharge)
+        : DEFAULT_TAX_SETTINGS.serviceCharge,
+    gstEnabled:
+      gstEnabled !== undefined
+        ? gstEnabled === "true"
+        : DEFAULT_TAX_SETTINGS.gstEnabled,
+    gstNumber:
+      gstNumber !== undefined ? gstNumber : DEFAULT_TAX_SETTINGS.gstNumber,
   };
 }
 
@@ -74,9 +92,11 @@ async function getTaxSettings(st: IStorage): Promise<TaxSettings> {
 async function upsertInvoice(
   st: IStorage,
   orderId: string,
-  data: Parameters<IStorage["createInvoice"]>[0]
+  data: Parameters<IStorage["createInvoice"]>[0],
 ): Promise<import("@shared/schema").Invoice> {
-  const existing = (await st.getInvoices()).find(inv => inv.orderId === orderId);
+  const existing = (await st.getInvoices()).find(
+    (inv) => inv.orderId === orderId,
+  );
   if (existing) {
     const updated = await st.updateInvoice(existing.id, data);
     return updated ?? existing;
@@ -105,7 +125,9 @@ async function queueBillPrintJobs(opts: {
   try {
     const { buildBillEscPos } = await import("./utils/escpos");
     const printers = await mongoStorage.getPrinters();
-    const billPrinters = printers.filter((p) => p.type === "Bill" && p.autoPrint);
+    const billPrinters = printers.filter(
+      (p) => p.type === "Bill" && p.autoPrint,
+    );
     if (billPrinters.length === 0) return;
 
     const parsedItems = JSON.parse(opts.invoice.items || "[]");
@@ -137,8 +159,8 @@ async function queueBillPrintJobs(opts: {
           printerPort: p.port,
           escposData: escData.toString("base64"),
           status: "pending",
-        })
-      )
+        }),
+      ),
     );
   } catch (err) {
     console.error("[BillPrint] Failed to queue bill print job:", err);
@@ -154,11 +176,13 @@ function getStorage(req: Request): IStorage {
 
 function broadcastUpdate(type: string, data: any) {
   if (!wss) {
-    console.log('[WebSocket] No WSS instance, cannot broadcast');
+    console.log("[WebSocket] No WSS instance, cannot broadcast");
     return;
   }
   const message = JSON.stringify({ type, data });
-  const clientCount = Array.from(wss.clients).filter(c => c.readyState === WebSocket.OPEN).length;
+  const clientCount = Array.from(wss.clients).filter(
+    (c) => c.readyState === WebSocket.OPEN,
+  ).length;
   console.log(`[WebSocket] Broadcasting ${type} to ${clientCount} clients`);
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
@@ -194,8 +218,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     // Uniqueness: floor names must be unique
     const existingFloors = await st.getFloors();
-    if (existingFloors.some(f => f.name.trim().toLowerCase() === result.data.name.trim().toLowerCase())) {
-      return res.status(409).json({ error: "A floor with this name already exists" });
+    if (
+      existingFloors.some(
+        (f) =>
+          f.name.trim().toLowerCase() === result.data.name.trim().toLowerCase(),
+      )
+    ) {
+      return res
+        .status(409)
+        .json({ error: "A floor with this name already exists" });
     }
     const floor = await st.createFloor(result.data);
     broadcastUpdate("floor_created", floor);
@@ -215,10 +246,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const existingFloors = await st.getFloors();
       const conflict = existingFloors.find(
-        f => f.id !== req.params.id && f.name.trim().toLowerCase() === trimmedName.toLowerCase()
+        (f) =>
+          f.id !== req.params.id &&
+          f.name.trim().toLowerCase() === trimmedName.toLowerCase(),
       );
       if (conflict) {
-        return res.status(409).json({ error: "A floor with this name already exists" });
+        return res
+          .status(409)
+          .json({ error: "A floor with this name already exists" });
       }
     }
     const floor = await st.updateFloor(req.params.id, req.body);
@@ -264,11 +299,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const existingTables = await st.getTables();
     const floorId = result.data.floorId ?? null;
     const conflict = existingTables.find(
-      t => t.floorId === floorId &&
-           t.tableNumber.trim().toLowerCase() === result.data.tableNumber.trim().toLowerCase()
+      (t) =>
+        t.floorId === floorId &&
+        t.tableNumber.trim().toLowerCase() ===
+          result.data.tableNumber.trim().toLowerCase(),
     );
     if (conflict) {
-      return res.status(409).json({ error: "A table with this name already exists on this floor" });
+      return res
+        .status(409)
+        .json({ error: "A table with this name already exists on this floor" });
     }
     const table = await st.createTable(result.data);
     broadcastUpdate("table_created", table);
@@ -278,7 +317,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/tables/:id", requireAuth, async (req, res) => {
     const st = getStorage(req);
     // Validate string fields before trim
-    if (req.body.tableNumber !== undefined && typeof req.body.tableNumber !== "string") {
+    if (
+      req.body.tableNumber !== undefined &&
+      typeof req.body.tableNumber !== "string"
+    ) {
       return res.status(400).json({ error: "Table number must be a string" });
     }
     // Uniqueness: if renaming or moving floor, check for conflicts
@@ -286,18 +328,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const currentTable = await st.getTable(req.params.id);
       if (currentTable) {
         const existingTables = await st.getTables();
-        const floorId = req.body.floorId !== undefined ? req.body.floorId : currentTable.floorId;
-        const tableNumber = (req.body.tableNumber !== undefined ? req.body.tableNumber : currentTable.tableNumber).trim();
+        const floorId =
+          req.body.floorId !== undefined
+            ? req.body.floorId
+            : currentTable.floorId;
+        const tableNumber = (
+          req.body.tableNumber !== undefined
+            ? req.body.tableNumber
+            : currentTable.tableNumber
+        ).trim();
         if (!tableNumber) {
-          return res.status(400).json({ error: "Table number cannot be empty" });
+          return res
+            .status(400)
+            .json({ error: "Table number cannot be empty" });
         }
         const conflict = existingTables.find(
-          t => t.id !== req.params.id &&
-               t.floorId === floorId &&
-               t.tableNumber.trim().toLowerCase() === tableNumber.toLowerCase()
+          (t) =>
+            t.id !== req.params.id &&
+            t.floorId === floorId &&
+            t.tableNumber.trim().toLowerCase() === tableNumber.toLowerCase(),
         );
         if (conflict) {
-          return res.status(409).json({ error: "A table with this name already exists on this floor" });
+          return res
+            .status(409)
+            .json({
+              error: "A table with this name already exists on this floor",
+            });
         }
       }
     }
@@ -416,7 +472,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       for (const item of itemsNeedingCodes) {
         let found = false;
-        for (let letterIdx = 0; letterIdx < letters.length && !found; letterIdx++) {
+        for (
+          let letterIdx = 0;
+          letterIdx < letters.length && !found;
+          letterIdx++
+        ) {
           for (let num = 1; num <= 99 && !found; num++) {
             const code = `${letters[letterIdx]}${num}`;
             if (!usedCodes.has(code)) {
@@ -429,9 +489,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
-      res.json({ success: true, updated, message: `Generated quick codes for ${updated} menu items` });
+      res.json({
+        success: true,
+        updated,
+        message: `Generated quick codes for ${updated} menu items`,
+      });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to generate quick codes" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to generate quick codes",
+        });
     }
   });
 
@@ -505,9 +576,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // First, delete all existing recipes for these menu items to avoid duplicates
       const existingRecipes = await st.getRecipes();
       for (const recipe of recipes) {
-        const menuItem = (await st.getMenuItems()).find(m => m.name === recipe.menuItemName);
+        const menuItem = (await st.getMenuItems()).find(
+          (m) => m.name === recipe.menuItemName,
+        );
         if (menuItem) {
-          const oldRecipe = existingRecipes.find(r => r.menuItemId === menuItem.id);
+          const oldRecipe = existingRecipes.find(
+            (r) => r.menuItemId === menuItem.id,
+          );
           if (oldRecipe) {
             await st.deleteRecipe(oldRecipe.id);
             console.log(`🗑️ Deleted old recipe for: ${menuItem.name}`);
@@ -517,10 +592,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       let addedRecipes = 0;
       const inventoryItems = await st.getInventoryItems();
-      const inventoryMap = new Map(inventoryItems.map(item => [item.name.toLowerCase(), item]));
+      const inventoryMap = new Map(
+        inventoryItems.map((item) => [item.name.toLowerCase(), item]),
+      );
 
       for (const recipe of recipes) {
-        const menuItem = (await st.getMenuItems()).find(m => m.name === recipe.menuItemName);
+        const menuItem = (await st.getMenuItems()).find(
+          (m) => m.name === recipe.menuItemName,
+        );
         if (!menuItem) {
           console.log(`Menu item not found: ${recipe.menuItemName}`);
           continue;
@@ -544,9 +623,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         if (recipe.ingredients.length > 0) {
-          const createdRecipe = await st.createRecipe({ menuItemId: menuItem.id });
-          console.log(`Created recipe for: ${menuItem.name} with ID: ${createdRecipe.id}`);
-          
+          const createdRecipe = await st.createRecipe({
+            menuItemId: menuItem.id,
+          });
+          console.log(
+            `Created recipe for: ${menuItem.name} with ID: ${createdRecipe.id}`,
+          );
+
           let addedIngredients = 0;
           // Now add ingredients to the recipe
           for (const ing of recipe.ingredients) {
@@ -560,30 +643,52 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   unit: ing.unit,
                 });
                 addedIngredients++;
-                console.log(`  ✅ Added ingredient: ${ing.name} (ID: ${invItem.id}) - ${ing.quantity}${ing.unit}`);
+                console.log(
+                  `  ✅ Added ingredient: ${ing.name} (ID: ${invItem.id}) - ${ing.quantity}${ing.unit}`,
+                );
               } catch (ingError) {
-                console.error(`  ❌ Failed to add ingredient ${ing.name}:`, ingError);
+                console.error(
+                  `  ❌ Failed to add ingredient ${ing.name}:`,
+                  ingError,
+                );
               }
             } else {
-              console.warn(`  ⚠️  Ingredient not found in inventory: ${ing.name}`);
+              console.warn(
+                `  ⚠️  Ingredient not found in inventory: ${ing.name}`,
+              );
             }
           }
-          
+
           if (addedIngredients > 0) {
             addedRecipes++;
-            console.log(`✅ Recipe fully populated for: ${menuItem.name} (${addedIngredients} ingredients)`);
+            console.log(
+              `✅ Recipe fully populated for: ${menuItem.name} (${addedIngredients} ingredients)`,
+            );
           } else {
-            console.warn(`⚠️  No ingredients were added to recipe for ${menuItem.name}`);
+            console.warn(
+              `⚠️  No ingredients were added to recipe for ${menuItem.name}`,
+            );
           }
         } else {
-          console.warn(`⚠️  No ingredients found for recipe ${recipe.menuItemName}`);
+          console.warn(
+            `⚠️  No ingredients found for recipe ${recipe.menuItemName}`,
+          );
         }
       }
 
-      res.json({ success: true, addedRecipes, message: `Seeded ${addedRecipes} sample recipes with all ingredients` });
+      res.json({
+        success: true,
+        addedRecipes,
+        message: `Seeded ${addedRecipes} sample recipes with all ingredients`,
+      });
     } catch (error) {
       console.error("Error seeding recipes:", error);
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to seed recipes" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error ? error.message : "Failed to seed recipes",
+        });
     }
   });
 
@@ -632,7 +737,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const person = await st.createDeliveryPerson(req.body);
       res.status(201).json(person);
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Failed to create delivery person" });
+      res
+        .status(400)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to create delivery person",
+        });
     }
   });
 
@@ -657,24 +769,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/orders/:id/assign-driver", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const { deliveryPersonId } = req.body;
-    
+
     const existingOrder = await st.getOrder(req.params.id);
     if (!existingOrder) {
       return res.status(404).json({ error: "Order not found" });
     }
-    
+
     if (existingOrder.orderType !== "delivery") {
-      return res.status(400).json({ error: "Can only assign drivers to delivery orders" });
+      return res
+        .status(400)
+        .json({ error: "Can only assign drivers to delivery orders" });
     }
-    
+
     if (deliveryPersonId) {
       const driver = await st.getDeliveryPerson(deliveryPersonId);
       if (!driver) {
         return res.status(400).json({ error: "Delivery person not found" });
       }
     }
-    
-    const order = await st.assignDeliveryPerson(req.params.id, deliveryPersonId);
+
+    const order = await st.assignDeliveryPerson(
+      req.params.id,
+      deliveryPersonId,
+    );
     if (!order) {
       return res.status(500).json({ error: "Failed to assign driver" });
     }
@@ -690,10 +807,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const invoices = await st.getInvoices();
-      const invoice = invoices.find(inv => inv.orderId === req.params.id);
-      
+      const invoice = invoices.find((inv) => inv.orderId === req.params.id);
+
       if (!invoice) {
-        return res.status(404).json({ error: "Invoice not found for this order" });
+        return res
+          .status(404)
+          .json({ error: "Invoice not found for this order" });
       }
 
       const orderItems = await st.getOrderItems(req.params.id);
@@ -705,11 +824,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         restaurantName: "Restaurant POS",
         restaurantAddress: "123 Main Street, City, State 12345",
         restaurantPhone: "+1 (555) 123-4567",
-        restaurantGSTIN: "GSTIN1234567890"
+        restaurantGSTIN: "GSTIN1234567890",
       });
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="Invoice-${invoice.invoiceNumber}.pdf"`);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="Invoice-${invoice.invoiceNumber}.pdf"`,
+      );
       res.send(pdfBuffer);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -739,13 +861,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         order,
         orderItems,
         tableNumber: tableInfo?.tableNumber || undefined,
-        floorName: tableInfo?.floorId ? (await st.getFloor(tableInfo.floorId))?.name || undefined : undefined,
+        floorName: tableInfo?.floorId
+          ? (await st.getFloor(tableInfo.floorId))?.name || undefined
+          : undefined,
         restaurantName: "Restaurant POS",
         isUpdated: (order.kotCount ?? 0) > 1,
       });
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="KOT-${order.id.substring(0, 8)}.pdf"`);
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="KOT-${order.id.substring(0, 8)}.pdf"`,
+      );
       res.send(pdfBuffer);
     } catch (error) {
       console.error("Error generating KOT PDF:", error);
@@ -791,7 +918,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!result.success) {
       return res.status(400).json({ error: result.error });
     }
-    console.log('[Server] Creating order item for order:', req.params.id);
+    console.log("[Server] Creating order item for order:", req.params.id);
     const item = await st.createOrderItem(result.data);
 
     const orderItems = await st.getOrderItems(req.params.id);
@@ -812,16 +939,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
-    console.log('[Server] Broadcasting order_item_added for orderId:', req.params.id);
+    console.log(
+      "[Server] Broadcasting order_item_added for orderId:",
+      req.params.id,
+    );
     broadcastUpdate("order_item_added", { orderId: req.params.id, item });
     // Backward-sync: add this item to the external DB order if applicable
-    externalOrdersSync.syncItemAdd(req.params.id, {
-      name:     item.name,
-      price:    parseFloat(item.price),
-      quantity: item.quantity,
-      notes:    item.notes ?? null,
-      isVeg:    item.isVeg,
-    }).catch(() => {});
+    externalOrdersSync
+      .syncItemAdd(req.params.id, {
+        name: item.name,
+        price: parseFloat(item.price),
+        quantity: item.quantity,
+        notes: item.notes ?? null,
+        isVeg: item.isVeg,
+      })
+      .catch(() => {});
     res.json(item);
   });
 
@@ -858,21 +990,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!result.success) {
       return res.status(400).json({ error: result.error });
     }
-    
-    console.log('[Server] Sending order to kitchen:', req.params.id);
+
+    console.log("[Server] Sending order to kitchen:", req.params.id);
     const order = await st.updateOrderStatus(req.params.id, "sent_to_kitchen");
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
     // Track how many times KOT has been sent — used to show "UPDATED" badge
-    const updatedOrder = await st.incrementKotCount(req.params.id) ?? order;
-    console.log('[Server] Broadcasting order_updated for KOT, orderId:', updatedOrder.id, 'status:', updatedOrder.status, 'kotCount:', updatedOrder.kotCount);
+    const updatedOrder = (await st.incrementKotCount(req.params.id)) ?? order;
+    console.log(
+      "[Server] Broadcasting order_updated for KOT, orderId:",
+      updatedOrder.id,
+      "status:",
+      updatedOrder.status,
+      "kotCount:",
+      updatedOrder.kotCount,
+    );
     broadcastUpdate("order_updated", updatedOrder);
 
     // Enqueue print jobs for every autoPrint KOT printer
     (async () => {
       try {
-        const kotPrinters = (await mongoStorage.getPrinters()).filter(p => p.type === "KOT" && p.autoPrint);
+        const kotPrinters = (await mongoStorage.getPrinters()).filter(
+          (p) => p.type === "KOT" && p.autoPrint,
+        );
         if (kotPrinters.length === 0) return;
         const { buildKOTEscPos } = await import("./utils/escpos");
         const orderItems = await st.getOrderItems(req.params.id);
@@ -884,7 +1025,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
         }
         const kotNumber = `KOT-${updatedOrder.id.substring(0, 8).toUpperCase()}`;
-        const escData = buildKOTEscPos({ order: updatedOrder, items: orderItems, tableNumber, floorName, kotNumber, isUpdated: (updatedOrder.kotCount ?? 0) > 1 });
+        const escData = buildKOTEscPos({
+          order: updatedOrder,
+          items: orderItems,
+          tableNumber,
+          floorName,
+          kotNumber,
+          isUpdated: (updatedOrder.kotCount ?? 0) > 1,
+        });
         const escBase64 = Buffer.from(escData).toString("base64");
         for (const printer of kotPrinters) {
           await mongoStorage.createPrintJob({
@@ -895,7 +1043,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
             escposData: escBase64,
             status: "pending",
           });
-          console.log(`[PrintJob] Queued ${kotNumber} → ${printer.ip}:${printer.port}`);
+          console.log(
+            `[PrintJob] Queued ${kotNumber} → ${printer.ip}:${printer.port}`,
+          );
         }
       } catch (e) {
         console.error("[PrintJob] Failed to enqueue:", e);
@@ -911,7 +1061,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!result.success) {
       return res.status(400).json({ error: result.error });
     }
-    
+
     const order = await st.updateOrderStatus(req.params.id, "saved");
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
@@ -920,13 +1070,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     let invoice = null;
     if (result.data.print) {
       const orderItems = await st.getOrderItems(req.params.id);
-      const subtotal = orderItems.reduce((sum, item) => 
-        sum + parseFloat(item.price) * item.quantity, 0
+      const subtotal = orderItems.reduce(
+        (sum, item) => sum + parseFloat(item.price) * item.quantity,
+        0,
       );
       const taxSettings = await getTaxSettings(st);
       const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
-      const effectiveServiceCharge = result.data.serviceCharge ?? taxSettings.serviceCharge;
-      const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, effectiveTaxRate, effectiveServiceCharge);
+      const effectiveServiceCharge =
+        result.data.serviceCharge ?? taxSettings.serviceCharge;
+      const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(
+        subtotal,
+        effectiveTaxRate,
+        effectiveServiceCharge,
+      );
 
       let tableInfo = null;
       if (order.tableId) {
@@ -934,21 +1090,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const invoiceCount = (await st.getInvoices()).length;
-      const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(4, '0')}`;
+      const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(4, "0")}`;
 
-      const invoiceItemsData = orderItems.map(item => ({
+      const invoiceItemsData = orderItems.map((item) => ({
         name: item.name,
         quantity: item.quantity,
         price: parseFloat(item.price),
         isVeg: item.isVeg,
-        notes: item.notes || undefined
+        notes: item.notes || undefined,
       }));
 
       invoice = await upsertInvoice(st, order.id, {
         invoiceNumber,
         orderId: order.id,
         tableNumber: tableInfo?.tableNumber || null,
-        floorName: tableInfo?.floorId ? (await st.getFloor(tableInfo.floorId))?.name || null : null,
+        floorName: tableInfo?.floorId
+          ? (await st.getFloor(tableInfo.floorId))?.name || null
+          : null,
         customerName: order.customerName,
         customerPhone: order.customerPhone,
         subtotal: subtotal.toFixed(2),
@@ -967,7 +1125,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       broadcastUpdate("invoice_created", invoice);
       // Queue thermal bill print if any Bill printers are configured
-      await queueBillPrintJobs({ invoice, orderType: order.orderType, taxSettings });
+      await queueBillPrintJobs({
+        invoice,
+        orderType: order.orderType,
+        taxSettings,
+      });
     }
 
     broadcastUpdate("order_updated", order);
@@ -980,21 +1142,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!result.success) {
       return res.status(400).json({ error: result.error });
     }
-    
+
     const order = await st.billOrder(req.params.id);
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
 
     const orderItems = await st.getOrderItems(req.params.id);
-    
-    const subtotal = orderItems.reduce((sum, item) => 
-      sum + parseFloat(item.price) * item.quantity, 0
+
+    const subtotal = orderItems.reduce(
+      (sum, item) => sum + parseFloat(item.price) * item.quantity,
+      0,
     );
     const taxSettings = await getTaxSettings(st);
     const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
-    const effectiveServiceCharge = result.data.serviceCharge ?? taxSettings.serviceCharge;
-    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, effectiveTaxRate, effectiveServiceCharge);
+    const effectiveServiceCharge =
+      result.data.serviceCharge ?? taxSettings.serviceCharge;
+    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(
+      subtotal,
+      effectiveTaxRate,
+      effectiveServiceCharge,
+    );
 
     let tableInfo = null;
     if (order.tableId) {
@@ -1002,21 +1170,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     const invoiceCount = (await st.getInvoices()).length;
-    const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(4, '0')}`;
+    const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(4, "0")}`;
 
-    const invoiceItemsData = orderItems.map(item => ({
+    const invoiceItemsData = orderItems.map((item) => ({
       name: item.name,
       quantity: item.quantity,
       price: parseFloat(item.price),
       isVeg: item.isVeg,
-      notes: item.notes || undefined
+      notes: item.notes || undefined,
     }));
 
     const invoice = await upsertInvoice(st, order.id, {
       invoiceNumber,
       orderId: order.id,
       tableNumber: tableInfo?.tableNumber || null,
-      floorName: tableInfo?.floorId ? (await st.getFloor(tableInfo.floorId))?.name || null : null,
+      floorName: tableInfo?.floorId
+        ? (await st.getFloor(tableInfo.floorId))?.name || null
+        : null,
       customerName: order.customerName,
       customerPhone: order.customerPhone,
       subtotal: subtotal.toFixed(2),
@@ -1036,7 +1206,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     broadcastUpdate("order_updated", order);
     broadcastUpdate("invoice_created", invoice);
     if (result.data.print) {
-      await queueBillPrintJobs({ invoice, orderType: order.orderType, taxSettings: await getTaxSettings(st) });
+      await queueBillPrintJobs({
+        invoice,
+        orderType: order.orderType,
+        taxSettings: await getTaxSettings(st),
+      });
     }
     res.json({ order, invoice, shouldPrint: result.data.print });
   });
@@ -1047,40 +1221,54 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!result.success) {
       return res.status(400).json({ error: result.error });
     }
-    
+
     const order = await st.getOrder(req.params.id);
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
 
     const orderItems = await st.getOrderItems(req.params.id);
-    
-    const subtotal = orderItems.reduce((sum, item) => 
-      sum + parseFloat(item.price) * item.quantity, 0
+
+    const subtotal = orderItems.reduce(
+      (sum, item) => sum + parseFloat(item.price) * item.quantity,
+      0,
     );
     const taxSettings = await getTaxSettings(st);
     const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
-    const effectiveServiceCharge = result.data.serviceCharge ?? taxSettings.serviceCharge;
-    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, effectiveTaxRate, effectiveServiceCharge);
+    const effectiveServiceCharge =
+      result.data.serviceCharge ?? taxSettings.serviceCharge;
+    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(
+      subtotal,
+      effectiveTaxRate,
+      effectiveServiceCharge,
+    );
 
     if (result.data.splitPayments && result.data.splitPayments.length > 0) {
-      const splitSum = result.data.splitPayments.reduce((sum, split) => sum + split.amount, 0);
+      const splitSum = result.data.splitPayments.reduce(
+        (sum, split) => sum + split.amount,
+        0,
+      );
       const tolerance = 0.01;
       if (Math.abs(splitSum - total) > tolerance) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: "Split payment amounts must equal the total bill",
           splitSum,
-          total 
+          total,
         });
       }
       for (const split of result.data.splitPayments) {
         if (split.amount <= 0) {
-          return res.status(400).json({ error: "Split payment amounts must be positive" });
+          return res
+            .status(400)
+            .json({ error: "Split payment amounts must be positive" });
         }
       }
     }
 
-    const checkedOutOrder = await st.checkoutOrder(req.params.id, result.data.paymentMode);
+    const checkedOutOrder = await st.checkoutOrder(
+      req.params.id,
+      result.data.paymentMode,
+    );
     if (!checkedOutOrder) {
       return res.status(500).json({ error: "Failed to checkout order" });
     }
@@ -1094,25 +1282,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Update customer's table status to "free" for digital menu orders
     if (checkedOutOrder.customerPhone) {
-      await digitalMenuSync.updateCustomerTableStatus(checkedOutOrder.customerPhone, 'free');
+      await digitalMenuSync.updateCustomerTableStatus(
+        checkedOutOrder.customerPhone,
+        "free",
+      );
     }
 
     const invoiceCount = (await st.getInvoices()).length;
-    const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(4, '0')}`;
+    const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(4, "0")}`;
 
-    const invoiceItemsData = orderItems.map(item => ({
+    const invoiceItemsData = orderItems.map((item) => ({
       name: item.name,
       quantity: item.quantity,
       price: parseFloat(item.price),
       isVeg: item.isVeg,
-      notes: item.notes || undefined
+      notes: item.notes || undefined,
     }));
 
     const invoice = await upsertInvoice(st, checkedOutOrder.id, {
       invoiceNumber,
       orderId: checkedOutOrder.id,
       tableNumber: tableInfo?.tableNumber || null,
-      floorName: tableInfo?.floorId ? (await st.getFloor(tableInfo.floorId))?.name || null : null,
+      floorName: tableInfo?.floorId
+        ? (await st.getFloor(tableInfo.floorId))?.name || null
+        : null,
       customerName: checkedOutOrder.customerName,
       customerPhone: checkedOutOrder.customerPhone,
       subtotal: subtotal.toFixed(2),
@@ -1123,7 +1316,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       discount: "0",
       total: total.toFixed(2),
       paymentMode: result.data.paymentMode || "cash",
-      splitPayments: result.data.splitPayments ? JSON.stringify(result.data.splitPayments) : null,
+      splitPayments: result.data.splitPayments
+        ? JSON.stringify(result.data.splitPayments)
+        : null,
       status: "Paid",
       items: JSON.stringify(invoiceItemsData),
       notes: null,
@@ -1140,9 +1335,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     broadcastUpdate("order_paid", checkedOutOrder);
     broadcastUpdate("invoice_created", invoice);
     if (result.data.print) {
-      await queueBillPrintJobs({ invoice, orderType: checkedOutOrder.orderType, taxSettings: await getTaxSettings(st) });
+      await queueBillPrintJobs({
+        invoice,
+        orderType: checkedOutOrder.orderType,
+        taxSettings: await getTaxSettings(st),
+      });
     }
-    res.json({ order: checkedOutOrder, invoice, shouldPrint: result.data.print });
+    res.json({
+      order: checkedOutOrder,
+      invoice,
+      shouldPrint: result.data.print,
+    });
   });
 
   app.get("/api/invoices/:id/pdf", requireAuth, async (req, res) => {
@@ -1172,7 +1375,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
 
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="${invoice.invoiceNumber}.pdf"`);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${invoice.invoiceNumber}.pdf"`,
+      );
       res.send(pdfBuffer);
     } catch (error) {
       console.error("Error generating invoice PDF:", error);
@@ -1183,18 +1389,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.patch("/api/order-items/:id", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const { quantity, notes, name } = req.body;
-    const data: Partial<{ quantity: number; notes: string | null; name: string }> = {};
+    const data: Partial<{
+      quantity: number;
+      notes: string | null;
+      name: string;
+    }> = {};
     if (quantity !== undefined) data.quantity = quantity;
     if (notes !== undefined) data.notes = notes;
     if (name !== undefined) data.name = name;
     const item = await st.updateOrderItem(req.params.id, data);
     if (!item) return res.status(404).json({ error: "Order item not found" });
     const orderItems = await st.getOrderItems(item.orderId);
-    const total = orderItems.reduce((s, i) => s + parseFloat(i.price) * i.quantity, 0);
+    const total = orderItems.reduce(
+      (s, i) => s + parseFloat(i.price) * i.quantity,
+      0,
+    );
     await st.updateOrderTotal(item.orderId, total.toFixed(2));
     broadcastUpdate("order_item_updated", item);
     // Backward-sync: reflect quantity/notes change in external DB if applicable
-    externalOrdersSync.syncItemUpdate(item.orderId, item.name, data).catch(() => {});
+    externalOrdersSync
+      .syncItemUpdate(item.orderId, item.name, data)
+      .catch(() => {});
     res.json(item);
   });
 
@@ -1264,7 +1479,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     await st.updateOrderTotal(item.orderId, total.toFixed(2));
 
-    broadcastUpdate("order_item_deleted", { id: req.params.id, orderId: item.orderId });
+    broadcastUpdate("order_item_deleted", {
+      id: req.params.id,
+      orderId: item.orderId,
+    });
     // Backward-sync: remove this item from the external DB order if applicable
     externalOrdersSync.syncItemDelete(item.orderId, item.name).catch(() => {});
     res.json({ success: true });
@@ -1311,14 +1529,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(invoice);
   });
 
-  app.get("/api/invoices/number/:invoiceNumber", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    const invoice = await st.getInvoiceByNumber(req.params.invoiceNumber);
-    if (!invoice) {
-      return res.status(404).json({ error: "Invoice not found" });
-    }
-    res.json(invoice);
-  });
+  app.get(
+    "/api/invoices/number/:invoiceNumber",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      const invoice = await st.getInvoiceByNumber(req.params.invoiceNumber);
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+      res.json(invoice);
+    },
+  );
 
   app.post("/api/invoices", requireAuth, async (req, res) => {
     const st = getStorage(req);
@@ -1380,28 +1602,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("Body keys:", Object.keys(req.body));
     console.log("timeSlot value:", req.body.timeSlot);
     console.log("timeSlot type:", typeof req.body.timeSlot);
-    
+
     const result = insertReservationSchema.safeParse(req.body);
     console.log("Validation result:", result.success);
-    
+
     if (!result.success) {
-      console.error("Validation errors:", JSON.stringify(result.error, null, 2));
+      console.error(
+        "Validation errors:",
+        JSON.stringify(result.error, null, 2),
+      );
       return res.status(400).json({ error: result.error });
     }
-    
+
     console.log("Validated data:", result.data);
-    
-    const existingReservations = await st.getReservationsByTable(result.data.tableId);
+
+    const existingReservations = await st.getReservationsByTable(
+      result.data.tableId,
+    );
     if (existingReservations.length > 0) {
-      return res.status(409).json({ error: "This table already has an active reservation" });
+      return res
+        .status(409)
+        .json({ error: "This table already has an active reservation" });
     }
-    
+
     const reservation = await st.createReservation(result.data);
     console.log("Created reservation:", reservation);
-    
+
     const table = await st.getTable(reservation.tableId);
     if (table && table.status === "free") {
-      const updatedTable = await st.updateTableStatus(reservation.tableId, "reserved");
+      const updatedTable = await st.updateTableStatus(
+        reservation.tableId,
+        "reserved",
+      );
       if (updatedTable) {
         broadcastUpdate("table_updated", updatedTable);
       }
@@ -1416,57 +1648,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!existingReservation) {
       return res.status(404).json({ error: "Reservation not found" });
     }
-    
+
     const oldTableId = existingReservation.tableId;
     const newTableId = req.body.tableId || oldTableId;
     const tableChanged = oldTableId !== newTableId;
-    
+
     if (tableChanged) {
       const newTableReservations = await st.getReservationsByTable(newTableId);
       if (newTableReservations.length > 0) {
-        return res.status(409).json({ error: "The destination table already has an active reservation" });
+        return res
+          .status(409)
+          .json({
+            error: "The destination table already has an active reservation",
+          });
       }
     }
-    
+
     const reservation = await st.updateReservation(req.params.id, req.body);
     if (!reservation) {
       return res.status(404).json({ error: "Reservation not found" });
     }
-    
+
     if (tableChanged) {
       const oldTableReservations = await st.getReservationsByTable(oldTableId);
       if (oldTableReservations.length === 0) {
         const oldTable = await st.getTable(oldTableId);
-        if (oldTable && oldTable.status === "reserved" && !oldTable.currentOrderId) {
-          const updatedOldTable = await st.updateTableStatus(oldTableId, "free");
+        if (
+          oldTable &&
+          oldTable.status === "reserved" &&
+          !oldTable.currentOrderId
+        ) {
+          const updatedOldTable = await st.updateTableStatus(
+            oldTableId,
+            "free",
+          );
           if (updatedOldTable) {
             broadcastUpdate("table_updated", updatedOldTable);
           }
         }
       }
-      
+
       const newTable = await st.getTable(newTableId);
       if (newTable && newTable.status === "free") {
-        const updatedNewTable = await st.updateTableStatus(newTableId, "reserved");
+        const updatedNewTable = await st.updateTableStatus(
+          newTableId,
+          "reserved",
+        );
         if (updatedNewTable) {
           broadcastUpdate("table_updated", updatedNewTable);
         }
       }
     }
-    
+
     if (req.body.status === "cancelled") {
-      const tableReservations = await st.getReservationsByTable(reservation.tableId);
+      const tableReservations = await st.getReservationsByTable(
+        reservation.tableId,
+      );
       if (tableReservations.length === 0) {
         const table = await st.getTable(reservation.tableId);
         if (table && table.status === "reserved" && !table.currentOrderId) {
-          const updatedTable = await st.updateTableStatus(reservation.tableId, "free");
+          const updatedTable = await st.updateTableStatus(
+            reservation.tableId,
+            "free",
+          );
           if (updatedTable) {
             broadcastUpdate("table_updated", updatedTable);
           }
         }
       }
     }
-    
+
     broadcastUpdate("reservation_updated", reservation);
     res.json(reservation);
   });
@@ -1481,11 +1732,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!success) {
       return res.status(404).json({ error: "Failed to delete reservation" });
     }
-    const tableReservations = await st.getReservationsByTable(reservation.tableId);
+    const tableReservations = await st.getReservationsByTable(
+      reservation.tableId,
+    );
     if (tableReservations.length === 0) {
       const table = await st.getTable(reservation.tableId);
       if (table && table.status === "reserved" && !table.currentOrderId) {
-        const updatedTable = await st.updateTableStatus(reservation.tableId, "free");
+        const updatedTable = await st.updateTableStatus(
+          reservation.tableId,
+          "free",
+        );
         if (updatedTable) {
           broadcastUpdate("table_updated", updatedTable);
         }
@@ -1498,10 +1754,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/clear-data", requireAuth, async (req, res) => {
     const st = getStorage(req);
     try {
-      const { types = ['all'] } = req.body;
+      const { types = ["all"] } = req.body;
       const cleared: string[] = [];
 
-      if (types.includes('orderItems') || types.includes('all')) {
+      if (types.includes("orderItems") || types.includes("all")) {
         const orders = await st.getOrders();
         for (const order of orders) {
           const orderItems = await st.getOrderItems(order.id);
@@ -1509,23 +1765,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await st.deleteOrderItem(item.id);
           }
         }
-        cleared.push('orderItems');
+        cleared.push("orderItems");
       }
 
-      if (types.includes('invoices') || types.includes('all')) {
+      if (types.includes("invoices") || types.includes("all")) {
         const invoices = await st.getInvoices();
         for (const invoice of invoices) {
           await st.deleteInvoice(invoice.id);
         }
-        cleared.push('invoices');
+        cleared.push("invoices");
       }
 
-      if (types.includes('orders') || types.includes('all')) {
+      if (types.includes("orders") || types.includes("all")) {
         const orders = await st.getOrders();
         for (const order of orders) {
           await st.deleteOrder(order.id);
         }
-        cleared.push('orders');
+        cleared.push("orders");
       }
 
       broadcastUpdate("data_cleared", { types: cleared });
@@ -1550,18 +1806,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     const orders = await st.getOrders();
-    const customerOrders = orders.filter(o => o.customerPhone === customer.phone);
+    const customerOrders = orders.filter(
+      (o) => o.customerPhone === customer.phone,
+    );
     const totalOrders = customerOrders.length;
 
     const invoices = await st.getInvoices();
-    const customerInvoices = invoices.filter(inv => {
-      const order = customerOrders.find(o => o.id === inv.orderId);
+    const customerInvoices = invoices.filter((inv) => {
+      const order = customerOrders.find((o) => o.id === inv.orderId);
       return !!order;
     });
-    const actualTotalSpent = customerInvoices.reduce((sum, inv) => sum + parseFloat(inv.total || '0'), 0);
+    const actualTotalSpent = customerInvoices.reduce(
+      (sum, inv) => sum + parseFloat(inv.total || "0"),
+      0,
+    );
 
-    const lastOrder = customerOrders.sort((a, b) => 
-      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    const lastOrder = customerOrders.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )[0];
 
     res.json({
@@ -1597,7 +1859,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     const existingCustomer = await st.getCustomerByPhone(result.data.phone);
     if (existingCustomer) {
-      return res.status(409).json({ error: "Customer with this phone number already exists", customer: existingCustomer });
+      return res
+        .status(409)
+        .json({
+          error: "Customer with this phone number already exists",
+          customer: existingCustomer,
+        });
     }
     const customer = await st.createCustomer(result.data);
     broadcastUpdate("customer_created", customer);
@@ -1710,36 +1977,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const mongoUri = await st.getSetting("mongodb_uri");
       if (!mongoUri) {
-        return res.status(400).json({ error: "MongoDB URI not configured. Please set it first." });
+        return res
+          .status(400)
+          .json({ error: "MongoDB URI not configured. Please set it first." });
       }
 
       const { databaseName } = req.body;
-      const { items, categories } = await fetchMenuItemsFromMongoDB(mongoUri, databaseName);
-      
+      const { items, categories } = await fetchMenuItemsFromMongoDB(
+        mongoUri,
+        databaseName,
+      );
+
       const existingItems = await st.getMenuItems();
       for (const existing of existingItems) {
         await st.deleteMenuItem(existing.id);
       }
-      
+
       const createdItems = [];
       for (const item of items) {
         const created = await st.createMenuItem(item);
         createdItems.push(created);
       }
-      
+
       await st.setSetting("menu_categories", JSON.stringify(categories));
-      
+
       broadcastUpdate("menu_synced", { count: createdItems.length });
-      
-      res.json({ 
-        success: true, 
+
+      res.json({
+        success: true,
         itemsImported: createdItems.length,
-        items: createdItems 
+        items: createdItems,
       });
     } catch (error) {
       console.error("Error syncing from MongoDB:", error);
-      res.status(500).json({ 
-        error: error instanceof Error ? error.message : "Failed to sync from MongoDB" 
+      res.status(500).json({
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to sync from MongoDB",
       });
     }
   });
@@ -1751,38 +2026,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const st = getStorage(req);
     try {
       let items = await st.getInventoryItems();
-      
+
       // Apply search filter
       if (req.query.search) {
         const search = req.query.search.toString().toLowerCase();
-        items = items.filter(item => 
-          item.name.toLowerCase().includes(search) ||
-          item.category.toLowerCase().includes(search)
+        items = items.filter(
+          (item) =>
+            item.name.toLowerCase().includes(search) ||
+            item.category.toLowerCase().includes(search),
         );
       }
-      
+
       // Apply category filter
       if (req.query.category) {
         const category = req.query.category.toString();
-        items = items.filter(item => item.category === category);
+        items = items.filter((item) => item.category === category);
       }
-      
+
       // Apply sorting
       if (req.query.sortBy) {
         const sortBy = req.query.sortBy.toString();
-        if (sortBy === 'name') {
+        if (sortBy === "name") {
           items.sort((a, b) => a.name.localeCompare(b.name));
-        } else if (sortBy === 'stock') {
-          items.sort((a, b) => parseFloat(a.currentStock) - parseFloat(b.currentStock));
-        } else if (sortBy === 'lowStock') {
-          items = items.filter(item => parseFloat(item.currentStock) <= parseFloat(item.minStock));
+        } else if (sortBy === "stock") {
+          items.sort(
+            (a, b) => parseFloat(a.currentStock) - parseFloat(b.currentStock),
+          );
+        } else if (sortBy === "lowStock") {
+          items = items.filter(
+            (item) =>
+              parseFloat(item.currentStock) <= parseFloat(item.minStock),
+          );
         }
       }
-      
+
       res.json(items);
     } catch (error) {
       console.error("Error fetching inventory:", error);
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch inventory" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch inventory",
+        });
     }
   });
 
@@ -1795,7 +2083,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       res.json(item);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch inventory item" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch inventory item",
+        });
     }
   });
 
@@ -1810,7 +2105,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("inventory_created", item);
       res.json(item);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to create inventory item" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to create inventory item",
+        });
     }
   });
 
@@ -1824,7 +2126,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("inventory_updated", item);
       res.json(item);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to update inventory item" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to update inventory item",
+        });
     }
   });
 
@@ -1838,38 +2147,58 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("inventory_deleted", { id: req.params.id });
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to delete inventory item" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to delete inventory item",
+        });
     }
   });
 
   // Recipes & Ingredients
-  app.get("/api/recipes/menu-item/:menuItemId", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const recipe = await st.getRecipeByMenuItemId(req.params.menuItemId);
-      if (!recipe) {
-        return res.status(404).json({ error: "Recipe not found for this menu item" });
+  app.get(
+    "/api/recipes/menu-item/:menuItemId",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const recipe = await st.getRecipeByMenuItemId(req.params.menuItemId);
+        if (!recipe) {
+          return res
+            .status(404)
+            .json({ error: "Recipe not found for this menu item" });
+        }
+
+        const ingredients = await st.getRecipeIngredients(recipe.id);
+        const ingredientsWithDetails = await Promise.all(
+          ingredients.map(async (ingredient) => {
+            const inventoryItem = await st.getInventoryItem(
+              ingredient.inventoryItemId,
+            );
+            return {
+              ...ingredient,
+              inventoryItem,
+            };
+          }),
+        );
+
+        res.json({
+          recipe,
+          ingredients: ingredientsWithDetails,
+        });
+      } catch (error) {
+        res
+          .status(500)
+          .json({
+            error:
+              error instanceof Error ? error.message : "Failed to fetch recipe",
+          });
       }
-      
-      const ingredients = await st.getRecipeIngredients(recipe.id);
-      const ingredientsWithDetails = await Promise.all(
-        ingredients.map(async (ingredient) => {
-          const inventoryItem = await st.getInventoryItem(ingredient.inventoryItemId);
-          return {
-            ...ingredient,
-            inventoryItem,
-          };
-        })
-      );
-      
-      res.json({
-        recipe,
-        ingredients: ingredientsWithDetails,
-      });
-    } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch recipe" });
-    }
-  });
+    },
+  );
 
   app.post("/api/recipes", requireAuth, async (req, res) => {
     const st = getStorage(req);
@@ -1882,56 +2211,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("recipe_created", recipe);
       res.json(recipe);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to create recipe" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error ? error.message : "Failed to create recipe",
+        });
     }
   });
 
-  app.post("/api/recipes/:recipeId/ingredients", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const bodySchema = insertRecipeIngredientSchema.omit({ recipeId: true });
-      const result = bodySchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ error: result.error });
+  app.post(
+    "/api/recipes/:recipeId/ingredients",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const bodySchema = insertRecipeIngredientSchema.omit({
+          recipeId: true,
+        });
+        const result = bodySchema.safeParse(req.body);
+        if (!result.success) {
+          return res.status(400).json({ error: result.error });
+        }
+        const ingredient = await st.createRecipeIngredient({
+          ...result.data,
+          recipeId: req.params.recipeId,
+        });
+        broadcastUpdate("recipe_ingredient_added", ingredient);
+        res.json(ingredient);
+      } catch (error) {
+        res
+          .status(500)
+          .json({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to add recipe ingredient",
+          });
       }
-      const ingredient = await st.createRecipeIngredient({
-        ...result.data,
-        recipeId: req.params.recipeId,
-      });
-      broadcastUpdate("recipe_ingredient_added", ingredient);
-      res.json(ingredient);
-    } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to add recipe ingredient" });
-    }
-  });
+    },
+  );
 
-  app.patch("/api/recipes/:recipeId/ingredients/:id", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const ingredient = await st.updateRecipeIngredient(req.params.id, req.body);
-      if (!ingredient) {
-        return res.status(404).json({ error: "Recipe ingredient not found" });
+  app.patch(
+    "/api/recipes/:recipeId/ingredients/:id",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const ingredient = await st.updateRecipeIngredient(
+          req.params.id,
+          req.body,
+        );
+        if (!ingredient) {
+          return res.status(404).json({ error: "Recipe ingredient not found" });
+        }
+        broadcastUpdate("recipe_ingredient_updated", ingredient);
+        res.json(ingredient);
+      } catch (error) {
+        res
+          .status(500)
+          .json({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to update recipe ingredient",
+          });
       }
-      broadcastUpdate("recipe_ingredient_updated", ingredient);
-      res.json(ingredient);
-    } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to update recipe ingredient" });
-    }
-  });
+    },
+  );
 
-  app.delete("/api/recipes/:recipeId/ingredients/:id", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const success = await st.deleteRecipeIngredient(req.params.id);
-      if (!success) {
-        return res.status(404).json({ error: "Recipe ingredient not found" });
+  app.delete(
+    "/api/recipes/:recipeId/ingredients/:id",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const success = await st.deleteRecipeIngredient(req.params.id);
+        if (!success) {
+          return res.status(404).json({ error: "Recipe ingredient not found" });
+        }
+        broadcastUpdate("recipe_ingredient_deleted", { id: req.params.id });
+        res.json({ success: true });
+      } catch (error) {
+        res
+          .status(500)
+          .json({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to delete recipe ingredient",
+          });
       }
-      broadcastUpdate("recipe_ingredient_deleted", { id: req.params.id });
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to delete recipe ingredient" });
-    }
-  });
+    },
+  );
 
   app.delete("/api/recipes/:id", requireAuth, async (req, res) => {
     const st = getStorage(req);
@@ -1943,7 +2315,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("recipe_deleted", { id: req.params.id });
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to delete recipe" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error ? error.message : "Failed to delete recipe",
+        });
     }
   });
 
@@ -1954,7 +2331,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const suppliers = await st.getSuppliers();
       res.json(suppliers);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch suppliers" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch suppliers",
+        });
     }
   });
 
@@ -1969,7 +2353,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("supplier_created", supplier);
       res.json(supplier);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to create supplier" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to create supplier",
+        });
     }
   });
 
@@ -1983,7 +2374,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("supplier_updated", supplier);
       res.json(supplier);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to update supplier" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to update supplier",
+        });
     }
   });
 
@@ -1997,7 +2395,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("supplier_deleted", { id: req.params.id });
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to delete supplier" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to delete supplier",
+        });
     }
   });
 
@@ -2011,12 +2416,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const items = await st.getPurchaseOrderItems(order.id);
           const itemsWithDetails = await Promise.all(
             items.map(async (item) => {
-              const inventoryItem = await st.getInventoryItem(item.inventoryItemId);
+              const inventoryItem = await st.getInventoryItem(
+                item.inventoryItemId,
+              );
               return {
                 ...item,
                 inventoryItem,
               };
-            })
+            }),
           );
           const supplier = await st.getSupplier(order.supplierId);
           return {
@@ -2024,11 +2431,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
             items: itemsWithDetails,
             supplier,
           };
-        })
+        }),
       );
       res.json(ordersWithItems);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch purchase orders" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch purchase orders",
+        });
     }
   });
 
@@ -2039,7 +2453,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!order) {
         return res.status(404).json({ error: "Purchase order not found" });
       }
-      
+
       const items = await st.getPurchaseOrderItems(order.id);
       const itemsWithDetails = await Promise.all(
         items.map(async (item) => {
@@ -2048,17 +2462,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
             ...item,
             inventoryItem,
           };
-        })
+        }),
       );
       const supplier = await st.getSupplier(order.supplierId);
-      
+
       res.json({
         ...order,
         items: itemsWithDetails,
         supplier,
       });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch purchase order" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch purchase order",
+        });
     }
   });
 
@@ -2073,7 +2494,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("purchase_order_created", order);
       res.json(order);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to create purchase order" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to create purchase order",
+        });
     }
   });
 
@@ -2091,7 +2519,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("purchase_order_item_added", item);
       res.json(item);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to add purchase order item" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to add purchase order item",
+        });
     }
   });
 
@@ -2105,24 +2540,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("purchase_order_updated", order);
       res.json(order);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to update purchase order" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to update purchase order",
+        });
     }
   });
 
-  app.post("/api/purchase-orders/:id/receive", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const order = await st.receivePurchaseOrder(req.params.id);
-      if (!order) {
-        return res.status(404).json({ error: "Purchase order not found" });
+  app.post(
+    "/api/purchase-orders/:id/receive",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const order = await st.receivePurchaseOrder(req.params.id);
+        if (!order) {
+          return res.status(404).json({ error: "Purchase order not found" });
+        }
+        broadcastUpdate("purchase_order_received", order);
+        broadcastUpdate("inventory_updated", {
+          purchaseOrderId: req.params.id,
+        });
+        res.json(order);
+      } catch (error) {
+        res
+          .status(500)
+          .json({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to receive purchase order",
+          });
       }
-      broadcastUpdate("purchase_order_received", order);
-      broadcastUpdate("inventory_updated", { purchaseOrderId: req.params.id });
-      res.json(order);
-    } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to receive purchase order" });
-    }
-  });
+    },
+  );
 
   app.delete("/api/purchase-orders/:id", requireAuth, async (req, res) => {
     const st = getStorage(req);
@@ -2134,7 +2589,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("purchase_order_deleted", { id: req.params.id });
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to delete purchase order" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to delete purchase order",
+        });
     }
   });
 
@@ -2145,16 +2607,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const wastages = await st.getWastages();
       const wastagesWithDetails = await Promise.all(
         wastages.map(async (wastage) => {
-          const inventoryItem = await st.getInventoryItem(wastage.inventoryItemId);
+          const inventoryItem = await st.getInventoryItem(
+            wastage.inventoryItemId,
+          );
           return {
             ...wastage,
             inventoryItem,
           };
-        })
+        }),
       );
       res.json(wastagesWithDetails);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch wastage records" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch wastage records",
+        });
     }
   });
 
@@ -2165,26 +2636,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!result.success) {
         return res.status(400).json({ error: result.error });
       }
-      
+
       // Auto-deduct from inventory
-      const inventoryItem = await st.getInventoryItem(result.data.inventoryItemId);
+      const inventoryItem = await st.getInventoryItem(
+        result.data.inventoryItemId,
+      );
       if (!inventoryItem) {
         return res.status(404).json({ error: "Inventory item not found" });
       }
-      
-      const newStock = parseFloat(inventoryItem.currentStock) - parseFloat(result.data.quantity);
+
+      const newStock =
+        parseFloat(inventoryItem.currentStock) -
+        parseFloat(result.data.quantity);
       if (newStock < 0) {
-        return res.status(400).json({ error: "Insufficient stock for wastage entry" });
+        return res
+          .status(400)
+          .json({ error: "Insufficient stock for wastage entry" });
       }
-      
-      await st.updateInventoryQuantity(result.data.inventoryItemId, newStock.toString());
-      
+
+      await st.updateInventoryQuantity(
+        result.data.inventoryItemId,
+        newStock.toString(),
+      );
+
       const wastage = await st.createWastage(result.data);
       broadcastUpdate("wastage_created", wastage);
       broadcastUpdate("inventory_updated", { wastageId: wastage.id });
       res.json(wastage);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to create wastage record" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to create wastage record",
+        });
     }
   });
 
@@ -2198,7 +2685,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("wastage_deleted", { id: req.params.id });
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to delete wastage record" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to delete wastage record",
+        });
     }
   });
 
@@ -2209,19 +2703,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const usages = await st.getInventoryUsages();
       res.json(usages);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch inventory usage" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch inventory usage",
+        });
     }
   });
 
-  app.get("/api/inventory-usage/item/:itemId", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const usages = await st.getInventoryUsagesByItem(req.params.itemId);
-      res.json(usages);
-    } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch item usage" });
-    }
-  });
+  app.get(
+    "/api/inventory-usage/item/:itemId",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const usages = await st.getInventoryUsagesByItem(req.params.itemId);
+        res.json(usages);
+      } catch (error) {
+        res
+          .status(500)
+          .json({
+            error:
+              error instanceof Error
+                ? error.message
+                : "Failed to fetch item usage",
+          });
+      }
+    },
+  );
 
   app.get("/api/inventory-usage/most-used", requireAuth, async (req, res) => {
     const st = getStorage(req);
@@ -2230,7 +2742,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mostUsed = await st.getMostUsedItems(limit);
       res.json(mostUsed);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch most used items" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch most used items",
+        });
     }
   });
 
@@ -2245,7 +2764,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("inventory_usage_created", usage);
       res.json(usage);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to create inventory usage record" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to create inventory usage record",
+        });
     }
   });
 
@@ -2253,10 +2779,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/inventory/seed", requireAuth, async (req, res) => {
     const st = getStorage(req);
     try {
-      if (typeof storage.seedInventoryAndRecipes !== 'function') {
-        return res.status(400).json({ error: "Seeding is only available with MongoDB storage" });
+      if (typeof storage.seedInventoryAndRecipes !== "function") {
+        return res
+          .status(400)
+          .json({ error: "Seeding is only available with MongoDB storage" });
       }
-      
+
       const result = await st.seedInventoryAndRecipes();
       broadcastUpdate("inventory_seeded", result);
       res.json({
@@ -2266,7 +2794,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error("Error seeding inventory:", error);
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to seed inventory" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error ? error.message : "Failed to seed inventory",
+        });
     }
   });
 
@@ -2274,7 +2807,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const digitalMenuSync = new DigitalMenuSyncService(storage);
   digitalMenuSync.setBroadcastFunction(broadcastUpdate);
-  
+
   app.post("/api/digital-menu/sync-start", requireAuth, async (req, res) => {
     const st = getStorage(req);
     try {
@@ -2282,7 +2815,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await digitalMenuSync.start(intervalMs);
       res.json({ success: true, message: "Digital menu sync service started" });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to start sync service" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to start sync service",
+        });
     }
   });
 
@@ -2292,7 +2832,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       digitalMenuSync.stop();
       res.json({ success: true, message: "Digital menu sync service stopped" });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to stop sync service" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to stop sync service",
+        });
     }
   });
 
@@ -2303,7 +2850,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("digital_menu_synced", { count: synced });
       res.json({ success: true, syncedOrders: synced });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to sync orders" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error ? error.message : "Failed to sync orders",
+        });
     }
   });
 
@@ -2313,7 +2865,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const status = digitalMenuSync.getSyncStatus();
       res.json(status);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to get sync status" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to get sync status",
+        });
     }
   });
 
@@ -2323,7 +2882,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const orders = await digitalMenuSync.getDigitalMenuOrders();
       res.json(orders);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch digital menu orders" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch digital menu orders",
+        });
     }
   });
 
@@ -2333,7 +2899,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const customers = await digitalMenuSync.getDigitalMenuCustomers();
       res.json(customers);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch digital menu customers" });
+      res
+        .status(500)
+        .json({
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to fetch digital menu customers",
+        });
     }
   });
 
@@ -2351,7 +2924,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const synced = await externalOrdersSync.sync();
       res.json({ success: true, syncedOrders: synced });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Sync failed" });
+      res
+        .status(500)
+        .json({
+          error: error instanceof Error ? error.message : "Sync failed",
+        });
     }
   });
 
@@ -2413,49 +2990,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Print a KOT to one or more printers by ID
   // Returns per-printer results so the frontend knows which ones failed
-  app.post("/api/printers/print-kot/:orderId", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const { buildKOTEscPos, printToThermal } = await import("./utils/escpos");
-      const { printerIds } = req.body as { printerIds?: string[] };
+  app.post(
+    "/api/printers/print-kot/:orderId",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const { buildKOTEscPos, printToThermal } = await import(
+          "./utils/escpos"
+        );
+        const { printerIds } = req.body as { printerIds?: string[] };
 
-      const order = await st.getOrder(req.params.orderId);
-      if (!order) return res.status(404).json({ error: "Order not found" });
+        const order = await st.getOrder(req.params.orderId);
+        if (!order) return res.status(404).json({ error: "Order not found" });
 
-      const orderItems = await st.getOrderItems(req.params.orderId);
-      let tableNumber: string | undefined;
-      let floorName: string | undefined;
-      if (order.tableId) {
-        const tbl = await st.getTable(order.tableId);
-        tableNumber = tbl?.tableNumber;
-        if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
+        const orderItems = await st.getOrderItems(req.params.orderId);
+        let tableNumber: string | undefined;
+        let floorName: string | undefined;
+        if (order.tableId) {
+          const tbl = await st.getTable(order.tableId);
+          tableNumber = tbl?.tableNumber;
+          if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
+        }
+
+        const allPrinters = await mongoStorage.getPrinters();
+        const targets = printerIds?.length
+          ? allPrinters.filter((p) => printerIds.includes(p.id))
+          : allPrinters.filter((p) => p.type === "KOT");
+
+        if (targets.length === 0) {
+          return res.json({ results: [], allFailed: true });
+        }
+
+        const kotNumber = `KOT-${order.id.substring(0, 8).toUpperCase()}`;
+        const escData = buildKOTEscPos({
+          order,
+          items: orderItems,
+          tableNumber,
+          floorName,
+          kotNumber,
+          isUpdated: (order.kotCount ?? 0) > 1,
+        });
+
+        const results = await Promise.all(
+          targets.map(async (p) => {
+            const result = await printToThermal(p.ip, p.port, escData);
+            return { id: p.id, name: p.name, ...result };
+          }),
+        );
+
+        const allFailed = results.every((r) => !r.success);
+        res.json({ results, allFailed });
+      } catch (e: any) {
+        res.status(500).json({ error: e.message });
       }
-
-      const allPrinters = await mongoStorage.getPrinters();
-      const targets = printerIds?.length
-        ? allPrinters.filter(p => printerIds.includes(p.id))
-        : allPrinters.filter(p => p.type === "KOT");
-
-      if (targets.length === 0) {
-        return res.json({ results: [], allFailed: true });
-      }
-
-      const kotNumber = `KOT-${order.id.substring(0, 8).toUpperCase()}`;
-      const escData = buildKOTEscPos({ order, items: orderItems, tableNumber, floorName, kotNumber, isUpdated: (order.kotCount ?? 0) > 1 });
-
-      const results = await Promise.all(
-        targets.map(async (p) => {
-          const result = await printToThermal(p.ip, p.port, escData);
-          return { id: p.id, name: p.name, ...result };
-        })
-      );
-
-      const allFailed = results.every(r => !r.success);
-      res.json({ results, allFailed });
-    } catch (e: any) {
-      res.status(500).json({ error: e.message });
-    }
-  });
+    },
+  );
 
   // Test print to a specific printer — queues a job for the local print agent
   app.post("/api/printers/:id/test", requireAuth, async (req, res) => {
@@ -2463,24 +3053,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const printer = await mongoStorage.getPrinter(req.params.id);
       if (!printer) return res.status(404).json({ error: "Printer not found" });
 
-      const ESC = 0x1b, GS = 0x1d, LF = 0x0a;
-      const now = new Date().toLocaleString("en-IN");
+      const ESC = 0x1b,
+        GS = 0x1d,
+        LF = 0x0a;
+      const now = new Date().toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata",
+      });
       const parts = [
-        Buffer.from([ESC, 0x40]),              // init
-        Buffer.from([ESC, 0x61, 0x01]),        // center
-        Buffer.from([ESC, 0x21, 0x30]),        // double size
+        Buffer.from([ESC, 0x40]), // init
+        Buffer.from([ESC, 0x61, 0x01]), // center
+        Buffer.from([ESC, 0x21, 0x30]), // double size
         Buffer.from("TEST PRINT\n", "utf8"),
-        Buffer.from([ESC, 0x21, 0x00]),        // normal
+        Buffer.from([ESC, 0x21, 0x00]), // normal
         Buffer.from(`${printer.name}\n`, "utf8"),
         Buffer.from(`IP: ${printer.ip}:${printer.port}\n`, "utf8"),
         Buffer.from(`Type: ${printer.type}\n`, "utf8"),
         Buffer.from(`Time: ${now}\n`, "utf8"),
         Buffer.from("--------------------------------\n", "utf8"),
-        Buffer.from([ESC, 0x45, 0x01]),        // bold
+        Buffer.from([ESC, 0x45, 0x01]), // bold
         Buffer.from("Printer is Online!\n", "utf8"),
         Buffer.from([ESC, 0x45, 0x00]),
         Buffer.from([LF, LF, LF, LF]),
-        Buffer.from([GS, 0x56, 0x42, 0x03]),   // cut
+        Buffer.from([GS, 0x56, 0x42, 0x03]), // cut
       ];
       const data = Buffer.concat(parts);
 
