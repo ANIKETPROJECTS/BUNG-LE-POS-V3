@@ -5552,21 +5552,20 @@ async function registerRoutes(app2) {
   });
   app2.post("/api/admin/qr-token", requireAuth, async (req, res) => {
     try {
-      const parsedId = z3.string().min(1).max(100).safeParse(req.body?.tableId);
-      if (!parsedId.success) return res.status(400).json({ error: "Invalid table ID" });
-      const st = getStorage(req);
-      const table = await st.getTable(parsedId.data);
-      if (!table) return res.status(404).json({ error: "Table not found" });
-      const floor = table.floorId ? await st.getFloor(table.floorId) : void 0;
-      const tableName = String(table.tableNumber ?? "").trim();
-      const floorName = String(floor?.name ?? "").trim();
-      if (!tableName || !floorName || tableName.length > 100 || floorName.length > 100) {
+      const input = z3.object({
+        tableId: z3.string().min(1).max(100).optional(),
+        tableName: z3.string().trim().min(1).max(100),
+        floorName: z3.string().trim().min(1).max(100),
+        sessionSecret: z3.string().min(1).max(500)
+      }).safeParse(req.body);
+      if (!input.success) return res.status(400).json({ error: "Table name, floor name, and session secret are required" });
+      const tableName = input.data.tableName;
+      const floorName = input.data.floorName;
+      if (!/^[^\u0000-\u001f\u007f]+$/.test(tableName) || !/^[^\u0000-\u001f\u007f]+$/.test(floorName)) {
         return res.status(400).json({ error: "Table or floor name is invalid" });
       }
       const encodedPayload = Buffer.from(JSON.stringify({ tableName, floorName, v: 1 }), "utf8").toString("base64url");
-      const secret = process.env.SESSION_SECRET;
-      if (!secret) return res.status(500).json({ error: "QR signing is not configured" });
-      const encodedSignature = crypto.createHmac("sha256", secret).update(encodedPayload).digest("base64url");
+      const encodedSignature = crypto.createHmac("sha256", input.data.sessionSecret).update(encodedPayload).digest("base64url");
       const token = `${encodedPayload}.${encodedSignature}`;
       const url = `https://bungle.atdigitalmenu.com/${token}`;
       const qrDataUrl = await QRCode.toDataURL(url, { errorCorrectionLevel: "M", margin: 2, width: 320 });

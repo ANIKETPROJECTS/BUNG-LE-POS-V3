@@ -314,15 +314,23 @@ export default function TableManagementPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ type: "floor" | "table"; id: string; name: string } | null>(null);
   const [qrTable, setQrTable] = useState<Table | null>(null);
   const [qrData, setQrData] = useState<{ url: string; token: string; qrDataUrl: string } | null>(null);
+  const [qrForm, setQrForm] = useState({ tableName: "", floorName: "", sessionSecret: "" });
   const qrMutation = useMutation({
-    mutationFn: async (tableId: string) => {
-      const res = await apiRequest("POST", "/api/admin/qr-token", { tableId });
+    mutationFn: async (form: typeof qrForm) => {
+      const res = await apiRequest("POST", "/api/admin/qr-token", form);
       return res.json();
     },
     onSuccess: setQrData,
     onError: (err) => toast({ title: extractErrorMessage(err), variant: "destructive" }),
   });
-  const openQR = (table: Table) => { setQrTable(table); setQrData(null); qrMutation.mutate(table.id); };
+  const openQR = (table: Table) => {
+    setQrTable(table); setQrData(null);
+    setQrForm({
+      tableName: table.tableNumber,
+      floorName: floors.find(f => f.id === table.floorId)?.name ?? "",
+      sessionSecret: "",
+    });
+  };
   const downloadQR = () => {
     if (!qrData) return;
     const link = document.createElement("a"); link.href = qrData.qrDataUrl;
@@ -646,18 +654,17 @@ export default function TableManagementPage() {
           <div className="space-y-4">
             <div className="space-y-1">
               <Label>Table name</Label>
-              <Input value={qrTable?.tableNumber ?? ""} readOnly />
+              <Input value={qrForm.tableName} onChange={e => setQrForm({ ...qrForm, tableName: e.target.value })} />
             </div>
             <div className="space-y-1">
               <Label>Floor name</Label>
-              <Input value={floors.find(f => f.id === qrTable?.floorId)?.name ?? "—"} readOnly />
+              <Input value={qrForm.floorName} onChange={e => setQrForm({ ...qrForm, floorName: e.target.value })} />
             </div>
             <div className="space-y-1">
               <Label>Session secret</Label>
-              <Input type="password" value="server-managed-session-secret" readOnly autoComplete="off" />
-              <p className="text-xs text-muted-foreground">Stored and used only on the server.</p>
+              <Input type="password" value={qrForm.sessionSecret} onChange={e => setQrForm({ ...qrForm, sessionSecret: e.target.value })} autoComplete="off" />
             </div>
-            <Button className="bg-zinc-900 hover:bg-zinc-800" onClick={() => qrTable && qrMutation.mutate(qrTable.id)} disabled={qrMutation.isPending}>
+            <Button className="bg-zinc-900 hover:bg-zinc-800" onClick={() => qrMutation.mutate(qrForm)} disabled={qrMutation.isPending}>
               {qrMutation.isPending ? "Generating…" : "Generate"}
             </Button>
             {qrData && <>
@@ -672,7 +679,7 @@ export default function TableManagementPage() {
                 </div>
               </div>
               <img src={qrData.qrDataUrl} alt={`QR code for ${qrTable?.tableNumber}`} className="mx-auto h-64 w-64" />
-              <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => qrTable && qrMutation.mutate(qrTable.id)}><RefreshCw className="mr-1 h-4 w-4" />Regenerate</Button><Button onClick={downloadQR}><Download className="mr-1 h-4 w-4" />Download QR</Button></div>
+              <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => qrMutation.mutate(qrForm)}><RefreshCw className="mr-1 h-4 w-4" />Regenerate</Button><Button onClick={downloadQR}><Download className="mr-1 h-4 w-4" />Download QR</Button></div>
             </>}
           </div>
         </DialogContent>
