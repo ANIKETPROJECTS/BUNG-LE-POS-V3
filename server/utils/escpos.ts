@@ -28,10 +28,28 @@ export function buildKOTEscPos(opts: {
   restaurantName?: string;
   isUpdated?: boolean;
 }): Buffer {
-  const { order, items, tableNumber, floorName, kotNumber, restaurantName = "Restaurant POS", isUpdated = false } = opts;
+  const {
+    order,
+    items,
+    tableNumber,
+    floorName,
+    kotNumber,
+    restaurantName = "Restaurant POS",
+    isUpdated = false,
+  } = opts;
   const now = new Date(order.createdAt);
-  const dateStr = now.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-  const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const dateStr = now.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  });
+  const timeStr = now.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata",
+  });
   const sep = "--------------------------------";
 
   const parts: Buffer[] = [];
@@ -73,14 +91,20 @@ export function buildKOTEscPos(opts: {
   parts.push(text(`Date : ${dateStr}  ${timeStr}\n`));
 
   if (order.orderType === "dine-in" && tableNumber) {
-    parts.push(text(`Table: ${tableNumber}${floorName ? `  (${floorName})` : ""}\n`));
+    parts.push(
+      text(`Table: ${tableNumber}${floorName ? `  (${floorName})` : ""}\n`),
+    );
   } else {
     const typeLabel = order.orderType === "delivery" ? "Delivery" : "Pickup";
     parts.push(text(`Type : ${typeLabel}\n`));
   }
 
   if (order.customerName) {
-    parts.push(text(`Cust : ${order.customerName}${order.customerPhone ? `  ${order.customerPhone}` : ""}\n`));
+    parts.push(
+      text(
+        `Cust : ${order.customerName}${order.customerPhone ? `  ${order.customerPhone}` : ""}\n`,
+      ),
+    );
   }
 
   parts.push(text(sep + "\n"));
@@ -165,10 +189,20 @@ export function buildBillEscPos(opts: {
     gstNumber = "",
   } = opts;
 
-  const sep  = "--------------------------------";
+  const sep = "--------------------------------";
   const sep2 = "================================";
-  const dateStr = date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-  const timeStr = date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const dateStr = date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Kolkata",
+  });
+  const timeStr = date.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata",
+  });
 
   const parts: Buffer[] = [];
 
@@ -192,7 +226,9 @@ export function buildBillEscPos(opts: {
   parts.push(text(`Date    : ${dateStr}  ${timeStr}\n`));
 
   if (orderType === "dine-in" && tableNumber) {
-    parts.push(text(`Table   : ${tableNumber}${floorName ? `  (${floorName})` : ""}\n`));
+    parts.push(
+      text(`Table   : ${tableNumber}${floorName ? `  (${floorName})` : ""}\n`),
+    );
   } else if (orderType === "delivery") {
     parts.push(text(`Type    : Delivery\n`));
   } else if (orderType === "pickup") {
@@ -200,7 +236,11 @@ export function buildBillEscPos(opts: {
   }
 
   if (customerName) {
-    parts.push(text(`Customer: ${customerName}${customerPhone ? `  ${customerPhone}` : ""}\n`));
+    parts.push(
+      text(
+        `Customer: ${customerName}${customerPhone ? `  ${customerPhone}` : ""}\n`,
+      ),
+    );
   }
 
   parts.push(text(sep + "\n"));
@@ -213,8 +253,8 @@ export function buildBillEscPos(opts: {
 
   // Items
   items.forEach((item) => {
-    const name   = item.name.substring(0, 17).padEnd(17);
-    const qty    = String(item.quantity).padStart(3);
+    const name = item.name.substring(0, 17).padEnd(17);
+    const qty = String(item.quantity).padStart(3);
     const amount = (item.price * item.quantity).toFixed(0).padStart(9);
     parts.push(text(`${name}${qty}${amount}\n`));
     if (item.notes) {
@@ -235,7 +275,7 @@ export function buildBillEscPos(opts: {
   if (gstEnabled && cgst > 0) {
     row("CGST", `Rs.${cgst.toFixed(2)}`);
     row("SGST", `Rs.${sgst.toFixed(2)}`);
-  } else if (!gstEnabled && (cgst + sgst) > 0) {
+  } else if (!gstEnabled && cgst + sgst > 0) {
     row("Tax", `Rs.${(cgst + sgst).toFixed(2)}`);
   }
   if (serviceCharge > 0) {
@@ -248,7 +288,7 @@ export function buildBillEscPos(opts: {
   parts.push(cmd(ESC, 0x45, 0x01));
   parts.push(cmd(ESC, 0x21, 0x10)); // double width
   const totalLabel = "TOTAL".padEnd(13);
-  const totalVal   = `Rs.${total.toFixed(2)}`.padStart(18);
+  const totalVal = `Rs.${total.toFixed(2)}`.padStart(18);
   parts.push(text(`${totalLabel}${totalVal}\n`));
   parts.push(cmd(ESC, 0x21, 0x00));
   parts.push(cmd(ESC, 0x45, 0x00));
@@ -273,7 +313,12 @@ export interface PrintResult {
   error?: string;
 }
 
-export function printToThermal(ip: string, port: number, data: Buffer, timeoutMs = 5000): Promise<PrintResult> {
+export function printToThermal(
+  ip: string,
+  port: number,
+  data: Buffer,
+  timeoutMs = 5000,
+): Promise<PrintResult> {
   return new Promise((resolve) => {
     const socket = new net.Socket();
     let settled = false;
@@ -285,7 +330,10 @@ export function printToThermal(ip: string, port: number, data: Buffer, timeoutMs
       resolve(result);
     };
 
-    const timer = setTimeout(() => done({ success: false, error: "Connection timed out" }), timeoutMs);
+    const timer = setTimeout(
+      () => done({ success: false, error: "Connection timed out" }),
+      timeoutMs,
+    );
 
     socket.connect(port, ip, () => {
       socket.write(data, (err) => {
@@ -305,7 +353,11 @@ export function printToThermal(ip: string, port: number, data: Buffer, timeoutMs
   });
 }
 
-export function checkPrinterOnline(ip: string, port: number, timeoutMs = 3000): Promise<boolean> {
+export function checkPrinterOnline(
+  ip: string,
+  port: number,
+  timeoutMs = 3000,
+): Promise<boolean> {
   return new Promise((resolve) => {
     const socket = new net.Socket();
     let done = false;
