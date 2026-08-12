@@ -139,9 +139,15 @@ async function queueBillPrintJobs(opts: {
   try {
     const { buildBillEscPos } = await import("./utils/escpos");
     const printers = await mongoStorage.getPrinters();
-    const billPrinters = printers.filter(
+    let billPrinters = printers.filter(
       (p) => p.type === "Bill" && p.autoPrint,
     );
+    // Many installations use one thermal printer for both KOT and customer
+    // bills. If no dedicated bill printer exists, use the configured KOT
+    // printer rather than silently skipping the checkout print.
+    if (billPrinters.length === 0) {
+      billPrinters = printers.filter((p) => p.type === "KOT" && p.autoPrint);
+    }
     if (billPrinters.length === 0) return;
 
     const parsedItems = JSON.parse(opts.invoice.items || "[]");
@@ -1064,7 +1070,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tableNumber = tbl?.tableNumber;
           if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
         }
-        const kotNumber = await getDailyBillingNumber(st, updatedOrder);
+        const baseKotNumber = await getDailyBillingNumber(st, updatedOrder);
+        const baseSequence = Number(baseKotNumber.slice(-2));
+        const kotSequence = baseSequence + Math.max(0, (updatedOrder.kotCount ?? 1) - 1);
+        const kotNumber = `${baseKotNumber.slice(0, -2)}${String(kotSequence).padStart(2, "0")}`;
         const escData = buildKOTEscPos({
           order: updatedOrder,
           items: orderItems,
@@ -3060,7 +3069,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.json({ results: [], allFailed: true });
         }
 
-        const kotNumber = await getDailyBillingNumber(st, order);
+        const baseKotNumber = await getDailyBillingNumber(st, order);
+        const kotSequence = Number(baseKotNumber.slice(-2)) + Math.max(0, (order.kotCount ?? 1) - 1);
+        const kotNumber = `${baseKotNumber.slice(0, -2)}${String(kotSequence).padStart(2, "0")}`;
         const escData = buildKOTEscPos({
           order,
           items: orderItems.filter((item) => item.status === "new"),

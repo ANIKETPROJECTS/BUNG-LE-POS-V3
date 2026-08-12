@@ -132,8 +132,9 @@ export function buildKOTEscPos(opts: {
     parts.push(cmd(ESC, 0x21, 0x08));
     nameLines.forEach((nameLine, lineIndex) => {
       const prefix = lineIndex === 0 ? `${num} ` : "   ";
-      const suffix = lineIndex === nameLines.length - 1 ? ` ${qty}` : "";
-      parts.push(text(`${prefix}${nameLine}${suffix}\n`));
+      const itemText = `${prefix}${nameLine}`;
+      const suffix = lineIndex === nameLines.length - 1 ? qty : "";
+      parts.push(text(`${itemText.padEnd(29)}${suffix}\n`));
     });
     parts.push(cmd(ESC, 0x21, 0x00));
     if (item.notes) {

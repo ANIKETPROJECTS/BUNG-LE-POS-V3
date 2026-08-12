@@ -331,8 +331,9 @@ function buildKOTEscPos(opts) {
     parts.push(cmd(ESC, 33, 8));
     nameLines.forEach((nameLine, lineIndex) => {
       const prefix = lineIndex === 0 ? `${num} ` : "   ";
-      const suffix = lineIndex === nameLines.length - 1 ? ` ${qty}` : "";
-      parts.push(text(`${prefix}${nameLine}${suffix}
+      const itemText = `${prefix}${nameLine}`;
+      const suffix = lineIndex === nameLines.length - 1 ? qty : "";
+      parts.push(text(`${itemText.padEnd(29)}${suffix}
 `));
     });
     parts.push(cmd(ESC, 33, 0));
@@ -5434,9 +5435,12 @@ async function queueBillPrintJobs(opts) {
   try {
     const { buildBillEscPos: buildBillEscPos2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
     const printers = await mongoStorage.getPrinters();
-    const billPrinters = printers.filter(
+    let billPrinters = printers.filter(
       (p) => p.type === "Bill" && p.autoPrint
     );
+    if (billPrinters.length === 0) {
+      billPrinters = printers.filter((p) => p.type === "KOT" && p.autoPrint);
+    }
     if (billPrinters.length === 0) return;
     const parsedItems = JSON.parse(opts.invoice.items || "[]");
     const escData = buildBillEscPos2({
@@ -6207,7 +6211,10 @@ async function registerRoutes(app2) {
           tableNumber = tbl?.tableNumber;
           if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
         }
-        const kotNumber = await getDailyBillingNumber(st, updatedOrder);
+        const baseKotNumber = await getDailyBillingNumber(st, updatedOrder);
+        const baseSequence = Number(baseKotNumber.slice(-2));
+        const kotSequence = baseSequence + Math.max(0, (updatedOrder.kotCount ?? 1) - 1);
+        const kotNumber = `${baseKotNumber.slice(0, -2)}${String(kotSequence).padStart(2, "0")}`;
         const escData = buildKOTEscPos2({
           order: updatedOrder,
           items: orderItems,
@@ -7782,7 +7789,9 @@ async function registerRoutes(app2) {
         if (targets.length === 0) {
           return res.json({ results: [], allFailed: true });
         }
-        const kotNumber = await getDailyBillingNumber(st, order);
+        const baseKotNumber = await getDailyBillingNumber(st, order);
+        const kotSequence = Number(baseKotNumber.slice(-2)) + Math.max(0, (order.kotCount ?? 1) - 1);
+        const kotNumber = `${baseKotNumber.slice(0, -2)}${String(kotSequence).padStart(2, "0")}`;
         const escData = buildKOTEscPos2({
           order,
           items: orderItems.filter((item) => item.status === "new"),
