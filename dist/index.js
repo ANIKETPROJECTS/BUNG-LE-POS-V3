@@ -277,7 +277,7 @@ function buildKOTEscPos(opts) {
   parts.push(text("Kitchen Order Ticket\n"));
   parts.push(text(sep + "\n"));
   parts.push(cmd(ESC, 97, 0));
-  const sequence = kotNumber.slice(-2);
+  const sequence = opts.sequence ?? kotNumber.slice(-2);
   parts.push(cmd(ESC, 97, 1));
   parts.push(cmd(ESC, 33, 48));
   parts.push(cmd(ESC, 69, 1));
@@ -6214,13 +6214,14 @@ async function registerRoutes(app2) {
         const baseKotNumber = await getDailyBillingNumber(st, updatedOrder);
         const baseSequence = Number(baseKotNumber.slice(-2));
         const kotSequence = baseSequence + Math.max(0, (updatedOrder.kotCount ?? 1) - 1);
-        const kotNumber = `${baseKotNumber.slice(0, -2)}${String(kotSequence).padStart(2, "0")}`;
+        const kotNumber = baseKotNumber;
         const escData = buildKOTEscPos2({
           order: updatedOrder,
           items: orderItems,
           tableNumber,
           floorName,
           kotNumber,
+          sequence: String(kotSequence).padStart(2, "0"),
           isUpdated: (updatedOrder.kotCount ?? 0) > 1
         });
         const escBase64 = Buffer.from(escData).toString("base64");
@@ -7791,13 +7792,14 @@ async function registerRoutes(app2) {
         }
         const baseKotNumber = await getDailyBillingNumber(st, order);
         const kotSequence = Number(baseKotNumber.slice(-2)) + Math.max(0, (order.kotCount ?? 1) - 1);
-        const kotNumber = `${baseKotNumber.slice(0, -2)}${String(kotSequence).padStart(2, "0")}`;
+        const kotNumber = baseKotNumber;
         const escData = buildKOTEscPos2({
           order,
           items: orderItems.filter((item) => item.status === "new"),
           tableNumber,
           floorName,
           kotNumber,
+          sequence: String(kotSequence).padStart(2, "0"),
           isUpdated: (order.kotCount ?? 0) > 1
         });
         const results = await Promise.all(
