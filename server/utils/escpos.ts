@@ -68,24 +68,24 @@ export function buildKOTEscPos(opts: {
   parts.push(cmd(ESC, 0x21, 0x00));
   parts.push(text("Kitchen Order Ticket\n"));
 
-  // UPDATED banner — shown when KOT is re-sent
-  if (isUpdated) {
-    parts.push(text(sep + "\n"));
-    parts.push(cmd(ESC, 0x21, 0x10)); // double width
-    parts.push(cmd(ESC, 0x45, 0x01)); // bold on
-    parts.push(text("  *** UPDATED KOT ***\n"));
-    parts.push(cmd(ESC, 0x45, 0x00)); // bold off
-    parts.push(cmd(ESC, 0x21, 0x00)); // normal size
-  }
-
   parts.push(text(sep + "\n"));
 
   // Left align for details
   parts.push(cmd(ESC, 0x61, 0x00));
 
-  // Bold KOT number
+  // Large daily chef sequence (01, 02, 03...). The full BG number remains
+  // available on the customer invoice; the short sequence is easiest to read
+  // and call out in the kitchen.
+  const sequence = kotNumber.slice(-2);
+  parts.push(cmd(ESC, 0x61, 0x01));
+  parts.push(cmd(ESC, 0x21, 0x30));
   parts.push(cmd(ESC, 0x45, 0x01));
-  parts.push(text(`${kotNumber}\n`));
+  parts.push(text(`SEQ ${sequence}\n`));
+  parts.push(cmd(ESC, 0x45, 0x00));
+  parts.push(cmd(ESC, 0x21, 0x00));
+  parts.push(cmd(ESC, 0x61, 0x00));
+  parts.push(cmd(ESC, 0x45, 0x01));
+  parts.push(text(`KOT: ${kotNumber}\n`));
   parts.push(cmd(ESC, 0x45, 0x00));
 
   parts.push(text(`Date : ${dateStr}  ${timeStr}\n`));
@@ -118,10 +118,23 @@ export function buildKOTEscPos(opts: {
   // Items
   items.forEach((item, idx) => {
     const num = String(idx + 1).padEnd(2);
-    const name = item.name.substring(0, 24).padEnd(24);
     const qty = String(item.quantity).padStart(3);
-    parts.push(cmd(ESC, 0x21, 0x08)); // double height
-    parts.push(text(`${num} ${name} ${qty}\n`));
+    const words = item.name.split(/\s+/);
+    const nameLines: string[] = [];
+    let line = "";
+    for (const word of words) {
+      if ((line + (line ? " " : "") + word).length > 24 && line) {
+        nameLines.push(line);
+        line = word;
+      } else line += (line ? " " : "") + word;
+    }
+    if (line) nameLines.push(line);
+    parts.push(cmd(ESC, 0x21, 0x08));
+    nameLines.forEach((nameLine, lineIndex) => {
+      const prefix = lineIndex === 0 ? `${num} ` : "   ";
+      const suffix = lineIndex === nameLines.length - 1 ? ` ${qty}` : "";
+      parts.push(text(`${prefix}${nameLine}${suffix}\n`));
+    });
     parts.push(cmd(ESC, 0x21, 0x00));
     if (item.notes) {
       parts.push(text(`   >> ${item.notes}\n`));

@@ -275,18 +275,19 @@ function buildKOTEscPos(opts) {
   parts.push(text(restaurantName + "\n"));
   parts.push(cmd(ESC, 33, 0));
   parts.push(text("Kitchen Order Ticket\n"));
-  if (isUpdated) {
-    parts.push(text(sep + "\n"));
-    parts.push(cmd(ESC, 33, 16));
-    parts.push(cmd(ESC, 69, 1));
-    parts.push(text("  *** UPDATED KOT ***\n"));
-    parts.push(cmd(ESC, 69, 0));
-    parts.push(cmd(ESC, 33, 0));
-  }
   parts.push(text(sep + "\n"));
   parts.push(cmd(ESC, 97, 0));
+  const sequence = kotNumber.slice(-2);
+  parts.push(cmd(ESC, 97, 1));
+  parts.push(cmd(ESC, 33, 48));
   parts.push(cmd(ESC, 69, 1));
-  parts.push(text(`${kotNumber}
+  parts.push(text(`SEQ ${sequence}
+`));
+  parts.push(cmd(ESC, 69, 0));
+  parts.push(cmd(ESC, 33, 0));
+  parts.push(cmd(ESC, 97, 0));
+  parts.push(cmd(ESC, 69, 1));
+  parts.push(text(`KOT: ${kotNumber}
 `));
   parts.push(cmd(ESC, 69, 0));
   parts.push(text(`Date : ${dateStr}  ${timeStr}
@@ -316,11 +317,24 @@ function buildKOTEscPos(opts) {
   parts.push(text(sep + "\n"));
   items.forEach((item, idx) => {
     const num = String(idx + 1).padEnd(2);
-    const name = item.name.substring(0, 24).padEnd(24);
     const qty = String(item.quantity).padStart(3);
+    const words = item.name.split(/\s+/);
+    const nameLines = [];
+    let line = "";
+    for (const word of words) {
+      if ((line + (line ? " " : "") + word).length > 24 && line) {
+        nameLines.push(line);
+        line = word;
+      } else line += (line ? " " : "") + word;
+    }
+    if (line) nameLines.push(line);
     parts.push(cmd(ESC, 33, 8));
-    parts.push(text(`${num} ${name} ${qty}
+    nameLines.forEach((nameLine, lineIndex) => {
+      const prefix = lineIndex === 0 ? `${num} ` : "   ";
+      const suffix = lineIndex === nameLines.length - 1 ? ` ${qty}` : "";
+      parts.push(text(`${prefix}${nameLine}${suffix}
 `));
+    });
     parts.push(cmd(ESC, 33, 0));
     if (item.notes) {
       parts.push(text(`   >> ${item.notes}

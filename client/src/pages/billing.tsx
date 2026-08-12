@@ -732,7 +732,8 @@ export default function BillingPage() {
         return;
       }
 
-      const shouldPrint = pendingKotAction === "kot-print";
+      // Checkout is the final payment action: always print the customer invoice.
+      const shouldPrint = true;
 
       const checkoutResponse = await checkoutMutation.mutateAsync({ 
         orderId: orderId, 
@@ -895,7 +896,8 @@ export default function BillingPage() {
           }))
         : undefined;
 
-      const shouldPrint = pendingKotAction === "kot-print";
+      // Checkout is the final payment action: always print the customer invoice.
+      const shouldPrint = true;
 
       const checkoutResponse = await checkoutMutation.mutateAsync({ 
         orderId: orderId, 
