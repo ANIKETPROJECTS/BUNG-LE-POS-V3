@@ -32,6 +32,7 @@ import { generateKOTPDF } from "./utils/kotGenerator";
 import { DigitalMenuSyncService } from "./digital-menu-sync";
 import { ExternalOrdersSyncService } from "./external-orders-sync";
 import { mongoStorage } from "./mongo-storage";
+import { getDailyBillingNumber, getDailyKotSequence } from "./utils/billing-sequence";
 import {
   computeBillTotals,
   DEFAULT_TAX_SETTINGS,
@@ -107,27 +108,6 @@ async function upsertInvoice(
 }
 
 /** Human-readable daily sequence shared by KOT and the final customer invoice. */
-async function getDailyBillingNumber(st: IStorage, order: import("@shared/schema").Order): Promise<string> {
-  const date = new Date(order.createdAt);
-  const yymmdd = date.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }).replace(/-/g, "").slice(2);
-  const dayOrders = (await st.getOrders())
-    .filter((o) => new Date(o.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) ===
-      date.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }))
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  const sequence = Math.max(1, dayOrders.findIndex((o) => o.id === order.id) + 1);
-  return `BG${yymmdd}${String(sequence).padStart(2, "0")}`;
-}
-
-async function getDailyKotSequence(st: IStorage, order: import("@shared/schema").Order): Promise<number> {
-  const day = new Date(order.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-  const orders = (await st.getOrders())
-    .filter((o) => new Date(o.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) === day)
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  return orders
-    .filter((o) => new Date(o.createdAt).getTime() < new Date(order.createdAt).getTime() ||
-      (o.createdAt === order.createdAt && o.id !== order.id))
-    .reduce((total, o) => total + (o.kotCount ?? 0), 0) + (order.kotCount ?? 1);
-}
 
 async function queueBillPrintJobs(opts: {
   invoice: {

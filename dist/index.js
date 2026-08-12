@@ -4230,6 +4230,21 @@ function computeBillTotals(subtotal, taxRatePercent, serviceChargePercent) {
   return { subtotal: safeSubtotal, tax, cgst, sgst, serviceCharge, total };
 }
 
+// server/utils/billing-sequence.ts
+function dayOf(order) {
+  return new Date(order.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+}
+async function getDailyBillingNumber(st, order) {
+  const orders = (await st.getOrders()).filter((o) => dayOf(o) === dayOf(order)).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  const sequence = Math.max(1, orders.findIndex((o) => o.id === order.id) + 1);
+  const yymmdd = dayOf(order).replace(/-/g, "").slice(2);
+  return `BG${yymmdd}${String(sequence).padStart(2, "0")}`;
+}
+async function getDailyKotSequence(st, order) {
+  const orders = (await st.getOrders()).filter((o) => dayOf(o) === dayOf(order)).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  return orders.filter((o) => new Date(o.createdAt).getTime() < new Date(order.createdAt).getTime()).reduce((total, o) => total + (o.kotCount ?? 0), 0) + (order.kotCount ?? 1);
+}
+
 // server/digital-menu-sync.ts
 var STALE_CLAIM_MS = 2 * 60 * 1e3;
 var DigitalMenuSyncService = class {
@@ -4582,14 +4597,15 @@ var DigitalMenuSyncService = class {
           tableNumber = tbl?.tableNumber;
           if (tbl?.floorId) floorName = (await this.storage.getFloor(tbl.floorId))?.name;
         }
-        const kotNumber = `KOT-${updatedOrder.id.substring(0, 8).toUpperCase()}`;
+        const kotNumber = await getDailyBillingNumber(this.storage, updatedOrder);
+        const kotSequence = await getDailyKotSequence(this.storage, updatedOrder);
         const escData = buildKOTEscPos2({
           order: updatedOrder,
           items: orderItems,
           tableNumber,
           floorName,
           kotNumber,
-          isUpdated: false
+          sequence: String(kotSequence).padStart(2, "0")
         });
         const escBase64 = Buffer.from(escData).toString("base64");
         for (const printer of kotPrinters) {
@@ -4707,7 +4723,7 @@ var DigitalMenuSyncService = class {
         await this.updateCustomerTableStatus(checkedOutOrder.customerPhone, "free");
       }
       const invoices = await this.storage.getInvoices();
-      const invoiceNumber = `INV-${String(invoices.length + 1).padStart(4, "0")}`;
+      const invoiceNumber = await getDailyBillingNumber(this.storage, checkedOutOrder);
       const invoiceItemsData = orderItems.map((item) => ({
         name: item.name,
         quantity: item.quantity,
@@ -5366,14 +5382,15 @@ var ExternalOrdersSyncService = class {
         if (resolvedTable?.floorId) {
           floorName = (await this.storage.getFloor(resolvedTable.floorId))?.name;
         }
-        const kotNumber = `KOT-${updatedOrder.id.substring(0, 8).toUpperCase()}`;
+        const kotNumber = await getDailyBillingNumber(this.storage, updatedOrder);
+        const kotSequence = await getDailyKotSequence(this.storage, updatedOrder);
         const escData = buildKOTEscPos2({
           order: updatedOrder,
           items: orderItems,
           tableNumber,
           floorName,
           kotNumber,
-          isUpdated: false
+          sequence: String(kotSequence).padStart(2, "0")
         });
         const escBase64 = Buffer.from(escData).toString("base64");
         for (const printer of kotPrinters) {
@@ -5437,18 +5454,6 @@ async function upsertInvoice(st, orderId, data) {
     return updated ?? existing;
   }
   return st.createInvoice(data);
-}
-async function getDailyBillingNumber(st, order) {
-  const date = new Date(order.createdAt);
-  const yymmdd = date.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }).replace(/-/g, "").slice(2);
-  const dayOrders = (await st.getOrders()).filter((o) => new Date(o.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) === date.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" })).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  const sequence = Math.max(1, dayOrders.findIndex((o) => o.id === order.id) + 1);
-  return `BG${yymmdd}${String(sequence).padStart(2, "0")}`;
-}
-async function getDailyKotSequence(st, order) {
-  const day = new Date(order.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-  const orders = (await st.getOrders()).filter((o) => new Date(o.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) === day).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  return orders.filter((o) => new Date(o.createdAt).getTime() < new Date(order.createdAt).getTime() || o.createdAt === order.createdAt && o.id !== order.id).reduce((total, o) => total + (o.kotCount ?? 0), 0) + (order.kotCount ?? 1);
 }
 async function queueBillPrintJobs(opts) {
   try {

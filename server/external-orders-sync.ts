@@ -28,6 +28,7 @@
 import { MongoClient, Db } from "mongodb";
 import type { IStorage } from "./storage";
 import { mongoStorage } from "./mongo-storage";
+import { getDailyBillingNumber, getDailyKotSequence } from "./utils/billing-sequence";
 
 const EXTERNAL_DB_NAME = "Orders";
 const EXTERNAL_COLL    = "orders";
@@ -674,14 +675,15 @@ export class ExternalOrdersSyncService {
         if (resolvedTable?.floorId) {
           floorName = (await this.storage.getFloor(resolvedTable.floorId))?.name;
         }
-        const kotNumber = `KOT-${updatedOrder.id.substring(0, 8).toUpperCase()}`;
+        const kotNumber = await getDailyBillingNumber(this.storage, updatedOrder);
+        const kotSequence = await getDailyKotSequence(this.storage, updatedOrder);
         const escData = buildKOTEscPos({
           order: updatedOrder,
           items: orderItems,
           tableNumber,
           floorName,
           kotNumber,
-          isUpdated: false,
+          sequence: String(kotSequence).padStart(2, "0"),
         });
         const escBase64 = Buffer.from(escData).toString("base64");
         for (const printer of kotPrinters) {
