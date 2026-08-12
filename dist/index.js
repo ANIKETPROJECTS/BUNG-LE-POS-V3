@@ -518,6 +518,8 @@ var init_escpos = __esm({
 import express2 from "express";
 
 // server/routes.ts
+import crypto from "crypto";
+import QRCode from "qrcode";
 import { createServer } from "http";
 import { WebSocketServer, WebSocket } from "ws";
 
@@ -5547,6 +5549,32 @@ async function registerRoutes(app2) {
     const st = getStorage(req);
     const tables = await st.getTables();
     res.json(tables);
+  });
+  app2.post("/api/admin/qr-token", requireAuth, async (req, res) => {
+    try {
+      const parsedId = z3.string().min(1).max(100).safeParse(req.body?.tableId);
+      if (!parsedId.success) return res.status(400).json({ error: "Invalid table ID" });
+      const st = getStorage(req);
+      const table = await st.getTable(parsedId.data);
+      if (!table) return res.status(404).json({ error: "Table not found" });
+      const floor = table.floorId ? await st.getFloor(table.floorId) : void 0;
+      const tableName = String(table.tableNumber ?? "").trim();
+      const floorName = String(floor?.name ?? "").trim();
+      if (!tableName || !floorName || tableName.length > 100 || floorName.length > 100) {
+        return res.status(400).json({ error: "Table or floor name is invalid" });
+      }
+      const encodedPayload = Buffer.from(JSON.stringify({ tableName, floorName, v: 1 }), "utf8").toString("base64url");
+      const secret = process.env.SESSION_SECRET;
+      if (!secret) return res.status(500).json({ error: "QR signing is not configured" });
+      const encodedSignature = crypto.createHmac("sha256", secret).update(encodedPayload).digest("base64url");
+      const token = `${encodedPayload}.${encodedSignature}`;
+      const url = `https://bungle.atdigitalmenu.com/${token}`;
+      const qrDataUrl = await QRCode.toDataURL(url, { errorCorrectionLevel: "M", margin: 2, width: 320 });
+      res.json({ url, token, qrDataUrl });
+    } catch (error) {
+      console.error("[QR] Generation failed:", error instanceof Error ? error.message : "unknown error");
+      res.status(500).json({ error: "Failed to generate QR code" });
+    }
   });
   app2.get("/api/tables/:id", requireAuth, async (req, res) => {
     const st = getStorage(req);

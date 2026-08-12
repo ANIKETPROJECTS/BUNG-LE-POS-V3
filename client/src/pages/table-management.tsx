@@ -23,7 +23,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Pencil, Trash2, Plus, ArrowLeft, Check, X, Building2, LayoutGrid } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Pencil, Trash2, Plus, ArrowLeft, Check, X, Building2, LayoutGrid, QrCode, Copy, Download, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Floor, Table } from "@shared/schema";
@@ -135,6 +136,9 @@ function FloorRow({
           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(true)}>
             <Pencil className="h-3.5 w-3.5" />
           </Button>
+          <Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => onGenerateQR(table)} title="Generate QR">
+            <QrCode className="h-3.5 w-3.5" />
+          </Button>
           <Button
             size="icon"
             variant="ghost"
@@ -156,11 +160,13 @@ function TableRow({
   floors,
   allTables,
   onDelete,
+  onGenerateQR,
 }: {
   table: Table;
   floors: Floor[];
   allTables: Table[];
   onDelete: (id: string, name: string) => void;
+  onGenerateQR: (table: Table) => void;
 }) {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
@@ -306,6 +312,22 @@ export default function TableManagementPage() {
 
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<{ type: "floor" | "table"; id: string; name: string } | null>(null);
+  const [qrTable, setQrTable] = useState<Table | null>(null);
+  const [qrData, setQrData] = useState<{ url: string; token: string; qrDataUrl: string } | null>(null);
+  const qrMutation = useMutation({
+    mutationFn: async (tableId: string) => {
+      const res = await apiRequest("POST", "/api/admin/qr-token", { tableId });
+      return res.json();
+    },
+    onSuccess: setQrData,
+    onError: (err) => toast({ title: extractErrorMessage(err), variant: "destructive" }),
+  });
+  const openQR = (table: Table) => { setQrTable(table); setQrData(null); qrMutation.mutate(table.id); };
+  const downloadQR = () => {
+    if (!qrData) return;
+    const link = document.createElement("a"); link.href = qrData.qrDataUrl;
+    link.download = `BUNGLE-${qrTable?.tableNumber ?? "table"}-QR.png`; link.click();
+  };
 
   const { data: floors = [] } = useQuery<Floor[]>({ queryKey: ["/api/floors"] });
   const { data: tables = [] } = useQuery<Table[]>({ queryKey: ["/api/tables"] });
@@ -585,6 +607,7 @@ export default function TableManagementPage() {
                     floors={floors}
                     allTables={tables}
                     onDelete={(id, name) => setDeleteTarget({ type: "table", id, name })}
+                    onGenerateQR={openQR}
                   />
                 ))
               )}
@@ -617,6 +640,23 @@ export default function TableManagementPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <Dialog open={!!qrTable} onOpenChange={(open) => !open && setQrTable(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader><DialogTitle>Generate QR Code</DialogTitle></DialogHeader>
+          <div className="space-y-4">
+            <div className="rounded-md bg-muted/40 p-3 text-sm">
+              <div><span className="text-muted-foreground">Table:</span> <strong>{qrTable?.tableNumber}</strong></div>
+              <div><span className="text-muted-foreground">Floor:</span> <strong>{floors.find(f => f.id === qrTable?.floorId)?.name ?? "—"}</strong></div>
+            </div>
+            {qrMutation.isPending && <p className="text-center text-sm text-muted-foreground">Generating secure QR…</p>}
+            {qrData && <>
+              <div className="flex gap-2"><Input value={qrData.url} readOnly /><Button size="icon" variant="outline" onClick={() => navigator.clipboard.writeText(qrData.url)} title="Copy"><Copy className="h-4 w-4" /></Button></div>
+              <img src={qrData.qrDataUrl} alt={`QR code for ${qrTable?.tableNumber}`} className="mx-auto h-64 w-64" />
+              <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => qrTable && qrMutation.mutate(qrTable.id)}><RefreshCw className="mr-1 h-4 w-4" />Regenerate</Button><Button onClick={downloadQR}><Download className="mr-1 h-4 w-4" />Download QR</Button></div>
+            </>}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
