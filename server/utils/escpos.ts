@@ -268,10 +268,26 @@ export function buildBillEscPos(opts: {
 
   // Items
   items.forEach((item) => {
-    const name = item.name.substring(0, 17).padEnd(17);
+    const words = item.name.split(/\s+/);
+    const nameLines: string[] = [];
+    let line = "";
+    for (const word of words) {
+      if ((line + (line ? " " : "") + word).length > 17 && line) {
+        nameLines.push(line);
+        line = word;
+      } else {
+        line += (line ? " " : "") + word;
+      }
+    }
+    if (line) nameLines.push(line);
     const qty = String(item.quantity).padStart(3);
     const amount = (item.price * item.quantity).toFixed(0).padStart(9);
-    parts.push(text(`${name}${qty}${amount}\n`));
+    nameLines.forEach((nameLine, lineIndex) => {
+      const suffix = lineIndex === nameLines.length - 1
+        ? `${qty.padStart(8)}${amount}`
+        : "";
+      parts.push(text(`${nameLine.padEnd(17)}${suffix}\n`));
+    });
     if (item.notes) {
       parts.push(text(`  >> ${item.notes}\n`));
     }
