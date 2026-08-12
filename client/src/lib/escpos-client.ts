@@ -79,7 +79,7 @@ export interface KOTOptions {
 
 export function buildKOTEscPos(opts: KOTOptions): Uint8Array {
   const {
-    restaurantName = "Restaurant POS",
+    restaurantName = "BUNGLE",
     kotNumber,
     orderType,
     tableNumber,

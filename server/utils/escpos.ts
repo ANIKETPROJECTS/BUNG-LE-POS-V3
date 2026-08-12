@@ -34,10 +34,10 @@ export function buildKOTEscPos(opts: {
     tableNumber,
     floorName,
     kotNumber,
-    restaurantName = "Restaurant POS",
+    restaurantName = "BUNGLE",
     isUpdated = false,
   } = opts;
-  const now = new Date(order.createdAt);
+  const now = new Date();
   const dateStr = now.toLocaleDateString("en-IN", {
     day: "2-digit",
     month: "short",
@@ -170,7 +170,7 @@ export function buildBillEscPos(opts: {
   gstNumber?: string;
 }): Buffer {
   const {
-    restaurantName = "Restaurant POS",
+    restaurantName = "BUNGLE",
     invoiceNumber,
     date,
     tableNumber,

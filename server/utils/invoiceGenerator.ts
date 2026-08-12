@@ -13,7 +13,7 @@ interface InvoiceData {
 }
 
 export function generateInvoicePDF(data: InvoiceData): Buffer {
-  const { invoice, order, orderItems, restaurantName = "Restaurant POS", restaurantAddress = "", restaurantPhone = "", restaurantGSTIN = "" } = data;
+  const { invoice, order, orderItems, restaurantName = "BUNGLE", restaurantAddress = "", restaurantPhone = "", restaurantGSTIN = "" } = data;
   
   if (!invoice || !order || !orderItems) {
     throw new Error("Missing required data for PDF generation");

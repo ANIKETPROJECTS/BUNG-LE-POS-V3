@@ -45,9 +45,9 @@ export default function LoginPage() {
         <div className="bg-card rounded-lg border border-card-border shadow-xl p-8">
           <div className="text-center mb-8">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-              <span className="text-3xl">POS</span>
+              <span className="text-3xl">B</span>
             </div>
-            <h1 className="text-3xl font-bold text-primary mb-2" data-testid="text-app-title">RestaurantPOS</h1>
+            <h1 className="text-3xl font-bold text-primary mb-2" data-testid="text-app-title">BUNGLE</h1>
             <p className="text-muted-foreground">Sign in to your account</p>
           </div>
 
@@ -128,7 +128,7 @@ export default function LoginPage() {
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          2024 RestaurantPOS. All rights reserved.
+          2024 BUNGLE. All rights reserved.
         </p>
       </div>
     </div>

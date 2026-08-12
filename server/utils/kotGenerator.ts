@@ -45,7 +45,7 @@ export function generateKOTPDF(data: KOTData): Buffer {
     order, orderItems,
     tableNumber, floorName,
     kotNumber = `KOT-${order.id.substring(0, 8).toUpperCase()}`,
-    restaurantName = "Restaurant POS",
+    restaurantName = "BUNGLE",
     isUpdated = false,
   } = data;
 

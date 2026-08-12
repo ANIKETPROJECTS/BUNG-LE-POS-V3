@@ -30,7 +30,7 @@ interface AppHeaderProps {
 }
 
 export default function AppHeader({
-  title = "Restaurant POS",
+  title = "BUNGLE",
   showSearch = true,
   onReservationClick,
   isReservationMode = false,

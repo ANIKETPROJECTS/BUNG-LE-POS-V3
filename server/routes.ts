@@ -104,6 +104,18 @@ async function upsertInvoice(
   return st.createInvoice(data);
 }
 
+/** Human-readable daily sequence shared by KOT and the final customer invoice. */
+async function getDailyBillingNumber(st: IStorage, order: import("@shared/schema").Order): Promise<string> {
+  const date = new Date(order.createdAt);
+  const yymmdd = date.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }).replace(/-/g, "").slice(2);
+  const dayOrders = (await st.getOrders())
+    .filter((o) => new Date(o.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) ===
+      date.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }))
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  const sequence = Math.max(1, dayOrders.findIndex((o) => o.id === order.id) + 1);
+  return `BG${yymmdd}${String(sequence).padStart(2, "0")}`;
+}
+
 async function queueBillPrintJobs(opts: {
   invoice: {
     invoiceNumber: string;
@@ -821,7 +833,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         invoice,
         order,
         orderItems,
-        restaurantName: "Restaurant POS",
+        restaurantName: "BUNGLE",
         restaurantAddress: "123 Main Street, City, State 12345",
         restaurantPhone: "+1 (555) 123-4567",
         restaurantGSTIN: "GSTIN1234567890",
@@ -864,7 +876,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         floorName: tableInfo?.floorId
           ? (await st.getFloor(tableInfo.floorId))?.name || undefined
           : undefined,
-        restaurantName: "Restaurant POS",
+        restaurantName: "BUNGLE",
         isUpdated: (order.kotCount ?? 0) > 1,
       });
 
@@ -1016,7 +1028,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
         if (kotPrinters.length === 0) return;
         const { buildKOTEscPos } = await import("./utils/escpos");
-        const orderItems = await st.getOrderItems(req.params.id);
+        const orderItems = (await st.getOrderItems(req.params.id)).filter((item) => item.status === "new");
         let tableNumber: string | undefined;
         let floorName: string | undefined;
         if (updatedOrder.tableId) {
@@ -1024,7 +1036,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tableNumber = tbl?.tableNumber;
           if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
         }
-        const kotNumber = `KOT-${updatedOrder.id.substring(0, 8).toUpperCase()}`;
+        const kotNumber = await getDailyBillingNumber(st, updatedOrder);
         const escData = buildKOTEscPos({
           order: updatedOrder,
           items: orderItems,
@@ -1047,6 +1059,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             `[PrintJob] Queued ${kotNumber} → ${printer.ip}:${printer.port}`,
           );
         }
+        await Promise.all(orderItems.map((item) => st.updateOrderItemStatus(item.id, "sent_to_kitchen")));
       } catch (e) {
         console.error("[PrintJob] Failed to enqueue:", e);
       }
@@ -1089,8 +1102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tableInfo = await st.getTable(order.tableId);
       }
 
-      const invoiceCount = (await st.getInvoices()).length;
-      const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(4, "0")}`;
+       const invoiceNumber = await getDailyBillingNumber(st, order);
 
       const invoiceItemsData = orderItems.map((item) => ({
         name: item.name,
@@ -1169,8 +1181,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       tableInfo = await st.getTable(order.tableId);
     }
 
-    const invoiceCount = (await st.getInvoices()).length;
-    const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(4, "0")}`;
+    const invoiceNumber = await getDailyBillingNumber(st, order);
 
     const invoiceItemsData = orderItems.map((item) => ({
       name: item.name,
@@ -1288,8 +1299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
     }
 
-    const invoiceCount = (await st.getInvoices()).length;
-    const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(4, "0")}`;
+    const invoiceNumber = await getDailyBillingNumber(st, checkedOutOrder);
 
     const invoiceItemsData = orderItems.map((item) => ({
       name: item.name,
@@ -1368,7 +1378,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         invoice,
         order,
         orderItems,
-        restaurantName: "Restaurant POS",
+        restaurantName: "BUNGLE",
         restaurantAddress: "123 Main Street, City, State 12345",
         restaurantPhone: "+1 (555) 123-4567",
         restaurantGSTIN: taxSettings.gstEnabled ? taxSettings.gstNumber : "",
@@ -3022,10 +3032,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.json({ results: [], allFailed: true });
         }
 
-        const kotNumber = `KOT-${order.id.substring(0, 8).toUpperCase()}`;
+        const kotNumber = await getDailyBillingNumber(st, order);
         const escData = buildKOTEscPos({
           order,
-          items: orderItems,
+          items: orderItems.filter((item) => item.status === "new"),
           tableNumber,
           floorName,
           kotNumber,

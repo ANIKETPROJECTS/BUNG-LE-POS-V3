@@ -112,7 +112,7 @@ function KOTViewModal({
           {/* Branding */}
           <div className="text-center pb-1">
             <p className="text-base font-extrabold tracking-widest uppercase text-gray-900">
-              Restaurant POS
+              BUNGLE
             </p>
             <p className="text-xs text-gray-400 mt-0.5 tracking-wide">Kitchen Order Ticket</p>
           </div>

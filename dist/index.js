@@ -245,10 +245,28 @@ function lines(n = 1) {
   return Buffer.from(Array(n).fill(LF));
 }
 function buildKOTEscPos(opts) {
-  const { order, items, tableNumber, floorName, kotNumber, restaurantName = "Restaurant POS", isUpdated = false } = opts;
-  const now = new Date(order.createdAt);
-  const dateStr = now.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-  const timeStr = now.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const {
+    order,
+    items,
+    tableNumber,
+    floorName,
+    kotNumber,
+    restaurantName = "BUNGLE",
+    isUpdated = false
+  } = opts;
+  const now = /* @__PURE__ */ new Date();
+  const dateStr = now.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Kolkata"
+  });
+  const timeStr = now.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata"
+  });
   const sep = "--------------------------------";
   const parts = [];
   parts.push(cmd(ESC, 64));
@@ -274,16 +292,22 @@ function buildKOTEscPos(opts) {
   parts.push(text(`Date : ${dateStr}  ${timeStr}
 `));
   if (order.orderType === "dine-in" && tableNumber) {
-    parts.push(text(`Table: ${tableNumber}${floorName ? `  (${floorName})` : ""}
-`));
+    parts.push(
+      text(`Table: ${tableNumber}${floorName ? `  (${floorName})` : ""}
+`)
+    );
   } else {
     const typeLabel = order.orderType === "delivery" ? "Delivery" : "Pickup";
     parts.push(text(`Type : ${typeLabel}
 `));
   }
   if (order.customerName) {
-    parts.push(text(`Cust : ${order.customerName}${order.customerPhone ? `  ${order.customerPhone}` : ""}
-`));
+    parts.push(
+      text(
+        `Cust : ${order.customerName}${order.customerPhone ? `  ${order.customerPhone}` : ""}
+`
+      )
+    );
   }
   parts.push(text(sep + "\n"));
   parts.push(cmd(ESC, 69, 1));
@@ -314,7 +338,7 @@ function buildKOTEscPos(opts) {
 }
 function buildBillEscPos(opts) {
   const {
-    restaurantName = "Restaurant POS",
+    restaurantName = "BUNGLE",
     invoiceNumber,
     date,
     tableNumber,
@@ -334,8 +358,18 @@ function buildBillEscPos(opts) {
   } = opts;
   const sep = "--------------------------------";
   const sep2 = "================================";
-  const dateStr = date.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
-  const timeStr = date.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit", hour12: true });
+  const dateStr = date.toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "Asia/Kolkata"
+  });
+  const timeStr = date.toLocaleTimeString("en-IN", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Kolkata"
+  });
   const parts = [];
   parts.push(cmd(ESC, 64));
   parts.push(cmd(ESC, 97, 1));
@@ -354,8 +388,10 @@ function buildBillEscPos(opts) {
   parts.push(text(`Date    : ${dateStr}  ${timeStr}
 `));
   if (orderType === "dine-in" && tableNumber) {
-    parts.push(text(`Table   : ${tableNumber}${floorName ? `  (${floorName})` : ""}
-`));
+    parts.push(
+      text(`Table   : ${tableNumber}${floorName ? `  (${floorName})` : ""}
+`)
+    );
   } else if (orderType === "delivery") {
     parts.push(text(`Type    : Delivery
 `));
@@ -364,8 +400,12 @@ function buildBillEscPos(opts) {
 `));
   }
   if (customerName) {
-    parts.push(text(`Customer: ${customerName}${customerPhone ? `  ${customerPhone}` : ""}
-`));
+    parts.push(
+      text(
+        `Customer: ${customerName}${customerPhone ? `  ${customerPhone}` : ""}
+`
+      )
+    );
   }
   parts.push(text(sep + "\n"));
   parts.push(cmd(ESC, 69, 1));
@@ -429,7 +469,10 @@ function printToThermal(ip, port, data, timeoutMs = 5e3) {
       socket.destroy();
       resolve(result);
     };
-    const timer = setTimeout(() => done({ success: false, error: "Connection timed out" }), timeoutMs);
+    const timer = setTimeout(
+      () => done({ success: false, error: "Connection timed out" }),
+      timeoutMs
+    );
     socket.connect(port, ip, () => {
       socket.write(data, (err) => {
         clearTimeout(timer);
@@ -3742,7 +3785,7 @@ function extractDatabaseName(mongoUri) {
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 function generateInvoicePDF(data) {
-  const { invoice, order, orderItems, restaurantName = "Restaurant POS", restaurantAddress = "", restaurantPhone = "", restaurantGSTIN = "" } = data;
+  const { invoice, order, orderItems, restaurantName = "BUNGLE", restaurantAddress = "", restaurantPhone = "", restaurantGSTIN = "" } = data;
   if (!invoice || !order || !orderItems) {
     throw new Error("Missing required data for PDF generation");
   }
@@ -3943,7 +3986,7 @@ function generateKOTPDF(data) {
     tableNumber,
     floorName,
     kotNumber = `KOT-${order.id.substring(0, 8).toUpperCase()}`,
-    restaurantName = "Restaurant POS",
+    restaurantName = "BUNGLE",
     isUpdated = false
   } = data;
   const doc = new jsPDF2({ unit: "mm", format: "a5" });
@@ -5332,11 +5375,13 @@ var checkoutSchema = z3.object({
   print: z3.boolean().optional().default(false),
   taxRate: z3.number().min(0).max(100).optional(),
   serviceCharge: z3.number().min(0).max(100).optional(),
-  splitPayments: z3.array(z3.object({
-    person: z3.number(),
-    amount: z3.number(),
-    paymentMode: z3.string()
-  })).optional()
+  splitPayments: z3.array(
+    z3.object({
+      person: z3.number(),
+      amount: z3.number(),
+      paymentMode: z3.string()
+    })
+  ).optional()
 });
 async function getTaxSettings(st) {
   const [taxRate, serviceCharge, gstEnabled, gstNumber] = await Promise.all([
@@ -5353,18 +5398,29 @@ async function getTaxSettings(st) {
   };
 }
 async function upsertInvoice(st, orderId, data) {
-  const existing = (await st.getInvoices()).find((inv) => inv.orderId === orderId);
+  const existing = (await st.getInvoices()).find(
+    (inv) => inv.orderId === orderId
+  );
   if (existing) {
     const updated = await st.updateInvoice(existing.id, data);
     return updated ?? existing;
   }
   return st.createInvoice(data);
 }
+async function getDailyBillingNumber(st, order) {
+  const date = new Date(order.createdAt);
+  const yymmdd = date.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }).replace(/-/g, "").slice(2);
+  const dayOrders = (await st.getOrders()).filter((o) => new Date(o.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) === date.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" })).sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+  const sequence = Math.max(1, dayOrders.findIndex((o) => o.id === order.id) + 1);
+  return `BG${yymmdd}${String(sequence).padStart(2, "0")}`;
+}
 async function queueBillPrintJobs(opts) {
   try {
     const { buildBillEscPos: buildBillEscPos2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
     const printers = await mongoStorage.getPrinters();
-    const billPrinters = printers.filter((p) => p.type === "Bill" && p.autoPrint);
+    const billPrinters = printers.filter(
+      (p) => p.type === "Bill" && p.autoPrint
+    );
     if (billPrinters.length === 0) return;
     const parsedItems = JSON.parse(opts.invoice.items || "[]");
     const escData = buildBillEscPos2({
@@ -5412,7 +5468,9 @@ function broadcastUpdate(type, data) {
     return;
   }
   const message = JSON.stringify({ type, data });
-  const clientCount = Array.from(wss.clients).filter((c) => c.readyState === WebSocket.OPEN).length;
+  const clientCount = Array.from(wss.clients).filter(
+    (c) => c.readyState === WebSocket.OPEN
+  ).length;
   console.log(`[WebSocket] Broadcasting ${type} to ${clientCount} clients`);
   wss.clients.forEach((client) => {
     if (client.readyState === WebSocket.OPEN) {
@@ -5442,7 +5500,9 @@ async function registerRoutes(app2) {
       return res.status(400).json({ error: result.error });
     }
     const existingFloors = await st.getFloors();
-    if (existingFloors.some((f) => f.name.trim().toLowerCase() === result.data.name.trim().toLowerCase())) {
+    if (existingFloors.some(
+      (f) => f.name.trim().toLowerCase() === result.data.name.trim().toLowerCase()
+    )) {
       return res.status(409).json({ error: "A floor with this name already exists" });
     }
     const floor = await st.createFloor(result.data);
@@ -5532,7 +5592,9 @@ async function registerRoutes(app2) {
           (t) => t.id !== req.params.id && t.floorId === floorId && t.tableNumber.trim().toLowerCase() === tableNumber.toLowerCase()
         );
         if (conflict) {
-          return res.status(409).json({ error: "A table with this name already exists on this floor" });
+          return res.status(409).json({
+            error: "A table with this name already exists on this floor"
+          });
         }
       }
     }
@@ -5648,9 +5710,15 @@ async function registerRoutes(app2) {
           }
         }
       }
-      res.json({ success: true, updated, message: `Generated quick codes for ${updated} menu items` });
+      res.json({
+        success: true,
+        updated,
+        message: `Generated quick codes for ${updated} menu items`
+      });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to generate quick codes" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to generate quick codes"
+      });
     }
   });
   app2.post("/api/menu/seed-sample-recipes", requireAuth, async (req, res) => {
@@ -5721,9 +5789,13 @@ async function registerRoutes(app2) {
       ];
       const existingRecipes = await st.getRecipes();
       for (const recipe of recipes) {
-        const menuItem = (await st.getMenuItems()).find((m) => m.name === recipe.menuItemName);
+        const menuItem = (await st.getMenuItems()).find(
+          (m) => m.name === recipe.menuItemName
+        );
         if (menuItem) {
-          const oldRecipe = existingRecipes.find((r) => r.menuItemId === menuItem.id);
+          const oldRecipe = existingRecipes.find(
+            (r) => r.menuItemId === menuItem.id
+          );
           if (oldRecipe) {
             await st.deleteRecipe(oldRecipe.id);
             console.log(`\u{1F5D1}\uFE0F Deleted old recipe for: ${menuItem.name}`);
@@ -5732,9 +5804,13 @@ async function registerRoutes(app2) {
       }
       let addedRecipes = 0;
       const inventoryItems = await st.getInventoryItems();
-      const inventoryMap = new Map(inventoryItems.map((item) => [item.name.toLowerCase(), item]));
+      const inventoryMap = new Map(
+        inventoryItems.map((item) => [item.name.toLowerCase(), item])
+      );
       for (const recipe of recipes) {
-        const menuItem = (await st.getMenuItems()).find((m) => m.name === recipe.menuItemName);
+        const menuItem = (await st.getMenuItems()).find(
+          (m) => m.name === recipe.menuItemName
+        );
         if (!menuItem) {
           console.log(`Menu item not found: ${recipe.menuItemName}`);
           continue;
@@ -5755,8 +5831,12 @@ async function registerRoutes(app2) {
           }
         }
         if (recipe.ingredients.length > 0) {
-          const createdRecipe = await st.createRecipe({ menuItemId: menuItem.id });
-          console.log(`Created recipe for: ${menuItem.name} with ID: ${createdRecipe.id}`);
+          const createdRecipe = await st.createRecipe({
+            menuItemId: menuItem.id
+          });
+          console.log(
+            `Created recipe for: ${menuItem.name} with ID: ${createdRecipe.id}`
+          );
           let addedIngredients = 0;
           for (const ing of recipe.ingredients) {
             const invItem = inventoryMap.get(ing.name.toLowerCase());
@@ -5769,28 +5849,47 @@ async function registerRoutes(app2) {
                   unit: ing.unit
                 });
                 addedIngredients++;
-                console.log(`  \u2705 Added ingredient: ${ing.name} (ID: ${invItem.id}) - ${ing.quantity}${ing.unit}`);
+                console.log(
+                  `  \u2705 Added ingredient: ${ing.name} (ID: ${invItem.id}) - ${ing.quantity}${ing.unit}`
+                );
               } catch (ingError) {
-                console.error(`  \u274C Failed to add ingredient ${ing.name}:`, ingError);
+                console.error(
+                  `  \u274C Failed to add ingredient ${ing.name}:`,
+                  ingError
+                );
               }
             } else {
-              console.warn(`  \u26A0\uFE0F  Ingredient not found in inventory: ${ing.name}`);
+              console.warn(
+                `  \u26A0\uFE0F  Ingredient not found in inventory: ${ing.name}`
+              );
             }
           }
           if (addedIngredients > 0) {
             addedRecipes++;
-            console.log(`\u2705 Recipe fully populated for: ${menuItem.name} (${addedIngredients} ingredients)`);
+            console.log(
+              `\u2705 Recipe fully populated for: ${menuItem.name} (${addedIngredients} ingredients)`
+            );
           } else {
-            console.warn(`\u26A0\uFE0F  No ingredients were added to recipe for ${menuItem.name}`);
+            console.warn(
+              `\u26A0\uFE0F  No ingredients were added to recipe for ${menuItem.name}`
+            );
           }
         } else {
-          console.warn(`\u26A0\uFE0F  No ingredients found for recipe ${recipe.menuItemName}`);
+          console.warn(
+            `\u26A0\uFE0F  No ingredients found for recipe ${recipe.menuItemName}`
+          );
         }
       }
-      res.json({ success: true, addedRecipes, message: `Seeded ${addedRecipes} sample recipes with all ingredients` });
+      res.json({
+        success: true,
+        addedRecipes,
+        message: `Seeded ${addedRecipes} sample recipes with all ingredients`
+      });
     } catch (error) {
       console.error("Error seeding recipes:", error);
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to seed recipes" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to seed recipes"
+      });
     }
   });
   app2.get("/api/orders", requireAuth, async (req, res) => {
@@ -5832,7 +5931,9 @@ async function registerRoutes(app2) {
       const person = await st.createDeliveryPerson(req.body);
       res.status(201).json(person);
     } catch (error) {
-      res.status(400).json({ error: error instanceof Error ? error.message : "Failed to create delivery person" });
+      res.status(400).json({
+        error: error instanceof Error ? error.message : "Failed to create delivery person"
+      });
     }
   });
   app2.patch("/api/delivery-persons/:id", requireAuth, async (req, res) => {
@@ -5867,7 +5968,10 @@ async function registerRoutes(app2) {
         return res.status(400).json({ error: "Delivery person not found" });
       }
     }
-    const order = await st.assignDeliveryPerson(req.params.id, deliveryPersonId);
+    const order = await st.assignDeliveryPerson(
+      req.params.id,
+      deliveryPersonId
+    );
     if (!order) {
       return res.status(500).json({ error: "Failed to assign driver" });
     }
@@ -5890,13 +5994,16 @@ async function registerRoutes(app2) {
         invoice,
         order,
         orderItems,
-        restaurantName: "Restaurant POS",
+        restaurantName: "BUNGLE",
         restaurantAddress: "123 Main Street, City, State 12345",
         restaurantPhone: "+1 (555) 123-4567",
         restaurantGSTIN: "GSTIN1234567890"
       });
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="Invoice-${invoice.invoiceNumber}.pdf"`);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="Invoice-${invoice.invoiceNumber}.pdf"`
+      );
       res.send(pdfBuffer);
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -5923,11 +6030,14 @@ async function registerRoutes(app2) {
         orderItems,
         tableNumber: tableInfo?.tableNumber || void 0,
         floorName: tableInfo?.floorId ? (await st.getFloor(tableInfo.floorId))?.name || void 0 : void 0,
-        restaurantName: "Restaurant POS",
+        restaurantName: "BUNGLE",
         isUpdated: (order.kotCount ?? 0) > 1
       });
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="KOT-${order.id.substring(0, 8)}.pdf"`);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="KOT-${order.id.substring(0, 8)}.pdf"`
+      );
       res.send(pdfBuffer);
     } catch (error) {
       console.error("Error generating KOT PDF:", error);
@@ -5982,7 +6092,10 @@ async function registerRoutes(app2) {
         broadcastUpdate("table_updated", updatedTable);
       }
     }
-    console.log("[Server] Broadcasting order_item_added for orderId:", req.params.id);
+    console.log(
+      "[Server] Broadcasting order_item_added for orderId:",
+      req.params.id
+    );
     broadcastUpdate("order_item_added", { orderId: req.params.id, item });
     externalOrdersSync.syncItemAdd(req.params.id, {
       name: item.name,
@@ -6029,14 +6142,23 @@ async function registerRoutes(app2) {
       return res.status(404).json({ error: "Order not found" });
     }
     const updatedOrder = await st.incrementKotCount(req.params.id) ?? order;
-    console.log("[Server] Broadcasting order_updated for KOT, orderId:", updatedOrder.id, "status:", updatedOrder.status, "kotCount:", updatedOrder.kotCount);
+    console.log(
+      "[Server] Broadcasting order_updated for KOT, orderId:",
+      updatedOrder.id,
+      "status:",
+      updatedOrder.status,
+      "kotCount:",
+      updatedOrder.kotCount
+    );
     broadcastUpdate("order_updated", updatedOrder);
     (async () => {
       try {
-        const kotPrinters = (await mongoStorage.getPrinters()).filter((p) => p.type === "KOT" && p.autoPrint);
+        const kotPrinters = (await mongoStorage.getPrinters()).filter(
+          (p) => p.type === "KOT" && p.autoPrint
+        );
         if (kotPrinters.length === 0) return;
         const { buildKOTEscPos: buildKOTEscPos2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
-        const orderItems = await st.getOrderItems(req.params.id);
+        const orderItems = (await st.getOrderItems(req.params.id)).filter((item) => item.status === "new");
         let tableNumber;
         let floorName;
         if (updatedOrder.tableId) {
@@ -6044,8 +6166,15 @@ async function registerRoutes(app2) {
           tableNumber = tbl?.tableNumber;
           if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
         }
-        const kotNumber = `KOT-${updatedOrder.id.substring(0, 8).toUpperCase()}`;
-        const escData = buildKOTEscPos2({ order: updatedOrder, items: orderItems, tableNumber, floorName, kotNumber, isUpdated: (updatedOrder.kotCount ?? 0) > 1 });
+        const kotNumber = await getDailyBillingNumber(st, updatedOrder);
+        const escData = buildKOTEscPos2({
+          order: updatedOrder,
+          items: orderItems,
+          tableNumber,
+          floorName,
+          kotNumber,
+          isUpdated: (updatedOrder.kotCount ?? 0) > 1
+        });
         const escBase64 = Buffer.from(escData).toString("base64");
         for (const printer of kotPrinters) {
           await mongoStorage.createPrintJob({
@@ -6056,8 +6185,11 @@ async function registerRoutes(app2) {
             escposData: escBase64,
             status: "pending"
           });
-          console.log(`[PrintJob] Queued ${kotNumber} \u2192 ${printer.ip}:${printer.port}`);
+          console.log(
+            `[PrintJob] Queued ${kotNumber} \u2192 ${printer.ip}:${printer.port}`
+          );
         }
+        await Promise.all(orderItems.map((item) => st.updateOrderItemStatus(item.id, "sent_to_kitchen")));
       } catch (e) {
         console.error("[PrintJob] Failed to enqueue:", e);
       }
@@ -6084,13 +6216,16 @@ async function registerRoutes(app2) {
       const taxSettings = await getTaxSettings(st);
       const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
       const effectiveServiceCharge = result.data.serviceCharge ?? taxSettings.serviceCharge;
-      const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, effectiveTaxRate, effectiveServiceCharge);
+      const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(
+        subtotal,
+        effectiveTaxRate,
+        effectiveServiceCharge
+      );
       let tableInfo = null;
       if (order.tableId) {
         tableInfo = await st.getTable(order.tableId);
       }
-      const invoiceCount = (await st.getInvoices()).length;
-      const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(4, "0")}`;
+      const invoiceNumber = await getDailyBillingNumber(st, order);
       const invoiceItemsData = orderItems.map((item) => ({
         name: item.name,
         quantity: item.quantity,
@@ -6119,7 +6254,11 @@ async function registerRoutes(app2) {
         notes: null
       });
       broadcastUpdate("invoice_created", invoice);
-      await queueBillPrintJobs({ invoice, orderType: order.orderType, taxSettings });
+      await queueBillPrintJobs({
+        invoice,
+        orderType: order.orderType,
+        taxSettings
+      });
     }
     broadcastUpdate("order_updated", order);
     res.json({ order, invoice, shouldPrint: result.data.print });
@@ -6142,13 +6281,16 @@ async function registerRoutes(app2) {
     const taxSettings = await getTaxSettings(st);
     const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
     const effectiveServiceCharge = result.data.serviceCharge ?? taxSettings.serviceCharge;
-    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, effectiveTaxRate, effectiveServiceCharge);
+    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(
+      subtotal,
+      effectiveTaxRate,
+      effectiveServiceCharge
+    );
     let tableInfo = null;
     if (order.tableId) {
       tableInfo = await st.getTable(order.tableId);
     }
-    const invoiceCount = (await st.getInvoices()).length;
-    const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(4, "0")}`;
+    const invoiceNumber = await getDailyBillingNumber(st, order);
     const invoiceItemsData = orderItems.map((item) => ({
       name: item.name,
       quantity: item.quantity,
@@ -6179,7 +6321,11 @@ async function registerRoutes(app2) {
     broadcastUpdate("order_updated", order);
     broadcastUpdate("invoice_created", invoice);
     if (result.data.print) {
-      await queueBillPrintJobs({ invoice, orderType: order.orderType, taxSettings: await getTaxSettings(st) });
+      await queueBillPrintJobs({
+        invoice,
+        orderType: order.orderType,
+        taxSettings: await getTaxSettings(st)
+      });
     }
     res.json({ order, invoice, shouldPrint: result.data.print });
   });
@@ -6201,9 +6347,16 @@ async function registerRoutes(app2) {
     const taxSettings = await getTaxSettings(st);
     const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
     const effectiveServiceCharge = result.data.serviceCharge ?? taxSettings.serviceCharge;
-    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, effectiveTaxRate, effectiveServiceCharge);
+    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(
+      subtotal,
+      effectiveTaxRate,
+      effectiveServiceCharge
+    );
     if (result.data.splitPayments && result.data.splitPayments.length > 0) {
-      const splitSum = result.data.splitPayments.reduce((sum, split) => sum + split.amount, 0);
+      const splitSum = result.data.splitPayments.reduce(
+        (sum, split) => sum + split.amount,
+        0
+      );
       const tolerance = 0.01;
       if (Math.abs(splitSum - total) > tolerance) {
         return res.status(400).json({
@@ -6218,7 +6371,10 @@ async function registerRoutes(app2) {
         }
       }
     }
-    const checkedOutOrder = await st.checkoutOrder(req.params.id, result.data.paymentMode);
+    const checkedOutOrder = await st.checkoutOrder(
+      req.params.id,
+      result.data.paymentMode
+    );
     if (!checkedOutOrder) {
       return res.status(500).json({ error: "Failed to checkout order" });
     }
@@ -6229,10 +6385,12 @@ async function registerRoutes(app2) {
       await st.updateTableStatus(checkedOutOrder.tableId, "free");
     }
     if (checkedOutOrder.customerPhone) {
-      await digitalMenuSync.updateCustomerTableStatus(checkedOutOrder.customerPhone, "free");
+      await digitalMenuSync.updateCustomerTableStatus(
+        checkedOutOrder.customerPhone,
+        "free"
+      );
     }
-    const invoiceCount = (await st.getInvoices()).length;
-    const invoiceNumber = `INV-${String(invoiceCount + 1).padStart(4, "0")}`;
+    const invoiceNumber = await getDailyBillingNumber(st, checkedOutOrder);
     const invoiceItemsData = orderItems.map((item) => ({
       name: item.name,
       quantity: item.quantity,
@@ -6269,9 +6427,17 @@ async function registerRoutes(app2) {
     broadcastUpdate("order_paid", checkedOutOrder);
     broadcastUpdate("invoice_created", invoice);
     if (result.data.print) {
-      await queueBillPrintJobs({ invoice, orderType: checkedOutOrder.orderType, taxSettings: await getTaxSettings(st) });
+      await queueBillPrintJobs({
+        invoice,
+        orderType: checkedOutOrder.orderType,
+        taxSettings: await getTaxSettings(st)
+      });
     }
-    res.json({ order: checkedOutOrder, invoice, shouldPrint: result.data.print });
+    res.json({
+      order: checkedOutOrder,
+      invoice,
+      shouldPrint: result.data.print
+    });
   });
   app2.get("/api/invoices/:id/pdf", requireAuth, async (req, res) => {
     const st = getStorage(req);
@@ -6290,13 +6456,16 @@ async function registerRoutes(app2) {
         invoice,
         order,
         orderItems,
-        restaurantName: "Restaurant POS",
+        restaurantName: "BUNGLE",
         restaurantAddress: "123 Main Street, City, State 12345",
         restaurantPhone: "+1 (555) 123-4567",
         restaurantGSTIN: taxSettings.gstEnabled ? taxSettings.gstNumber : ""
       });
       res.setHeader("Content-Type", "application/pdf");
-      res.setHeader("Content-Disposition", `attachment; filename="${invoice.invoiceNumber}.pdf"`);
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename="${invoice.invoiceNumber}.pdf"`
+      );
       res.send(pdfBuffer);
     } catch (error) {
       console.error("Error generating invoice PDF:", error);
@@ -6313,7 +6482,10 @@ async function registerRoutes(app2) {
     const item = await st.updateOrderItem(req.params.id, data);
     if (!item) return res.status(404).json({ error: "Order item not found" });
     const orderItems = await st.getOrderItems(item.orderId);
-    const total = orderItems.reduce((s, i) => s + parseFloat(i.price) * i.quantity, 0);
+    const total = orderItems.reduce(
+      (s, i) => s + parseFloat(i.price) * i.quantity,
+      0
+    );
     await st.updateOrderTotal(item.orderId, total.toFixed(2));
     broadcastUpdate("order_item_updated", item);
     externalOrdersSync.syncItemUpdate(item.orderId, item.name, data).catch(() => {
@@ -6375,7 +6547,10 @@ async function registerRoutes(app2) {
       return sum + parseFloat(orderItem.price) * orderItem.quantity;
     }, 0);
     await st.updateOrderTotal(item.orderId, total.toFixed(2));
-    broadcastUpdate("order_item_deleted", { id: req.params.id, orderId: item.orderId });
+    broadcastUpdate("order_item_deleted", {
+      id: req.params.id,
+      orderId: item.orderId
+    });
     externalOrdersSync.syncItemDelete(item.orderId, item.name).catch(() => {
     });
     res.json({ success: true });
@@ -6416,14 +6591,18 @@ async function registerRoutes(app2) {
     }
     res.json(invoice);
   });
-  app2.get("/api/invoices/number/:invoiceNumber", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    const invoice = await st.getInvoiceByNumber(req.params.invoiceNumber);
-    if (!invoice) {
-      return res.status(404).json({ error: "Invoice not found" });
+  app2.get(
+    "/api/invoices/number/:invoiceNumber",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      const invoice = await st.getInvoiceByNumber(req.params.invoiceNumber);
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+      res.json(invoice);
     }
-    res.json(invoice);
-  });
+  );
   app2.post("/api/invoices", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const result = insertInvoiceSchema.safeParse(req.body);
@@ -6481,11 +6660,16 @@ async function registerRoutes(app2) {
     const result = insertReservationSchema.safeParse(req.body);
     console.log("Validation result:", result.success);
     if (!result.success) {
-      console.error("Validation errors:", JSON.stringify(result.error, null, 2));
+      console.error(
+        "Validation errors:",
+        JSON.stringify(result.error, null, 2)
+      );
       return res.status(400).json({ error: result.error });
     }
     console.log("Validated data:", result.data);
-    const existingReservations = await st.getReservationsByTable(result.data.tableId);
+    const existingReservations = await st.getReservationsByTable(
+      result.data.tableId
+    );
     if (existingReservations.length > 0) {
       return res.status(409).json({ error: "This table already has an active reservation" });
     }
@@ -6493,7 +6677,10 @@ async function registerRoutes(app2) {
     console.log("Created reservation:", reservation);
     const table = await st.getTable(reservation.tableId);
     if (table && table.status === "free") {
-      const updatedTable = await st.updateTableStatus(reservation.tableId, "reserved");
+      const updatedTable = await st.updateTableStatus(
+        reservation.tableId,
+        "reserved"
+      );
       if (updatedTable) {
         broadcastUpdate("table_updated", updatedTable);
       }
@@ -6513,7 +6700,9 @@ async function registerRoutes(app2) {
     if (tableChanged) {
       const newTableReservations = await st.getReservationsByTable(newTableId);
       if (newTableReservations.length > 0) {
-        return res.status(409).json({ error: "The destination table already has an active reservation" });
+        return res.status(409).json({
+          error: "The destination table already has an active reservation"
+        });
       }
     }
     const reservation = await st.updateReservation(req.params.id, req.body);
@@ -6525,7 +6714,10 @@ async function registerRoutes(app2) {
       if (oldTableReservations.length === 0) {
         const oldTable = await st.getTable(oldTableId);
         if (oldTable && oldTable.status === "reserved" && !oldTable.currentOrderId) {
-          const updatedOldTable = await st.updateTableStatus(oldTableId, "free");
+          const updatedOldTable = await st.updateTableStatus(
+            oldTableId,
+            "free"
+          );
           if (updatedOldTable) {
             broadcastUpdate("table_updated", updatedOldTable);
           }
@@ -6533,18 +6725,26 @@ async function registerRoutes(app2) {
       }
       const newTable = await st.getTable(newTableId);
       if (newTable && newTable.status === "free") {
-        const updatedNewTable = await st.updateTableStatus(newTableId, "reserved");
+        const updatedNewTable = await st.updateTableStatus(
+          newTableId,
+          "reserved"
+        );
         if (updatedNewTable) {
           broadcastUpdate("table_updated", updatedNewTable);
         }
       }
     }
     if (req.body.status === "cancelled") {
-      const tableReservations = await st.getReservationsByTable(reservation.tableId);
+      const tableReservations = await st.getReservationsByTable(
+        reservation.tableId
+      );
       if (tableReservations.length === 0) {
         const table = await st.getTable(reservation.tableId);
         if (table && table.status === "reserved" && !table.currentOrderId) {
-          const updatedTable = await st.updateTableStatus(reservation.tableId, "free");
+          const updatedTable = await st.updateTableStatus(
+            reservation.tableId,
+            "free"
+          );
           if (updatedTable) {
             broadcastUpdate("table_updated", updatedTable);
           }
@@ -6564,11 +6764,16 @@ async function registerRoutes(app2) {
     if (!success) {
       return res.status(404).json({ error: "Failed to delete reservation" });
     }
-    const tableReservations = await st.getReservationsByTable(reservation.tableId);
+    const tableReservations = await st.getReservationsByTable(
+      reservation.tableId
+    );
     if (tableReservations.length === 0) {
       const table = await st.getTable(reservation.tableId);
       if (table && table.status === "reserved" && !table.currentOrderId) {
-        const updatedTable = await st.updateTableStatus(reservation.tableId, "free");
+        const updatedTable = await st.updateTableStatus(
+          reservation.tableId,
+          "free"
+        );
         if (updatedTable) {
           broadcastUpdate("table_updated", updatedTable);
         }
@@ -6625,14 +6830,19 @@ async function registerRoutes(app2) {
       return res.status(404).json({ error: "Customer not found" });
     }
     const orders = await st.getOrders();
-    const customerOrders = orders.filter((o) => o.customerPhone === customer.phone);
+    const customerOrders = orders.filter(
+      (o) => o.customerPhone === customer.phone
+    );
     const totalOrders = customerOrders.length;
     const invoices = await st.getInvoices();
     const customerInvoices = invoices.filter((inv) => {
       const order = customerOrders.find((o) => o.id === inv.orderId);
       return !!order;
     });
-    const actualTotalSpent = customerInvoices.reduce((sum, inv) => sum + parseFloat(inv.total || "0"), 0);
+    const actualTotalSpent = customerInvoices.reduce(
+      (sum, inv) => sum + parseFloat(inv.total || "0"),
+      0
+    );
     const lastOrder = customerOrders.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     )[0];
@@ -6666,7 +6876,10 @@ async function registerRoutes(app2) {
     }
     const existingCustomer = await st.getCustomerByPhone(result.data.phone);
     if (existingCustomer) {
-      return res.status(409).json({ error: "Customer with this phone number already exists", customer: existingCustomer });
+      return res.status(409).json({
+        error: "Customer with this phone number already exists",
+        customer: existingCustomer
+      });
     }
     const customer = await st.createCustomer(result.data);
     broadcastUpdate("customer_created", customer);
@@ -6770,7 +6983,10 @@ async function registerRoutes(app2) {
         return res.status(400).json({ error: "MongoDB URI not configured. Please set it first." });
       }
       const { databaseName } = req.body;
-      const { items, categories } = await fetchMenuItemsFromMongoDB(mongoUri, databaseName);
+      const { items, categories } = await fetchMenuItemsFromMongoDB(
+        mongoUri,
+        databaseName
+      );
       const existingItems = await st.getMenuItems();
       for (const existing of existingItems) {
         await st.deleteMenuItem(existing.id);
@@ -6813,15 +7029,21 @@ async function registerRoutes(app2) {
         if (sortBy === "name") {
           items.sort((a, b) => a.name.localeCompare(b.name));
         } else if (sortBy === "stock") {
-          items.sort((a, b) => parseFloat(a.currentStock) - parseFloat(b.currentStock));
+          items.sort(
+            (a, b) => parseFloat(a.currentStock) - parseFloat(b.currentStock)
+          );
         } else if (sortBy === "lowStock") {
-          items = items.filter((item) => parseFloat(item.currentStock) <= parseFloat(item.minStock));
+          items = items.filter(
+            (item) => parseFloat(item.currentStock) <= parseFloat(item.minStock)
+          );
         }
       }
       res.json(items);
     } catch (error) {
       console.error("Error fetching inventory:", error);
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch inventory" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to fetch inventory"
+      });
     }
   });
   app2.get("/api/inventory/:id", requireAuth, async (req, res) => {
@@ -6833,7 +7055,9 @@ async function registerRoutes(app2) {
       }
       res.json(item);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch inventory item" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to fetch inventory item"
+      });
     }
   });
   app2.post("/api/inventory", requireAuth, async (req, res) => {
@@ -6847,7 +7071,9 @@ async function registerRoutes(app2) {
       broadcastUpdate("inventory_created", item);
       res.json(item);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to create inventory item" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to create inventory item"
+      });
     }
   });
   app2.patch("/api/inventory/:id", requireAuth, async (req, res) => {
@@ -6860,7 +7086,9 @@ async function registerRoutes(app2) {
       broadcastUpdate("inventory_updated", item);
       res.json(item);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to update inventory item" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to update inventory item"
+      });
     }
   });
   app2.delete("/api/inventory/:id", requireAuth, async (req, res) => {
@@ -6873,34 +7101,44 @@ async function registerRoutes(app2) {
       broadcastUpdate("inventory_deleted", { id: req.params.id });
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to delete inventory item" });
-    }
-  });
-  app2.get("/api/recipes/menu-item/:menuItemId", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const recipe = await st.getRecipeByMenuItemId(req.params.menuItemId);
-      if (!recipe) {
-        return res.status(404).json({ error: "Recipe not found for this menu item" });
-      }
-      const ingredients = await st.getRecipeIngredients(recipe.id);
-      const ingredientsWithDetails = await Promise.all(
-        ingredients.map(async (ingredient) => {
-          const inventoryItem = await st.getInventoryItem(ingredient.inventoryItemId);
-          return {
-            ...ingredient,
-            inventoryItem
-          };
-        })
-      );
-      res.json({
-        recipe,
-        ingredients: ingredientsWithDetails
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to delete inventory item"
       });
-    } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch recipe" });
     }
   });
+  app2.get(
+    "/api/recipes/menu-item/:menuItemId",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const recipe = await st.getRecipeByMenuItemId(req.params.menuItemId);
+        if (!recipe) {
+          return res.status(404).json({ error: "Recipe not found for this menu item" });
+        }
+        const ingredients = await st.getRecipeIngredients(recipe.id);
+        const ingredientsWithDetails = await Promise.all(
+          ingredients.map(async (ingredient) => {
+            const inventoryItem = await st.getInventoryItem(
+              ingredient.inventoryItemId
+            );
+            return {
+              ...ingredient,
+              inventoryItem
+            };
+          })
+        );
+        res.json({
+          recipe,
+          ingredients: ingredientsWithDetails
+        });
+      } catch (error) {
+        res.status(500).json({
+          error: error instanceof Error ? error.message : "Failed to fetch recipe"
+        });
+      }
+    }
+  );
   app2.post("/api/recipes", requireAuth, async (req, res) => {
     const st = getStorage(req);
     try {
@@ -6912,53 +7150,78 @@ async function registerRoutes(app2) {
       broadcastUpdate("recipe_created", recipe);
       res.json(recipe);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to create recipe" });
-    }
-  });
-  app2.post("/api/recipes/:recipeId/ingredients", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const bodySchema = insertRecipeIngredientSchema.omit({ recipeId: true });
-      const result = bodySchema.safeParse(req.body);
-      if (!result.success) {
-        return res.status(400).json({ error: result.error });
-      }
-      const ingredient = await st.createRecipeIngredient({
-        ...result.data,
-        recipeId: req.params.recipeId
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to create recipe"
       });
-      broadcastUpdate("recipe_ingredient_added", ingredient);
-      res.json(ingredient);
-    } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to add recipe ingredient" });
     }
   });
-  app2.patch("/api/recipes/:recipeId/ingredients/:id", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const ingredient = await st.updateRecipeIngredient(req.params.id, req.body);
-      if (!ingredient) {
-        return res.status(404).json({ error: "Recipe ingredient not found" });
+  app2.post(
+    "/api/recipes/:recipeId/ingredients",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const bodySchema = insertRecipeIngredientSchema.omit({
+          recipeId: true
+        });
+        const result = bodySchema.safeParse(req.body);
+        if (!result.success) {
+          return res.status(400).json({ error: result.error });
+        }
+        const ingredient = await st.createRecipeIngredient({
+          ...result.data,
+          recipeId: req.params.recipeId
+        });
+        broadcastUpdate("recipe_ingredient_added", ingredient);
+        res.json(ingredient);
+      } catch (error) {
+        res.status(500).json({
+          error: error instanceof Error ? error.message : "Failed to add recipe ingredient"
+        });
       }
-      broadcastUpdate("recipe_ingredient_updated", ingredient);
-      res.json(ingredient);
-    } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to update recipe ingredient" });
     }
-  });
-  app2.delete("/api/recipes/:recipeId/ingredients/:id", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const success = await st.deleteRecipeIngredient(req.params.id);
-      if (!success) {
-        return res.status(404).json({ error: "Recipe ingredient not found" });
+  );
+  app2.patch(
+    "/api/recipes/:recipeId/ingredients/:id",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const ingredient = await st.updateRecipeIngredient(
+          req.params.id,
+          req.body
+        );
+        if (!ingredient) {
+          return res.status(404).json({ error: "Recipe ingredient not found" });
+        }
+        broadcastUpdate("recipe_ingredient_updated", ingredient);
+        res.json(ingredient);
+      } catch (error) {
+        res.status(500).json({
+          error: error instanceof Error ? error.message : "Failed to update recipe ingredient"
+        });
       }
-      broadcastUpdate("recipe_ingredient_deleted", { id: req.params.id });
-      res.json({ success: true });
-    } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to delete recipe ingredient" });
     }
-  });
+  );
+  app2.delete(
+    "/api/recipes/:recipeId/ingredients/:id",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const success = await st.deleteRecipeIngredient(req.params.id);
+        if (!success) {
+          return res.status(404).json({ error: "Recipe ingredient not found" });
+        }
+        broadcastUpdate("recipe_ingredient_deleted", { id: req.params.id });
+        res.json({ success: true });
+      } catch (error) {
+        res.status(500).json({
+          error: error instanceof Error ? error.message : "Failed to delete recipe ingredient"
+        });
+      }
+    }
+  );
   app2.delete("/api/recipes/:id", requireAuth, async (req, res) => {
     const st = getStorage(req);
     try {
@@ -6969,7 +7232,9 @@ async function registerRoutes(app2) {
       broadcastUpdate("recipe_deleted", { id: req.params.id });
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to delete recipe" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to delete recipe"
+      });
     }
   });
   app2.get("/api/suppliers", requireAuth, async (req, res) => {
@@ -6978,7 +7243,9 @@ async function registerRoutes(app2) {
       const suppliers = await st.getSuppliers();
       res.json(suppliers);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch suppliers" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to fetch suppliers"
+      });
     }
   });
   app2.post("/api/suppliers", requireAuth, async (req, res) => {
@@ -6992,7 +7259,9 @@ async function registerRoutes(app2) {
       broadcastUpdate("supplier_created", supplier);
       res.json(supplier);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to create supplier" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to create supplier"
+      });
     }
   });
   app2.patch("/api/suppliers/:id", requireAuth, async (req, res) => {
@@ -7005,7 +7274,9 @@ async function registerRoutes(app2) {
       broadcastUpdate("supplier_updated", supplier);
       res.json(supplier);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to update supplier" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to update supplier"
+      });
     }
   });
   app2.delete("/api/suppliers/:id", requireAuth, async (req, res) => {
@@ -7018,7 +7289,9 @@ async function registerRoutes(app2) {
       broadcastUpdate("supplier_deleted", { id: req.params.id });
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to delete supplier" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to delete supplier"
+      });
     }
   });
   app2.get("/api/purchase-orders", requireAuth, async (req, res) => {
@@ -7030,7 +7303,9 @@ async function registerRoutes(app2) {
           const items = await st.getPurchaseOrderItems(order.id);
           const itemsWithDetails = await Promise.all(
             items.map(async (item) => {
-              const inventoryItem = await st.getInventoryItem(item.inventoryItemId);
+              const inventoryItem = await st.getInventoryItem(
+                item.inventoryItemId
+              );
               return {
                 ...item,
                 inventoryItem
@@ -7047,7 +7322,9 @@ async function registerRoutes(app2) {
       );
       res.json(ordersWithItems);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch purchase orders" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to fetch purchase orders"
+      });
     }
   });
   app2.get("/api/purchase-orders/:id", requireAuth, async (req, res) => {
@@ -7074,7 +7351,9 @@ async function registerRoutes(app2) {
         supplier
       });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch purchase order" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to fetch purchase order"
+      });
     }
   });
   app2.post("/api/purchase-orders", requireAuth, async (req, res) => {
@@ -7088,7 +7367,9 @@ async function registerRoutes(app2) {
       broadcastUpdate("purchase_order_created", order);
       res.json(order);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to create purchase order" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to create purchase order"
+      });
     }
   });
   app2.post("/api/purchase-orders/:id/items", requireAuth, async (req, res) => {
@@ -7105,7 +7386,9 @@ async function registerRoutes(app2) {
       broadcastUpdate("purchase_order_item_added", item);
       res.json(item);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to add purchase order item" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to add purchase order item"
+      });
     }
   });
   app2.patch("/api/purchase-orders/:id", requireAuth, async (req, res) => {
@@ -7118,23 +7401,33 @@ async function registerRoutes(app2) {
       broadcastUpdate("purchase_order_updated", order);
       res.json(order);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to update purchase order" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to update purchase order"
+      });
     }
   });
-  app2.post("/api/purchase-orders/:id/receive", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const order = await st.receivePurchaseOrder(req.params.id);
-      if (!order) {
-        return res.status(404).json({ error: "Purchase order not found" });
+  app2.post(
+    "/api/purchase-orders/:id/receive",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const order = await st.receivePurchaseOrder(req.params.id);
+        if (!order) {
+          return res.status(404).json({ error: "Purchase order not found" });
+        }
+        broadcastUpdate("purchase_order_received", order);
+        broadcastUpdate("inventory_updated", {
+          purchaseOrderId: req.params.id
+        });
+        res.json(order);
+      } catch (error) {
+        res.status(500).json({
+          error: error instanceof Error ? error.message : "Failed to receive purchase order"
+        });
       }
-      broadcastUpdate("purchase_order_received", order);
-      broadcastUpdate("inventory_updated", { purchaseOrderId: req.params.id });
-      res.json(order);
-    } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to receive purchase order" });
     }
-  });
+  );
   app2.delete("/api/purchase-orders/:id", requireAuth, async (req, res) => {
     const st = getStorage(req);
     try {
@@ -7145,7 +7438,9 @@ async function registerRoutes(app2) {
       broadcastUpdate("purchase_order_deleted", { id: req.params.id });
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to delete purchase order" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to delete purchase order"
+      });
     }
   });
   app2.get("/api/wastage", requireAuth, async (req, res) => {
@@ -7154,7 +7449,9 @@ async function registerRoutes(app2) {
       const wastages = await st.getWastages();
       const wastagesWithDetails = await Promise.all(
         wastages.map(async (wastage) => {
-          const inventoryItem = await st.getInventoryItem(wastage.inventoryItemId);
+          const inventoryItem = await st.getInventoryItem(
+            wastage.inventoryItemId
+          );
           return {
             ...wastage,
             inventoryItem
@@ -7163,7 +7460,9 @@ async function registerRoutes(app2) {
       );
       res.json(wastagesWithDetails);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch wastage records" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to fetch wastage records"
+      });
     }
   });
   app2.post("/api/wastage", requireAuth, async (req, res) => {
@@ -7173,7 +7472,9 @@ async function registerRoutes(app2) {
       if (!result.success) {
         return res.status(400).json({ error: result.error });
       }
-      const inventoryItem = await st.getInventoryItem(result.data.inventoryItemId);
+      const inventoryItem = await st.getInventoryItem(
+        result.data.inventoryItemId
+      );
       if (!inventoryItem) {
         return res.status(404).json({ error: "Inventory item not found" });
       }
@@ -7181,13 +7482,18 @@ async function registerRoutes(app2) {
       if (newStock < 0) {
         return res.status(400).json({ error: "Insufficient stock for wastage entry" });
       }
-      await st.updateInventoryQuantity(result.data.inventoryItemId, newStock.toString());
+      await st.updateInventoryQuantity(
+        result.data.inventoryItemId,
+        newStock.toString()
+      );
       const wastage = await st.createWastage(result.data);
       broadcastUpdate("wastage_created", wastage);
       broadcastUpdate("inventory_updated", { wastageId: wastage.id });
       res.json(wastage);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to create wastage record" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to create wastage record"
+      });
     }
   });
   app2.delete("/api/wastage/:id", requireAuth, async (req, res) => {
@@ -7200,7 +7506,9 @@ async function registerRoutes(app2) {
       broadcastUpdate("wastage_deleted", { id: req.params.id });
       res.json({ success: true });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to delete wastage record" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to delete wastage record"
+      });
     }
   });
   app2.get("/api/inventory-usage", requireAuth, async (req, res) => {
@@ -7209,18 +7517,26 @@ async function registerRoutes(app2) {
       const usages = await st.getInventoryUsages();
       res.json(usages);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch inventory usage" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to fetch inventory usage"
+      });
     }
   });
-  app2.get("/api/inventory-usage/item/:itemId", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const usages = await st.getInventoryUsagesByItem(req.params.itemId);
-      res.json(usages);
-    } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch item usage" });
+  app2.get(
+    "/api/inventory-usage/item/:itemId",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const usages = await st.getInventoryUsagesByItem(req.params.itemId);
+        res.json(usages);
+      } catch (error) {
+        res.status(500).json({
+          error: error instanceof Error ? error.message : "Failed to fetch item usage"
+        });
+      }
     }
-  });
+  );
   app2.get("/api/inventory-usage/most-used", requireAuth, async (req, res) => {
     const st = getStorage(req);
     try {
@@ -7228,7 +7544,9 @@ async function registerRoutes(app2) {
       const mostUsed = await st.getMostUsedItems(limit);
       res.json(mostUsed);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch most used items" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to fetch most used items"
+      });
     }
   });
   app2.post("/api/inventory-usage", requireAuth, async (req, res) => {
@@ -7242,7 +7560,9 @@ async function registerRoutes(app2) {
       broadcastUpdate("inventory_usage_created", usage);
       res.json(usage);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to create inventory usage record" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to create inventory usage record"
+      });
     }
   });
   app2.post("/api/inventory/seed", requireAuth, async (req, res) => {
@@ -7260,7 +7580,9 @@ async function registerRoutes(app2) {
       });
     } catch (error) {
       console.error("Error seeding inventory:", error);
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to seed inventory" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to seed inventory"
+      });
     }
   });
   const digitalMenuSync = new DigitalMenuSyncService(storage);
@@ -7272,7 +7594,9 @@ async function registerRoutes(app2) {
       await digitalMenuSync.start(intervalMs);
       res.json({ success: true, message: "Digital menu sync service started" });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to start sync service" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to start sync service"
+      });
     }
   });
   app2.post("/api/digital-menu/sync-stop", requireAuth, async (req, res) => {
@@ -7281,7 +7605,9 @@ async function registerRoutes(app2) {
       digitalMenuSync.stop();
       res.json({ success: true, message: "Digital menu sync service stopped" });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to stop sync service" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to stop sync service"
+      });
     }
   });
   app2.post("/api/digital-menu/sync-now", requireAuth, async (req, res) => {
@@ -7291,7 +7617,9 @@ async function registerRoutes(app2) {
       broadcastUpdate("digital_menu_synced", { count: synced });
       res.json({ success: true, syncedOrders: synced });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to sync orders" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to sync orders"
+      });
     }
   });
   app2.get("/api/digital-menu/status", requireAuth, async (req, res) => {
@@ -7300,7 +7628,9 @@ async function registerRoutes(app2) {
       const status = digitalMenuSync.getSyncStatus();
       res.json(status);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to get sync status" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to get sync status"
+      });
     }
   });
   app2.get("/api/digital-menu/orders", requireAuth, async (req, res) => {
@@ -7309,7 +7639,9 @@ async function registerRoutes(app2) {
       const orders = await digitalMenuSync.getDigitalMenuOrders();
       res.json(orders);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch digital menu orders" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to fetch digital menu orders"
+      });
     }
   });
   app2.get("/api/digital-menu/customers", requireAuth, async (req, res) => {
@@ -7318,7 +7650,9 @@ async function registerRoutes(app2) {
       const customers = await digitalMenuSync.getDigitalMenuCustomers();
       res.json(customers);
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Failed to fetch digital menu customers" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Failed to fetch digital menu customers"
+      });
     }
   });
   digitalMenuSync.start(5e3);
@@ -7331,7 +7665,9 @@ async function registerRoutes(app2) {
       const synced = await externalOrdersSync.sync();
       res.json({ success: true, syncedOrders: synced });
     } catch (error) {
-      res.status(500).json({ error: error instanceof Error ? error.message : "Sync failed" });
+      res.status(500).json({
+        error: error instanceof Error ? error.message : "Sync failed"
+      });
     }
   });
   app2.get("/api/printers", requireAuth, async (req, res) => {
@@ -7382,46 +7718,59 @@ async function registerRoutes(app2) {
       res.json({ id: req.params.id, online: false });
     }
   });
-  app2.post("/api/printers/print-kot/:orderId", requireAuth, async (req, res) => {
-    const st = getStorage(req);
-    try {
-      const { buildKOTEscPos: buildKOTEscPos2, printToThermal: printToThermal2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
-      const { printerIds } = req.body;
-      const order = await st.getOrder(req.params.orderId);
-      if (!order) return res.status(404).json({ error: "Order not found" });
-      const orderItems = await st.getOrderItems(req.params.orderId);
-      let tableNumber;
-      let floorName;
-      if (order.tableId) {
-        const tbl = await st.getTable(order.tableId);
-        tableNumber = tbl?.tableNumber;
-        if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
+  app2.post(
+    "/api/printers/print-kot/:orderId",
+    requireAuth,
+    async (req, res) => {
+      const st = getStorage(req);
+      try {
+        const { buildKOTEscPos: buildKOTEscPos2, printToThermal: printToThermal2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
+        const { printerIds } = req.body;
+        const order = await st.getOrder(req.params.orderId);
+        if (!order) return res.status(404).json({ error: "Order not found" });
+        const orderItems = await st.getOrderItems(req.params.orderId);
+        let tableNumber;
+        let floorName;
+        if (order.tableId) {
+          const tbl = await st.getTable(order.tableId);
+          tableNumber = tbl?.tableNumber;
+          if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
+        }
+        const allPrinters = await mongoStorage.getPrinters();
+        const targets = printerIds?.length ? allPrinters.filter((p) => printerIds.includes(p.id)) : allPrinters.filter((p) => p.type === "KOT");
+        if (targets.length === 0) {
+          return res.json({ results: [], allFailed: true });
+        }
+        const kotNumber = await getDailyBillingNumber(st, order);
+        const escData = buildKOTEscPos2({
+          order,
+          items: orderItems.filter((item) => item.status === "new"),
+          tableNumber,
+          floorName,
+          kotNumber,
+          isUpdated: (order.kotCount ?? 0) > 1
+        });
+        const results = await Promise.all(
+          targets.map(async (p) => {
+            const result = await printToThermal2(p.ip, p.port, escData);
+            return { id: p.id, name: p.name, ...result };
+          })
+        );
+        const allFailed = results.every((r) => !r.success);
+        res.json({ results, allFailed });
+      } catch (e) {
+        res.status(500).json({ error: e.message });
       }
-      const allPrinters = await mongoStorage.getPrinters();
-      const targets = printerIds?.length ? allPrinters.filter((p) => printerIds.includes(p.id)) : allPrinters.filter((p) => p.type === "KOT");
-      if (targets.length === 0) {
-        return res.json({ results: [], allFailed: true });
-      }
-      const kotNumber = `KOT-${order.id.substring(0, 8).toUpperCase()}`;
-      const escData = buildKOTEscPos2({ order, items: orderItems, tableNumber, floorName, kotNumber, isUpdated: (order.kotCount ?? 0) > 1 });
-      const results = await Promise.all(
-        targets.map(async (p) => {
-          const result = await printToThermal2(p.ip, p.port, escData);
-          return { id: p.id, name: p.name, ...result };
-        })
-      );
-      const allFailed = results.every((r) => !r.success);
-      res.json({ results, allFailed });
-    } catch (e) {
-      res.status(500).json({ error: e.message });
     }
-  });
+  );
   app2.post("/api/printers/:id/test", requireAuth, async (req, res) => {
     try {
       const printer = await mongoStorage.getPrinter(req.params.id);
       if (!printer) return res.status(404).json({ error: "Printer not found" });
       const ESC2 = 27, GS2 = 29, LF2 = 10;
-      const now = (/* @__PURE__ */ new Date()).toLocaleString("en-IN");
+      const now = (/* @__PURE__ */ new Date()).toLocaleString("en-IN", {
+        timeZone: "Asia/Kolkata"
+      });
       const parts = [
         Buffer.from([ESC2, 64]),
         // init

@@ -59,7 +59,7 @@ export default function PrintableInvoice({ invoice, order, orderItems, onPrintCo
       `}</style>
       
       <div style={{ textAlign: 'center', borderBottom: '2px dashed #000', paddingBottom: '10px', marginBottom: '10px' }}>
-        <h2 style={{ margin: '0 0 5px 0', fontSize: '18px', fontWeight: 'bold' }}>Restaurant POS</h2>
+         <h2 style={{ margin: '0 0 5px 0', fontSize: '18px', fontWeight: 'bold' }}>BUNGLE</h2>
         <p style={{ margin: '2px 0', fontSize: '10px' }}>123 Main Street, City, State 12345</p>
         <p style={{ margin: '2px 0', fontSize: '10px' }}>Phone: +1 (555) 123-4567</p>
         <p style={{ margin: '2px 0', fontSize: '10px' }}>GSTIN: GSTIN1234567890</p>
