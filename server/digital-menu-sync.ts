@@ -267,6 +267,17 @@ export class DigitalMenuSyncService {
           if (digitalOrder.syncedToPOS !== true) continue;
           
           const orderId = digitalOrder._id?.toString() || `${customerDoc._id.toString()}_${digitalOrder.orderDate}`;
+          // Digital Menu can append items to an already-synced order. The
+          // original sync claim is intentionally not reset, so detect and
+          // import only the items that do not yet exist in the POS order.
+          if (digitalOrder.posOrderId) {
+            try {
+              const added = await this.syncAddedPOSItems(digitalOrder);
+              if (added > 0) updated += 1;
+            } catch (error) {
+              console.error(`❌ Failed to sync added items for ${orderId}:`, error);
+            }
+          }
           const previousStatus = this.orderStatusMap.get(orderId);
           const previousPaymentStatus = this.orderPaymentStatusMap.get(orderId);
           const currentPaymentStatus = digitalOrder.paymentStatus || 'pending';
@@ -354,6 +365,76 @@ export class DigitalMenuSyncService {
       console.error('❌ Error during digital menu sync:', error);
       return 0;
     }
+  }
+
+  private async syncAddedPOSItems(digitalOrder: DigitalMenuOrder): Promise<number> {
+    if (!digitalOrder.posOrderId) return 0;
+    const posOrder = await this.storage.getOrder(digitalOrder.posOrderId);
+    if (!posOrder) return 0;
+    const existingItems = await this.storage.getOrderItems(posOrder.id);
+    const incomingItems = digitalOrder.items || [];
+    if (incomingItems.length <= existingItems.length) return 0;
+
+    const addedItems = incomingItems.slice(existingItems.length);
+    const createdItems = [];
+    for (const item of addedItems) {
+      const menuItem = await this.findMenuItemByName(item.menuItemName);
+      const notes = [
+        item.notes,
+        item.spiceLevel ? `Spice: ${item.spiceLevel}` : null,
+      ].filter(Boolean).join(" | ") || null;
+      createdItems.push(await this.storage.createOrderItem({
+        orderId: posOrder.id,
+        menuItemId: menuItem?.id || "unknown",
+        name: item.menuItemName,
+        quantity: item.quantity,
+        price: (item.price || 0).toFixed(2),
+        notes,
+        status: "new",
+        isVeg: menuItem?.isVeg ?? true,
+      }));
+    }
+
+    await this.storage.updateOrderTotal(posOrder.id, (digitalOrder.total || 0).toFixed(2));
+    const updatedOrder = await this.storage.incrementKotCount(posOrder.id) ?? posOrder;
+    const printers = (await mongoStorage.getPrinters()).filter(
+      (printer) => printer.type === "KOT" && printer.autoPrint
+    );
+    if (printers.length > 0) {
+      const { buildKOTEscPos } = await import("./utils/escpos");
+      const table = updatedOrder.tableId ? await this.storage.getTable(updatedOrder.tableId) : null;
+      const floorName = table?.floorId
+        ? (await this.storage.getFloor(table.floorId))?.name
+        : undefined;
+      const kotNumber = await getDailyBillingNumber(this.storage, updatedOrder);
+      const sequence = await getDailyKotSequence(this.storage, updatedOrder);
+      const escData = buildKOTEscPos({
+        order: updatedOrder,
+        items: createdItems,
+        tableNumber: table?.tableNumber,
+        floorName,
+        kotNumber,
+        sequence: String(sequence).padStart(2, "0"),
+        isUpdated: true,
+      });
+      const escposData = Buffer.from(escData).toString("base64");
+      for (const printer of printers) {
+        await mongoStorage.createPrintJob({
+          orderId: updatedOrder.id,
+          kotNumber,
+          printerIp: printer.ip,
+          printerPort: printer.port,
+          escposData,
+          status: "pending",
+        });
+      }
+    }
+    for (const item of createdItems) {
+      if (this.broadcastFn) {
+        this.broadcastFn("order_item_added", { orderId: posOrder.id, item });
+      }
+    }
+    return createdItems.length;
   }
 
   private async convertAndCreatePOSOrder(digitalOrder: DigitalMenuOrder): Promise<string> {
