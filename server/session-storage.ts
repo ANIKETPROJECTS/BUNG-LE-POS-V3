@@ -421,6 +421,7 @@ export class SessionStorage implements IStorage {
       notes: insertItem.notes ?? null,
       status: insertItem.status ?? 'new',
       isVeg: insertItem.isVeg ?? true,
+      createdAt: new Date(),
     };
     await this.getCollection<OrderItem>('orderItems').insertOne(item as any);
     return item;
@@ -450,6 +451,14 @@ export class SessionStorage implements IStorage {
     await this.ensureConnection();
     const result = await this.getCollection<OrderItem>('orderItems').deleteOne({ id } as any);
     return result.deletedCount > 0;
+  }
+
+  async assignMissingKotBatch(orderId: string, batch: number): Promise<void> {
+    await this.ensureConnection();
+    await this.getCollection<OrderItem>('orderItems').updateMany(
+      { orderId, kotBatch: { $exists: false } } as any,
+      { $set: { kotBatch: batch } },
+    );
   }
 
   async getInventoryItems(): Promise<InventoryItem[]> {
