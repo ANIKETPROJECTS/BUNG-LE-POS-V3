@@ -1801,6 +1801,13 @@ var MongoStorage = class {
       { $set: { kotBatch: batch } }
     );
   }
+  async setOrderItemKotBatch(id, batch) {
+    await this.ensureConnection();
+    await mongodb.getCollection("orderItems").updateOne(
+      { id },
+      { $set: { kotBatch: batch } }
+    );
+  }
   async updateOrderItem(id, data) {
     await this.ensureConnection();
     const result = await mongodb.getCollection("orderItems").findOneAndUpdate(
@@ -5199,7 +5206,7 @@ var ExternalOrdersSyncService = class {
       const price = Number(item.price || item.unitPrice || item.rate || 0);
       const notes = item.notes || item.instructions || item.specialRequest || null;
       const isVeg = item.isVeg !== void 0 ? Boolean(item.isVeg) : !/non[-_\s]?veg/i.test(String(item.category || item.type || ""));
-      created.push(await this.storage.createOrderItem({
+      const createdItem = await this.storage.createOrderItem({
         orderId: posOrder.id,
         menuItemId: "external",
         name,
@@ -5209,7 +5216,9 @@ var ExternalOrdersSyncService = class {
         status: "new",
         isVeg,
         kotBatch: (posOrder.kotCount ?? 0) + 1
-      }));
+      });
+      await this.storage.setOrderItemKotBatch(createdItem.id, kotBatch);
+      created.push(createdItem);
     }
     const total = Number(doc.total ?? doc.totalAmount ?? doc.grandTotal ?? 0);
     await this.storage.updateOrderTotal(posOrder.id, total.toFixed(2));
@@ -5523,6 +5532,7 @@ var ExternalOrdersSyncService = class {
         isVeg,
         kotBatch: 1
       });
+      await this.storage.setOrderItemKotBatch(created.id, 1);
       console.log(`  \u{1F37D}\uFE0F  [ExternalOrders] Item: ${itemName} x${qty} (${isVeg ? "veg" : "non-veg"})`);
       this.broadcastFn?.("order_item_added", { orderId: posOrder.id, item: created });
     }

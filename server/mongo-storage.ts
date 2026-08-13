@@ -460,6 +460,14 @@ export class MongoStorage implements IStorage {
     );
   }
 
+  async setOrderItemKotBatch(id: string, batch: number): Promise<void> {
+    await this.ensureConnection();
+    await mongodb.getCollection<OrderItem>("orderItems").updateOne(
+      { id } as any,
+      { $set: { kotBatch: batch } },
+    );
+  }
+
   async updateOrderItem(id: string, data: Partial<Pick<OrderItem, 'quantity' | 'notes' | 'name'>>): Promise<OrderItem | undefined> {
     await this.ensureConnection();
     const result = await mongodb.getCollection<OrderItem>('orderItems').findOneAndUpdate(

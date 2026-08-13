@@ -342,7 +342,7 @@ export class ExternalOrdersSyncService {
       const isVeg = item.isVeg !== undefined
         ? Boolean(item.isVeg)
         : !/non[-_\s]?veg/i.test(String(item.category || item.type || ""));
-      created.push(await this.storage.createOrderItem({
+      const createdItem = await this.storage.createOrderItem({
         orderId: posOrder.id,
         menuItemId: "external",
         name,
@@ -352,7 +352,9 @@ export class ExternalOrdersSyncService {
         status: "new",
         isVeg,
         kotBatch: (posOrder.kotCount ?? 0) + 1,
-      }));
+      });
+      await this.storage.setOrderItemKotBatch(createdItem.id, kotBatch);
+      created.push(createdItem);
     }
 
     const total = Number(doc.total ?? doc.totalAmount ?? doc.grandTotal ?? 0);
@@ -739,6 +741,7 @@ export class ExternalOrdersSyncService {
         isVeg,
         kotBatch: 1,
       });
+      await this.storage.setOrderItemKotBatch(created.id, 1);
 
       console.log(`  🍽️  [ExternalOrders] Item: ${itemName} x${qty} (${isVeg ? "veg" : "non-veg"})`);
       this.broadcastFn?.("order_item_added", { orderId: posOrder.id, item: created });
