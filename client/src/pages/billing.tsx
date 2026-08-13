@@ -197,6 +197,30 @@ export default function BillingPage() {
     }
   };
 
+  // Digital Menu updates an existing POS order by adding OrderItem records.
+  // Poll while this screen is open so those items appear without requiring a
+  // page refresh. Table views poll all active orders, preserving separate
+  // orders/KOTs while presenting their current items together.
+  useEffect(() => {
+    if (!currentOrderId && !currentTableId) return;
+
+    let stopped = false;
+    const refresh = async () => {
+      if (stopped) return;
+      if (currentTableId) {
+        await fetchTableOrder(currentTableId);
+      } else if (currentOrderId) {
+        await fetchExistingOrder(currentOrderId);
+      }
+    };
+
+    const intervalId = window.setInterval(refresh, 1000);
+    return () => {
+      stopped = true;
+      window.clearInterval(intervalId);
+    };
+  }, [currentTableId, currentOrderId]);
+
   const { data: menuItems = [], isLoading: menuLoading } = useQuery<MenuItem[]>({
     queryKey: ["/api/menu"],
   });
