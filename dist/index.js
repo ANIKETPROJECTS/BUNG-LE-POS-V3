@@ -5149,6 +5149,22 @@ var ExternalOrdersSyncService = class {
           }
         }
       }
+      const syncedDocs = await coll.find({
+        syncedToPOS: true,
+        posOrderId: { $exists: true },
+        status: { $nin: ["cancelled", "rejected", "cancel", "reject"] }
+      }).toArray();
+      for (const doc of syncedDocs) {
+        try {
+          const added = await this.syncAddedItems(doc);
+          if (added > 0) {
+            synced++;
+            console.log(`\u{1F504} [ExternalOrders] Added ${added} item(s) to POS order ${doc.posOrderId}`);
+          }
+        } catch (err) {
+          console.error(`\u274C [ExternalOrders] Failed to sync item additions for ${doc._id}:`, err);
+        }
+      }
       if (synced > 0) {
         console.log(`\u{1F4E6} [ExternalOrders] ${synced} new order(s) synced to POS`);
         this.broadcastFn?.("external_orders_batch_synced", { count: synced });
@@ -5158,6 +5174,77 @@ var ExternalOrdersSyncService = class {
       console.error("[ExternalOrders] Sync cycle error:", err);
       return 0;
     }
+  }
+  async syncAddedItems(doc) {
+    const posOrder = await this.storage.getOrder(String(doc.posOrderId));
+    if (!posOrder) return 0;
+    const incoming = doc.items || doc.orderItems || doc.cart || [];
+    const existing = await this.storage.getOrderItems(posOrder.id);
+    if (incoming.length <= existing.length) return 0;
+    const added = incoming.slice(existing.length);
+    const created = [];
+    for (const item of added) {
+      const name = item.name || item.menuItemName || item.itemName || "Unknown Item";
+      const quantity = Number(item.quantity || item.qty || 1);
+      const price = Number(item.price || item.unitPrice || item.rate || 0);
+      const notes = item.notes || item.instructions || item.specialRequest || null;
+      const isVeg = item.isVeg !== void 0 ? Boolean(item.isVeg) : !/non[-_\s]?veg/i.test(String(item.category || item.type || ""));
+      created.push(await this.storage.createOrderItem({
+        orderId: posOrder.id,
+        menuItemId: "external",
+        name,
+        quantity,
+        price: price.toFixed(2),
+        notes,
+        status: "new",
+        isVeg
+      }));
+    }
+    const total = Number(doc.total ?? doc.totalAmount ?? doc.grandTotal ?? 0);
+    await this.storage.updateOrderTotal(posOrder.id, total.toFixed(2));
+    const updatedOrder = await this.storage.incrementKotCount(posOrder.id) ?? posOrder;
+    const table = updatedOrder.tableId ? await this.storage.getTable(updatedOrder.tableId) : null;
+    const printers = (await mongoStorage.getPrinters()).filter(
+      (printer) => printer.type === "KOT" && printer.autoPrint
+    );
+    if (printers.length > 0) {
+      const { buildKOTEscPos: buildKOTEscPos2 } = await Promise.resolve().then(() => (init_escpos(), escpos_exports));
+      const floorName = table?.floorId ? (await this.storage.getFloor(table.floorId))?.name : void 0;
+      const kotNumber = await getDailyBillingNumber(this.storage, updatedOrder);
+      const kotSequence = await getDailyKotSequence(this.storage, updatedOrder);
+      const escData = buildKOTEscPos2({
+        order: updatedOrder,
+        items: created,
+        tableNumber: table?.tableNumber,
+        floorName,
+        kotNumber,
+        sequence: String(kotSequence).padStart(2, "0"),
+        isUpdated: true
+      });
+      const escposData = Buffer.from(escData).toString("base64");
+      for (const printer of printers) {
+        await mongoStorage.createPrintJob({
+          orderId: updatedOrder.id,
+          kotNumber,
+          printerIp: printer.ip,
+          printerPort: printer.port,
+          escposData,
+          status: "pending"
+        });
+      }
+    }
+    this.broadcastFn?.("order_updated", updatedOrder);
+    for (const item of created) {
+      this.broadcastFn?.("order_item_added", { orderId: posOrder.id, item });
+    }
+    this.broadcastFn?.("kot_created", {
+      orderId: posOrder.id,
+      tableNumber: table?.tableNumber ?? null,
+      customerName: doc.customerName || null,
+      itemCount: created.length,
+      isUpdated: true
+    });
+    return created.length;
   }
   /**
    * Resolve a table in the POS by matching:
