@@ -393,7 +393,13 @@ function KOTDeleteModal({
   const { toast } = useToast();
 
   const deleteMutation = useMutation({
-    mutationFn: async (orderId: string) => apiRequest("DELETE", `/api/orders/${orderId}`),
+    mutationFn: async (kot: KOTTicket) => {
+      // A KOT is a batch of items, not the whole POS order. Delete only this
+      // batch so later KOTs for the same table/order remain intact.
+      await Promise.all(
+        kot.items.map((item) => apiRequest("DELETE", `/api/order-items/${item.id}`))
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders/active"] });
       queryClient.invalidateQueries({ queryKey: ["/api/orders/completed"] });
@@ -404,7 +410,7 @@ function KOTDeleteModal({
   const handleConfirm = async () => {
     if (!ticket) return;
     try {
-      await deleteMutation.mutateAsync(ticket.order.id);
+      await deleteMutation.mutateAsync(ticket);
       toast({ title: `${ticket.kotNumber} deleted` });
       onClose();
     } catch {
@@ -851,8 +857,8 @@ export default function KOTPage() {
           </div>
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-            {filtered.map(t => (
-              <KOTGridCard key={t.order.id} ticket={t}
+             {filtered.map((t, index) => (
+               <KOTGridCard key={`${t.order.id}-${t.kotNumber}-${index}`} ticket={t}
                 onView={() => setViewTicket(t)}
                 onEdit={() => setEditTicket(t)}
                 onDelete={() => setDeleteTicket(t)}
@@ -862,8 +868,8 @@ export default function KOTPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            {filtered.map(t => (
-              <KOTListRow key={t.order.id} ticket={t}
+             {filtered.map((t, index) => (
+               <KOTListRow key={`${t.order.id}-${t.kotNumber}-${index}`} ticket={t}
                 onView={() => setViewTicket(t)}
                 onEdit={() => setEditTicket(t)}
                 onDelete={() => setDeleteTicket(t)}
