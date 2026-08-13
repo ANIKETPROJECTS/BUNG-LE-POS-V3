@@ -48,7 +48,7 @@ export default function KitchenPage() {
       return [];
     }
 
-    return activeOrders.map((order, index) => {
+    return activeOrders.flatMap((order, index) => {
       const items = orderItemQueries[index]?.data || [];
 
       let tableNumber = "";
@@ -61,7 +61,20 @@ export default function KitchenPage() {
         tableNumber = "Pickup";
       }
 
-      return { order, items, tableNumber };
+      const batches = new Map<number, DBOrderItem[]>();
+      for (const item of items) {
+        const batch = (item as any).kotBatch ?? 1;
+        if (!batches.has(batch)) batches.set(batch, []);
+        batches.get(batch)!.push(item);
+      }
+
+      return Array.from(batches.entries()).map(([kotBatch, batchItems]) => ({
+        order,
+        items: batchItems,
+        tableNumber,
+        kotBatch,
+        ticketId: `${order.id}-kot-${kotBatch}`,
+      }));
     });
   }, [activeOrders, orderItemQueries, tables]);
 
@@ -116,14 +129,15 @@ export default function KitchenPage() {
                 <div className="text-center py-8 text-muted-foreground">No current orders</div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start">
-                  {ordersWithDetails.map(({ order, items, tableNumber }) => (
+                  {ordersWithDetails.map(({ order, items, tableNumber, kotBatch, ticketId }) => (
                     <KitchenOrderCard
-                      key={order.id}
-                      orderId={order.id}
+                      key={ticketId}
+                      orderId={ticketId}
                       order={order}
                       tableNumber={tableNumber}
                       orderTime={new Date(order.createdAt)}
                       items={items}
+                      kotBatch={kotBatch}
                     />
                   ))}
                 </div>
@@ -142,6 +156,7 @@ interface KitchenOrderCardProps {
   tableNumber: string;
   orderTime: Date;
   items: DBOrderItem[];
+  kotBatch: number;
 }
 
 function KitchenOrderCard({
@@ -150,6 +165,7 @@ function KitchenOrderCard({
   tableNumber,
   orderTime,
   items,
+  kotBatch,
 }: KitchenOrderCardProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
   const [isItemsCollapsed, setIsItemsCollapsed] = useState(false);
@@ -189,7 +205,7 @@ function KitchenOrderCard({
         <div className="flex justify-between items-start">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-bold text-lg">Order #{orderId.substring(0, 8)}</h3>
+              <h3 className="font-bold text-lg">Order #{order.id.substring(0, 8)} · KOT {kotBatch}</h3>
               {order.orderType && order.orderType !== "dine-in" && (
                 <Badge className="bg-white/20 text-white border-white/30 text-xs">
                   {order.orderType === "delivery" ? "DELIVERY" : "PICKUP"}
