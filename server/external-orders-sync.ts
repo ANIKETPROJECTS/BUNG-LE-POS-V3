@@ -330,6 +330,7 @@ export class ExternalOrdersSyncService {
 
     const added = incoming.slice(existing.length);
     const created: any[] = [];
+    const kotBatch = (posOrder.kotCount ?? 0) + 1;
     // Backfill legacy items created before KOT batches were introduced.
     // Without this, the UI correctly sees the new item but groups it into
     // the legacy batch because the original items have no batch field.
@@ -351,7 +352,7 @@ export class ExternalOrdersSyncService {
         notes,
         status: "new",
         isVeg,
-        kotBatch: (posOrder.kotCount ?? 0) + 1,
+        kotBatch,
       });
       await this.storage.setOrderItemKotBatch(createdItem.id, kotBatch);
       created.push(createdItem);

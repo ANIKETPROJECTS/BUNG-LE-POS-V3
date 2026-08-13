@@ -5199,6 +5199,7 @@ var ExternalOrdersSyncService = class {
     if (incoming.length <= existing.length) return 0;
     const added = incoming.slice(existing.length);
     const created = [];
+    const kotBatch = (posOrder.kotCount ?? 0) + 1;
     await this.storage.assignMissingKotBatch(posOrder.id, 1);
     for (const item of added) {
       const name = item.name || item.menuItemName || item.itemName || "Unknown Item";
@@ -5215,7 +5216,7 @@ var ExternalOrdersSyncService = class {
         notes,
         status: "new",
         isVeg,
-        kotBatch: (posOrder.kotCount ?? 0) + 1
+        kotBatch
       });
       await this.storage.setOrderItemKotBatch(createdItem.id, kotBatch);
       created.push(createdItem);
