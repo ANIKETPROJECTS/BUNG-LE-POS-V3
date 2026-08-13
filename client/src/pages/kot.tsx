@@ -747,7 +747,20 @@ export default function KOTPage() {
     const done   = buildTickets(todayCompletedOrders, completedQueries);
     const sorted = [...active, ...done].sort(
       (a, b) => {
-        const timeDiff = new Date(a.order.createdAt).getTime() - new Date(b.order.createdAt).getTime();
+        // Add-on KOTs share their parent order's createdAt. Use the first
+        // item's creation time so an add-on from T1 stays after an intervening
+        // order from T2 instead of being grouped by table/order.
+        const aItemTime = a.items.reduce((min, item) => {
+          const value = item.createdAt ? new Date(item.createdAt).getTime() : Infinity;
+          return Math.min(min, value);
+        }, Infinity);
+        const bItemTime = b.items.reduce((min, item) => {
+          const value = item.createdAt ? new Date(item.createdAt).getTime() : Infinity;
+          return Math.min(min, value);
+        }, Infinity);
+        const aTime = Number.isFinite(aItemTime) ? aItemTime : new Date(a.order.createdAt).getTime();
+        const bTime = Number.isFinite(bItemTime) ? bItemTime : new Date(b.order.createdAt).getTime();
+        const timeDiff = aTime - bTime;
         if (timeDiff !== 0) return timeDiff;
         // External orders can share the same millisecond timestamp. Use the
         // stable Mongo/POS order id as a deterministic tie-breaker so a

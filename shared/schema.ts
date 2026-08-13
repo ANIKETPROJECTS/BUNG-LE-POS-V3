@@ -127,6 +127,7 @@ export interface OrderItem {
   status: string;
   isVeg: boolean;
   kotBatch?: number;
+  createdAt?: Date | string;
 }
 
 export const insertOrderItemSchema = z.object({
