@@ -746,11 +746,11 @@ export default function KOTPage() {
     const active = buildTickets(kitchenOrders, activeQueries);
     const done   = buildTickets(todayCompletedOrders, completedQueries);
     const sorted = [...active, ...done].sort(
-      (a, b) => new Date(b.order.createdAt).getTime() - new Date(a.order.createdAt).getTime()
+      (a, b) => new Date(a.order.createdAt).getTime() - new Date(b.order.createdAt).getTime()
     );
     return sorted.map((ticket, index) => ({
       ...ticket,
-      kotNumber: `KOT-${String(sorted.length - index).padStart(4, "0")}`,
+      kotNumber: `KOT-${String(index + 1).padStart(4, "0")}`,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kitchenOrders, completedOrders, activeQueries, completedQueries, tables, floors]);
