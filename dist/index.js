@@ -6802,6 +6802,19 @@ async function registerRoutes(app2) {
       return sum + parseFloat(orderItem.price) * orderItem.quantity;
     }, 0);
     await st.updateOrderTotal(item.orderId, total.toFixed(2));
+    if (orderItems.length === 0) {
+      const emptyOrder = await st.getOrder(item.orderId);
+      if (emptyOrder?.tableId) {
+        await st.updateTableOrder(emptyOrder.tableId, null);
+        await st.updateTableStatus(emptyOrder.tableId, "free");
+        const updatedTable = await st.getTable(emptyOrder.tableId);
+        if (updatedTable) broadcastUpdate("table_updated", updatedTable);
+      }
+      await st.deleteOrder(item.orderId);
+      broadcastUpdate("order_updated", { id: item.orderId, deleted: true });
+      externalOrdersSync.deleteExternalOrder(item.orderId).catch(() => {
+      });
+    }
     broadcastUpdate("order_item_deleted", {
       id: req.params.id,
       orderId: item.orderId

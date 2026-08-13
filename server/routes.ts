@@ -1517,6 +1517,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     await st.updateOrderTotal(item.orderId, total.toFixed(2));
 
+    // Removing the last item removes the active order from the table as well.
+    // This is important when a KOT batch is deleted from the KOT screen:
+    // otherwise the table remains occupied with an empty order.
+    if (orderItems.length === 0) {
+      const emptyOrder = await st.getOrder(item.orderId);
+      if (emptyOrder?.tableId) {
+        await st.updateTableOrder(emptyOrder.tableId, null);
+        await st.updateTableStatus(emptyOrder.tableId, "free");
+        const updatedTable = await st.getTable(emptyOrder.tableId);
+        if (updatedTable) broadcastUpdate("table_updated", updatedTable);
+      }
+      await st.deleteOrder(item.orderId);
+      broadcastUpdate("order_updated", { id: item.orderId, deleted: true });
+      externalOrdersSync.deleteExternalOrder(item.orderId).catch(() => {});
+    }
+
     broadcastUpdate("order_item_deleted", {
       id: req.params.id,
       orderId: item.orderId,
