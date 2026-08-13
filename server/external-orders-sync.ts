@@ -330,6 +330,10 @@ export class ExternalOrdersSyncService {
 
     const added = incoming.slice(existing.length);
     const created: any[] = [];
+    // Backfill legacy items created before KOT batches were introduced.
+    // Without this, the UI correctly sees the new item but groups it into
+    // the legacy batch because the original items have no batch field.
+    await this.storage.assignMissingKotBatch(posOrder.id, 1);
     for (const item of added) {
       const name = item.name || item.menuItemName || item.itemName || "Unknown Item";
       const quantity = Number(item.quantity || item.qty || 1);

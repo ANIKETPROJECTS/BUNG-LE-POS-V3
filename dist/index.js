@@ -1794,6 +1794,13 @@ var MongoStorage = class {
     );
     return result ?? void 0;
   }
+  async assignMissingKotBatch(orderId, batch) {
+    await this.ensureConnection();
+    await mongodb.getCollection("orderItems").updateMany(
+      { orderId, kotBatch: { $exists: false } },
+      { $set: { kotBatch: batch } }
+    );
+  }
   async updateOrderItem(id, data) {
     await this.ensureConnection();
     const result = await mongodb.getCollection("orderItems").findOneAndUpdate(
@@ -5185,6 +5192,7 @@ var ExternalOrdersSyncService = class {
     if (incoming.length <= existing.length) return 0;
     const added = incoming.slice(existing.length);
     const created = [];
+    await this.storage.assignMissingKotBatch(posOrder.id, 1);
     for (const item of added) {
       const name = item.name || item.menuItemName || item.itemName || "Unknown Item";
       const quantity = Number(item.quantity || item.qty || 1);

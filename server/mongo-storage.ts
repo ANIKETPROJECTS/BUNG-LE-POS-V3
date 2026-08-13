@@ -452,6 +452,14 @@ export class MongoStorage implements IStorage {
     return result ?? undefined;
   }
 
+  async assignMissingKotBatch(orderId: string, batch: number): Promise<void> {
+    await this.ensureConnection();
+    await mongodb.getCollection<OrderItem>("orderItems").updateMany(
+      { orderId, kotBatch: { $exists: false } } as any,
+      { $set: { kotBatch: batch } },
+    );
+  }
+
   async updateOrderItem(id: string, data: Partial<Pick<OrderItem, 'quantity' | 'notes' | 'name'>>): Promise<OrderItem | undefined> {
     await this.ensureConnection();
     const result = await mongodb.getCollection<OrderItem>('orderItems').findOneAndUpdate(
