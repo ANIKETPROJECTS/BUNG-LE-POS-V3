@@ -1033,6 +1033,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
+    // POS-created items do not always carry a batch until the KOT is sent.
+    // Assign the pending items to this KOT before incrementing the count so
+    // add-ons get their own ticket just like Digital Menu orders.
+    const kotBatch = (order.kotCount ?? 0) + 1;
+    await st.assignMissingKotBatch(req.params.id, kotBatch);
     // Track how many times KOT has been sent — used to show "UPDATED" badge
     const updatedOrder = (await st.incrementKotCount(req.params.id)) ?? order;
     console.log(
