@@ -89,6 +89,7 @@ export interface IStorage {
   updateOrderItemStatus(id: string, status: string): Promise<OrderItem | undefined>;
   updateOrderItem(id: string, data: Partial<Pick<OrderItem, 'quantity' | 'notes' | 'name'>>): Promise<OrderItem | undefined>;
   deleteOrderItem(id: string): Promise<boolean>;
+  assignMissingKotBatch(orderId: string, batch: number): Promise<void>;
 
   getInventoryItems(): Promise<InventoryItem[]>;
   getInventoryItem(id: string): Promise<InventoryItem | undefined>;
