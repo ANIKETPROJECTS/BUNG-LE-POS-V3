@@ -746,7 +746,14 @@ export default function KOTPage() {
     const active = buildTickets(kitchenOrders, activeQueries);
     const done   = buildTickets(todayCompletedOrders, completedQueries);
     const sorted = [...active, ...done].sort(
-      (a, b) => new Date(a.order.createdAt).getTime() - new Date(b.order.createdAt).getTime()
+      (a, b) => {
+        const timeDiff = new Date(a.order.createdAt).getTime() - new Date(b.order.createdAt).getTime();
+        if (timeDiff !== 0) return timeDiff;
+        // External orders can share the same millisecond timestamp. Use the
+        // stable Mongo/POS order id as a deterministic tie-breaker so a
+        // refresh cannot make a later table appear earlier in the sequence.
+        return a.order.id.localeCompare(b.order.id);
+      }
     );
     return sorted.map((ticket, index) => ({
       ...ticket,
