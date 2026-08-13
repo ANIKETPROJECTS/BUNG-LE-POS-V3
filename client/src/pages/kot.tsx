@@ -714,7 +714,7 @@ export default function KOTPage() {
     })),
   });
 
-  const buildTickets = (orders: Order[], queries: typeof activeQueries, base: number): KOTTicket[] =>
+  const buildTickets = (orders: Order[], queries: typeof activeQueries): KOTTicket[] =>
     orders.flatMap((order, i) => {
       const items  = queries[i]?.data ?? [];
       const table  = tables.find(t => t.id === order.tableId);
@@ -736,16 +736,22 @@ export default function KOTPage() {
         items: batchItems,
         tableNumber,
         floorName,
-        kotNumber: `KOT-${String(base + i + batch).padStart(4, "0")}`,
+        // Assigned after active and completed orders are merged so numbering
+        // is global for the day, regardless of which table or status it has.
+        kotNumber: "",
       }));
     });
 
   const allTickets = useMemo(() => {
-    const active = buildTickets(kitchenOrders, activeQueries, 0);
-    const done   = buildTickets(todayCompletedOrders, completedQueries, kitchenOrders.length);
-    return [...active, ...done].sort(
+    const active = buildTickets(kitchenOrders, activeQueries);
+    const done   = buildTickets(todayCompletedOrders, completedQueries);
+    const sorted = [...active, ...done].sort(
       (a, b) => new Date(b.order.createdAt).getTime() - new Date(a.order.createdAt).getTime()
     );
+    return sorted.map((ticket, index) => ({
+      ...ticket,
+      kotNumber: `KOT-${String(sorted.length - index).padStart(4, "0")}`,
+    }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kitchenOrders, completedOrders, activeQueries, completedQueries, tables, floors]);
 
