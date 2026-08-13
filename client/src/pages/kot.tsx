@@ -504,7 +504,14 @@ function KOTGridCard({ ticket, onView, onEdit, onDelete, onPrint }: {
             <div key={item.id} className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5 min-w-0">
                 <VegDot isVeg={item.isVeg} />
-                <span className="text-xs text-gray-700 dark:text-gray-300 truncate">{item.name}</span>
+                   <div className="min-w-0">
+                     <span className="text-xs text-gray-700 dark:text-gray-300 truncate block">{item.name}</span>
+                     {item.notes && (
+                       <span className="text-[11px] text-gray-500 dark:text-gray-400 italic block truncate">
+                         Note: {item.notes}
+                       </span>
+                     )}
+                   </div>
               </div>
               <span className="flex-shrink-0 text-xs font-bold text-gray-700 dark:text-gray-200">×{item.quantity}</span>
             </div>
@@ -569,7 +576,7 @@ function KOTListRow({ ticket, onView, onEdit, onDelete, onPrint }: {
       {/* Items summary */}
       <div className="flex-1 min-w-0">
         <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
-          {ticket.items.map(i => `${i.name} ×${i.quantity}`).join("  ·  ") || "—"}
+           {ticket.items.map(i => `${i.name}${i.notes ? ` (Note: ${i.notes})` : ""} ×${i.quantity}`).join("  ·  ") || "—"}
         </p>
       </div>
 
