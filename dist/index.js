@@ -5512,7 +5512,8 @@ var ExternalOrdersSyncService = class {
         price: price.toFixed(2),
         notes,
         status: "new",
-        isVeg
+        isVeg,
+        kotBatch: 1
       });
       console.log(`  \u{1F37D}\uFE0F  [ExternalOrders] Item: ${itemName} x${qty} (${isVeg ? "veg" : "non-veg"})`);
       this.broadcastFn?.("order_item_added", { orderId: posOrder.id, item: created });

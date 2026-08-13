@@ -733,6 +733,7 @@ export class ExternalOrdersSyncService {
         notes,
         status:     "new",
         isVeg,
+        kotBatch: 1,
       });
 
       console.log(`  🍽️  [ExternalOrders] Item: ${itemName} x${qty} (${isVeg ? "veg" : "non-veg"})`);
