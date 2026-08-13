@@ -437,6 +437,7 @@ export class MongoStorage implements IStorage {
       notes: item.notes ?? null,
       status: item.status ?? "new",
       isVeg: item.isVeg ?? true,
+      createdAt: new Date(),
     };
     await mongodb.getCollection<OrderItem>('orderItems').insertOne(orderItem as any);
     return orderItem;

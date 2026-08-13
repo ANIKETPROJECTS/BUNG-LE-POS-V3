@@ -1780,7 +1780,8 @@ var MongoStorage = class {
       price: item.price,
       notes: item.notes ?? null,
       status: item.status ?? "new",
-      isVeg: item.isVeg ?? true
+      isVeg: item.isVeg ?? true,
+      createdAt: /* @__PURE__ */ new Date()
     };
     await mongodb.getCollection("orderItems").insertOne(orderItem);
     return orderItem;
