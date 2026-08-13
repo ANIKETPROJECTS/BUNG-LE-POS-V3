@@ -600,6 +600,7 @@ export class MemStorage implements IStorage {
       notes: item.notes ?? null,
       status: item.status ?? "new",
       isVeg: item.isVeg ?? true,
+      createdAt: new Date(),
     };
     this.orderItems.set(id, orderItem);
     return orderItem;
@@ -623,6 +624,14 @@ export class MemStorage implements IStorage {
 
   async deleteOrderItem(id: string): Promise<boolean> {
     return this.orderItems.delete(id);
+  }
+
+  async assignMissingKotBatch(orderId: string, batch: number): Promise<void> {
+    for (const [id, item] of this.orderItems.entries()) {
+      if (item.orderId === orderId && item.kotBatch == null) {
+        this.orderItems.set(id, { ...item, kotBatch: batch });
+      }
+    }
   }
 
   async getInventoryItems(): Promise<InventoryItem[]> {
