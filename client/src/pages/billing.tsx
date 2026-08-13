@@ -116,37 +116,53 @@ export default function BillingPage() {
 
   const fetchTableOrder = async (tableId: string) => {
     try {
-      // First try to get the order from the table's currentOrderId
+      // currentOrderId points only to the latest order. A table can have
+      // multiple ongoing Digital Menu orders, so load all active orders.
       const tableRes = await fetch(`/api/tables/${tableId}`);
-      if (tableRes.ok) {
-        const table = await tableRes.json();
-        if (table.currentOrderId) {
-          setCurrentOrderId(table.currentOrderId);
-          fetchExistingOrder(table.currentOrderId);
-          return;
-        }
-      }
-      
-      // If no currentOrderId, search for active orders for this table
-      // This handles cases where digital menu orders exist but aren't linked
+      const table = tableRes.ok ? await tableRes.json() : null;
       const ordersRes = await fetch(`/api/orders/active`);
-      if (ordersRes.ok) {
-        const orders = await ordersRes.json();
-        const tableOrder = orders.find((order: any) => order.tableId === tableId);
-        if (tableOrder) {
-          setCurrentOrderId(tableOrder.id);
-          fetchExistingOrder(tableOrder.id);
-          
-          // Fix the data inconsistency by updating the table's currentOrderId
-          try {
-            await fetch(`/api/tables/${tableId}/order`, {
-              method: 'PATCH',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ orderId: tableOrder.id })
-            });
-          } catch (e) {
-            console.error("Failed to sync table order link:", e);
-          }
+      if (!ordersRes.ok) return;
+      const orders = await ordersRes.json();
+      const tableOrders = orders
+        .filter((order: any) => order.tableId === tableId)
+        .sort((a: any, b: any) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        );
+      if (tableOrders.length === 0) return;
+
+      const itemLists = await Promise.all(
+        tableOrders.map(async (order: any) => {
+          const response = await fetch(`/api/orders/${order.id}/items`);
+          return response.ok ? response.json() : [];
+        })
+      );
+      const formattedItems = itemLists.flat().map((item: any) => ({
+        id: item.id,
+        menuItemId: item.menuItemId,
+        name: item.name,
+        price: parseFloat(item.price),
+        quantity: item.quantity,
+        notes: item.notes || undefined,
+        isFromDatabase: true,
+        isVeg: item.isVeg,
+      }));
+
+      // Actions continue to target the newest order, while the bill view
+      // displays every item from every ongoing order on the table.
+      const latestOrder = tableOrders[tableOrders.length - 1];
+      setCurrentOrderId(latestOrder.id);
+      setOrderItems(formattedItems);
+
+      // Repair the table pointer without deleting or merging older orders.
+      if (table?.currentOrderId !== latestOrder.id) {
+        try {
+          await fetch(`/api/tables/${tableId}/order`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ orderId: latestOrder.id }),
+          });
+        } catch (e) {
+          console.error("Failed to sync table order link:", e);
         }
       }
     } catch (error) {
