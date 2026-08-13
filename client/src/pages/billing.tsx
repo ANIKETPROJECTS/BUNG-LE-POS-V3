@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Search, Send, Users, User, ShoppingCart } from "lucide-react";
 import { useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -80,6 +80,7 @@ export default function BillingPage() {
   const { data: taxSettings } = useTaxSettings();
   const [taxRate, setTaxRate] = useState(taxSettings.taxRate);
   const [serviceChargeRate, setServiceChargeRate] = useState(taxSettings.serviceCharge);
+  const localEditingRef = useRef(false);
 
   useEffect(() => {
     setTaxRate(taxSettings.taxRate);
@@ -207,6 +208,9 @@ export default function BillingPage() {
     let stopped = false;
     const refresh = async () => {
       if (stopped) return;
+      // Do not replace POS edits while the cashier is composing the next
+      // KOT. The Digital Menu poller may update the same order concurrently.
+      if (localEditingRef.current) return;
       if (currentTableId) {
         await fetchTableOrder(currentTableId);
       } else if (currentOrderId) {
@@ -509,6 +513,7 @@ export default function BillingPage() {
   const handleAddItem = (itemId: string) => {
     const menuItem = menuItems.find((item) => item.id === itemId);
     if (!menuItem) return;
+    localEditingRef.current = true;
 
     const existingItem = orderItems.find((item) => item.menuItemId === itemId && !item.isFromDatabase);
     if (existingItem) {
@@ -544,6 +549,7 @@ export default function BillingPage() {
       });
       return;
     }
+    localEditingRef.current = true;
     
     if (quantity === 0) {
       setOrderItems(orderItems.filter((item) => item.id !== id));
@@ -562,6 +568,7 @@ export default function BillingPage() {
       });
       return;
     }
+    localEditingRef.current = true;
     setOrderItems(orderItems.filter((item) => item.id !== id));
   };
 
@@ -575,6 +582,7 @@ export default function BillingPage() {
       });
       return;
     }
+    localEditingRef.current = true;
     setOrderItems(orderItems.map((item) => (item.id === id ? { ...item, notes } : item)));
   };
 
