@@ -227,6 +227,7 @@ export class MongoStorage implements IStorage {
       cost: item.cost,
       available: item.available ?? true,
       isVeg: item.isVeg ?? true,
+      kotBatch: item.kotBatch,
       variants: item.variants ?? null,
       image: item.image ?? null,
       description: item.description ?? null,

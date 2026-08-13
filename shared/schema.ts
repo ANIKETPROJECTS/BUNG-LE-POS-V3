@@ -126,6 +126,7 @@ export interface OrderItem {
   notes: string | null;
   status: string;
   isVeg: boolean;
+  kotBatch?: number;
 }
 
 export const insertOrderItemSchema = z.object({
@@ -137,6 +138,7 @@ export const insertOrderItemSchema = z.object({
   notes: z.string().nullable().optional(),
   status: z.string().default("new"),
   isVeg: z.boolean().default(true),
+  kotBatch: z.number().optional(),
 });
 
 export type InsertOrderItem = z.infer<typeof insertOrderItemSchema>;

@@ -85,7 +85,8 @@ var init_schema = __esm({
       price: z2.string(),
       notes: z2.string().nullable().optional(),
       status: z2.string().default("new"),
-      isVeg: z2.boolean().default(true)
+      isVeg: z2.boolean().default(true),
+      kotBatch: z2.number().optional()
     });
     insertInventoryItemSchema = z2.object({
       name: z2.string(),
@@ -1593,6 +1594,7 @@ var MongoStorage = class {
       cost: item.cost,
       available: item.available ?? true,
       isVeg: item.isVeg ?? true,
+      kotBatch: item.kotBatch,
       variants: item.variants ?? null,
       image: item.image ?? null,
       description: item.description ?? null,
@@ -5197,7 +5199,8 @@ var ExternalOrdersSyncService = class {
         price: price.toFixed(2),
         notes,
         status: "new",
-        isVeg
+        isVeg,
+        kotBatch: (posOrder.kotCount ?? 0) + 1
       }));
     }
     const total = Number(doc.total ?? doc.totalAmount ?? doc.grandTotal ?? 0);

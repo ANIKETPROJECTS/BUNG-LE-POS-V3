@@ -702,7 +702,7 @@ export default function KOTPage() {
   });
 
   const buildTickets = (orders: Order[], queries: typeof activeQueries, base: number): KOTTicket[] =>
-    orders.map((order, i) => {
+    orders.flatMap((order, i) => {
       const items  = queries[i]?.data ?? [];
       const table  = tables.find(t => t.id === order.tableId);
       const floor  = floors.find(f => f.id === table?.floorId);
@@ -712,7 +712,19 @@ export default function KOTPage() {
       const floorName = order.orderType === "dine-in"
         ? (floor?.name ?? "")
         : (order.customerName ?? "");
-      return { order, items, tableNumber, floorName, kotNumber: `KOT-${String(base + i + 1).padStart(4, "0")}` };
+      const batches = new Map<number, OrderItem[]>();
+      for (const item of items) {
+        const batch = (item as any).kotBatch ?? 1;
+        if (!batches.has(batch)) batches.set(batch, []);
+        batches.get(batch)!.push(item);
+      }
+      return Array.from(batches.entries()).map(([batch, batchItems]) => ({
+        order,
+        items: batchItems,
+        tableNumber,
+        floorName,
+        kotNumber: `KOT-${String(base + i + batch).padStart(4, "0")}`,
+      }));
     });
 
   const allTickets = useMemo(() => {

@@ -347,6 +347,7 @@ export class ExternalOrdersSyncService {
         notes,
         status: "new",
         isVeg,
+        kotBatch: (posOrder.kotCount ?? 0) + 1,
       }));
     }
 
