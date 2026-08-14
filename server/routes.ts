@@ -24,6 +24,7 @@ import {
   insertCustomerSchema,
   insertFeedbackSchema,
   insertInventoryUsageSchema,
+  type OrderItem,
 } from "@shared/schema";
 import { z } from "zod";
 import { fetchMenuItemsFromMongoDB } from "./mongodbService";
@@ -1271,7 +1272,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Order not found" });
     }
 
-    const orderItems = await st.getOrderItems(req.params.id);
+    // A table can hold several active orders at once (each person's Digital
+    // Menu order becomes its own POS order so they keep separate KOTs). On
+    // checkout the whole cart must be settled together in one bill, so gather
+    // every active order on the same table and check them all out at once.
+    const ACTIVE_STATUSES = ["sent_to_kitchen", "ready_to_bill", "billed"];
+    let ordersToSettle = [order];
+    if (order.tableId) {
+      const allOrders = await st.getOrders();
+      ordersToSettle = allOrders.filter(
+        (o) =>
+          o.tableId === order.tableId &&
+          (ACTIVE_STATUSES.includes(o.status) || o.id === order.id),
+      );
+      // Keep deterministic ordering so the invoice/primary order is predictable.
+      ordersToSettle.sort(
+        (a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      );
+    }
+
+    // Aggregate items across every order being settled in this checkout.
+    const orderItems: OrderItem[] = [];
+    for (const ord of ordersToSettle) {
+      const ordItems = await st.getOrderItems(ord.id);
+      orderItems.push(...ordItems);
+    }
 
     const subtotal = orderItems.reduce(
       (sum, item) => sum + parseFloat(item.price) * item.quantity,
@@ -1309,30 +1335,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
-    const checkedOutOrder = await st.checkoutOrder(
-      req.params.id,
-      result.data.paymentMode,
-    );
-    if (!checkedOutOrder) {
+    // Check out every order settled in this bill. The primary order is the
+    // first (earliest) of the set; it carries the combined invoice while all
+    // sibling orders are marked completed at the same time.
+    const primaryOrder = order;
+    const checkedOutOrders = [];
+    for (const ord of ordersToSettle) {
+      const settled = await st.checkoutOrder(
+        ord.id,
+        result.data.paymentMode,
+      );
+      if (settled) checkedOutOrders.push(settled);
+    }
+    if (checkedOutOrders.length === 0) {
       return res.status(500).json({ error: "Failed to checkout order" });
     }
 
     let tableInfo = null;
-    if (checkedOutOrder.tableId) {
-      tableInfo = await st.getTable(checkedOutOrder.tableId);
-      await st.updateTableOrder(checkedOutOrder.tableId, null);
-      await st.updateTableStatus(checkedOutOrder.tableId, "free");
+    if (primaryOrder.tableId) {
+      tableInfo = await st.getTable(primaryOrder.tableId);
+      await st.updateTableOrder(primaryOrder.tableId, null);
+      await st.updateTableStatus(primaryOrder.tableId, "free");
     }
 
     // Update customer's table status to "free" for digital menu orders
-    if (checkedOutOrder.customerPhone) {
-      await digitalMenuSync.updateCustomerTableStatus(
-        checkedOutOrder.customerPhone,
-        "free",
-      );
+    for (const settled of checkedOutOrders) {
+      if (settled.customerPhone) {
+        await digitalMenuSync.updateCustomerTableStatus(
+          settled.customerPhone,
+          "free",
+        );
+      }
     }
 
-    const invoiceNumber = await getDailyBillingNumber(st, checkedOutOrder);
+    const invoiceNumber = await getDailyBillingNumber(st, primaryOrder);
 
     const invoiceItemsData = orderItems.map((item) => ({
       name: item.name,
@@ -1342,15 +1378,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       notes: item.notes || undefined,
     }));
 
-    const invoice = await upsertInvoice(st, checkedOutOrder.id, {
+    const consolidatedCustomerName = checkedOutOrders
+      .map((o) => o.customerName)
+      .find(Boolean)
+      === undefined
+      ? null
+      : checkedOutOrders.map((o) => o.customerName).find(Boolean);
+    const customerName = consolidatedCustomerName ?? primaryOrder.customerName;
+    const customerPhone =
+      checkedOutOrders.map((o) => o.customerPhone).find(Boolean) ??
+      primaryOrder.customerPhone;
+
+    const invoice = await upsertInvoice(st, primaryOrder.id, {
       invoiceNumber,
-      orderId: checkedOutOrder.id,
+      orderId: primaryOrder.id,
       tableNumber: tableInfo?.tableNumber || null,
       floorName: tableInfo?.floorId
         ? (await st.getFloor(tableInfo.floorId))?.name || null
         : null,
-      customerName: checkedOutOrder.customerName,
-      customerPhone: checkedOutOrder.customerPhone,
+      customerName,
+      customerPhone,
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
       cgst: cgst.toFixed(2),
@@ -1367,25 +1414,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
       notes: null,
     });
 
-    // Auto-deduct inventory for order
-    try {
-      await st.deductInventoryForOrder(checkedOutOrder.id);
-      broadcastUpdate("inventory_updated", { orderId: checkedOutOrder.id });
-    } catch (error) {
-      console.error("Error deducting inventory for order:", error);
+    // Auto-deduct inventory for every order settled in this checkout
+    for (const settled of checkedOutOrders) {
+      try {
+        await st.deductInventoryForOrder(settled.id);
+        broadcastUpdate("inventory_updated", { orderId: settled.id });
+      } catch (error) {
+        console.error("Error deducting inventory for order:", error);
+      }
     }
 
-    broadcastUpdate("order_paid", checkedOutOrder);
+    for (const settled of checkedOutOrders) {
+      broadcastUpdate("order_paid", settled);
+    }
     broadcastUpdate("invoice_created", invoice);
     if (result.data.print) {
       await queueBillPrintJobs({
         invoice,
-        orderType: checkedOutOrder.orderType,
+        orderType: primaryOrder.orderType,
         taxSettings: await getTaxSettings(st),
       });
     }
     res.json({
-      order: checkedOutOrder,
+      order: checkedOutOrders[0],
+      orders: checkedOutOrders,
       invoice,
       shouldPrint: result.data.print,
     });
