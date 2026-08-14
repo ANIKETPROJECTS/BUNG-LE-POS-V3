@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { Plus, Download, Send, Eye, Edit, Trash2, RefreshCw, X, Minus, StickyNote, Search, Filter, ArrowUpDown, MoreVertical } from "lucide-react";
+import { Plus, Download, Send, Eye, Edit, Trash2, RefreshCw, X, Minus, StickyNote, Search, Filter, ArrowUpDown, MoreVertical, Printer } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import AppHeader from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
@@ -165,6 +165,26 @@ export default function InvoicesPage() {
         description: "Invoice has been successfully updated",
       });
       setShowEditDialog(false);
+    },
+  });
+
+  const reprintInvoiceMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest("POST", `/api/invoices/${id}/reprint`);
+      return res;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Reprint sent",
+        description: "Invoice reprint queued to the printer",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Reprint failed",
+        description: "Unable to reprint the invoice",
+        variant: "destructive",
+      });
     },
   });
 
@@ -858,6 +878,10 @@ export default function InvoicesPage() {
               <div className="flex gap-2 pt-2">
                 <Button variant="outline" onClick={() => setShowViewDialog(false)} className="flex-1">
                   Close
+                </Button>
+                <Button variant="outline" onClick={() => reprintInvoiceMutation.mutate(selectedInvoice.id)} disabled={reprintInvoiceMutation.isPending} className="flex-1">
+                  <Printer className="h-4 w-4 mr-2" />
+                  {reprintInvoiceMutation.isPending ? "Printing..." : "Reprint"}
                 </Button>
                 <Button onClick={() => handleDownloadInvoice(selectedInvoice)} className="flex-1">
                   <Download className="h-4 w-4 mr-2" />

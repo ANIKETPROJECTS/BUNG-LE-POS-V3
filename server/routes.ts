@@ -1429,6 +1429,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reprint an existing customer bill to the thermal printer(s), after an
+  // edit or whenever an extra copy is needed.
+  app.post("/api/invoices/:id/reprint", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    try {
+      const invoice = await st.getInvoice(req.params.id);
+      if (!invoice) {
+        return res.status(404).json({ error: "Invoice not found" });
+      }
+
+      const order = await st.getOrder(invoice.orderId);
+      if (order && order.tableId) {
+        const tbl = await st.getTable(order.tableId);
+        if (tbl?.floorId) {
+          const floor = await st.getFloor(tbl.floorId);
+          if (floor) invoice.floorName = floor.name;
+        }
+      }
+
+      await queueBillPrintJobs({
+        invoice,
+        orderType: order?.orderType,
+        taxSettings: await getTaxSettings(st),
+      });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error reprinting invoice:", error);
+      res.status(500).json({ error: "Failed to reprint invoice" });
+    }
+  });
+
   app.patch("/api/order-items/:id", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const { quantity, notes, name } = req.body;
