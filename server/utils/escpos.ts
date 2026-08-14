@@ -74,19 +74,18 @@ export function buildKOTEscPos(opts: {
   // Left align for details
   parts.push(cmd(ESC, 0x61, 0x00));
 
-  // Large daily chef sequence (01, 02, 03...). The full BG number remains
-  // available on the customer invoice; the short sequence is easiest to read
-  // and call out in the kitchen.
+  // Print the KOT sequence prominently for the kitchen. The full billing
+  // number is shown separately as the invoice number.
   const sequence = opts.sequence ?? kotNumber.slice(-2);
   parts.push(cmd(ESC, 0x61, 0x01));
   parts.push(cmd(ESC, 0x21, 0x30));
   parts.push(cmd(ESC, 0x45, 0x01));
-  parts.push(text(`SEQ ${sequence}\n`));
+  parts.push(text(`KOT ${sequence}\n`));
   parts.push(cmd(ESC, 0x45, 0x00));
   parts.push(cmd(ESC, 0x21, 0x00));
   parts.push(cmd(ESC, 0x61, 0x00));
   parts.push(cmd(ESC, 0x45, 0x01));
-  parts.push(text(`KOT: ${kotNumber}\n`));
+  parts.push(text(`Invoice No: ${kotNumber}\n`));
   parts.push(cmd(ESC, 0x45, 0x00));
 
   parts.push(text(`Date : ${dateStr}  ${timeStr}\n`));
