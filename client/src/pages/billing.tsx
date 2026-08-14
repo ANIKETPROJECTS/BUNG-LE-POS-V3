@@ -1048,7 +1048,7 @@ export default function BillingPage() {
       <AppHeader title="Billing / POS" showSearch={false} />
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <div className="w-40 shrink-0 hidden md:block bg-white border-r border-gray-200">
+        <div className="w-40 shrink-0 hidden xl:block bg-white border-r border-gray-200">
           <CategorySidebar
             categories={categories}
             selectedCategory={selectedCategory}
@@ -1071,7 +1071,7 @@ export default function BillingPage() {
               </div>
             )}
             
-            <div className="md:hidden mb-3">
+            <div className="xl:hidden mb-3">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="h-11 text-base" data-testid="select-category-mobile">
                   <SelectValue placeholder="Select Category" />
@@ -1118,7 +1118,7 @@ export default function BillingPage() {
             </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-4 pb-24 lg:pb-4 bg-gray-50">
+          <div className="flex-1 overflow-y-auto p-4 pb-24 xl:pb-4 bg-gray-50">
             {menuLoading ? (
               <div className="text-center py-12 text-gray-500">
                 <div className="animate-pulse">Loading menu...</div>
@@ -1143,7 +1143,7 @@ export default function BillingPage() {
           </div>
         </div>
 
-        <div className="hidden lg:block lg:w-[480px] shrink-0 bg-white shadow-lg">
+        <div className="hidden xl:block xl:w-[480px] shrink-0 bg-white shadow-lg">
           <OrderCart
             items={orderItems}
             serviceType={serviceType}
@@ -1175,7 +1175,7 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 p-4 shadow-lg z-10">
+      <div className="xl:hidden fixed bottom-0 left-0 right-0 bg-white border-t-2 border-gray-200 p-4 shadow-lg z-10">
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1">
             <div className="text-sm text-gray-600">
