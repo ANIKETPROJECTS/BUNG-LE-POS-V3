@@ -1,8 +1,6 @@
-import { Users, Clock, FileText, DollarSign } from "lucide-react";
+import { Users, FileText, DollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect, useRef } from "react";
-
-const tableTimerStore = new Map<string, { startTime: number; orderId: string | null }>();
+import { useState } from "react";
 
 interface TableCardProps {
   id: string;
@@ -10,7 +8,6 @@ interface TableCardProps {
   status: "free" | "occupied" | "preparing" | "ready" | "reserved" | "served";
   seats: number;
   currentGuests?: number;
-  orderStartTime?: string | null;
   onClick: (id: string) => void;
   onToggleServed?: (id: string) => void;
   onViewOrder?: (id: string) => void;
@@ -63,52 +60,12 @@ export default function TableCard({
   status,
   seats,
   currentGuests,
-  orderStartTime,
   onClick,
   onToggleServed,
   onViewOrder,
   onBilling,
 }: TableCardProps) {
   const config = statusConfig[status];
-  const [elapsedTime, setElapsedTime] = useState(0);
-  
-  useEffect(() => {
-    const isOccupied = status !== "free";
-    if (!orderStartTime || !isOccupied) {
-      if (tableTimerStore.has(id)) {
-        tableTimerStore.delete(id);
-      }
-      setElapsedTime(0);
-      return;
-    }
-
-    const existingTimer = tableTimerStore.get(id);
-    const currentOrderId = orderStartTime;
-    
-    if (!existingTimer || existingTimer.orderId !== currentOrderId) {
-      tableTimerStore.set(id, {
-        startTime: Date.now(),
-        orderId: currentOrderId
-      });
-    }
-
-    const timerData = tableTimerStore.get(id)!;
-
-    const updateTime = () => {
-      const elapsed = Math.floor((Date.now() - timerData.startTime) / 1000);
-      setElapsedTime(Math.max(0, elapsed));
-    };
-
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, [id, orderStartTime, status]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
 
   const handleClick = (e: React.MouseEvent) => {
     onClick(id);
@@ -149,12 +106,6 @@ export default function TableCard({
           <Users className="h-3 w-3" />
           <span>{seats}</span>
         </div>
-        {status !== "free" && orderStartTime && (
-          <div className="absolute top-1 right-1 z-10 flex items-center gap-1 text-xs font-mono font-semibold text-black">
-            <Clock className="h-3 w-3" />
-            <span>{formatTime(elapsedTime)}</span>
-          </div>
-        )}
         <div className="flex flex-col items-center gap-2">
           <div className={cn(
             "w-16 h-16 rounded-full border-2 flex items-center justify-center transition-all",

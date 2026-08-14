@@ -35,9 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Table, Order, Floor, Reservation } from "@shared/schema";
 
-interface TableWithOrder extends Table {
-  orderStartTime?: string | null;
-}
+interface TableWithOrder extends Table {}
 
 export default function TablesPage() {
   const [, navigate] = useLocation();
@@ -86,7 +84,6 @@ export default function TablesPage() {
       const tableOrder = orders.find((order) => order.id === table.currentOrderId);
       return {
         ...table,
-        orderStartTime: tableOrder?.createdAt ? String(tableOrder.createdAt) : null,
       };
     });
   }, [tables, orders]);
@@ -384,7 +381,6 @@ export default function TablesPage() {
                       tableNumber={table.tableNumber}
                       status={getTableStatus(table)}
                       seats={table.seats}
-                      orderStartTime={table.orderStartTime}
                       onClick={handleTableClick}
                     />
                   ))}

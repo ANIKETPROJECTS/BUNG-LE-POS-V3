@@ -3,7 +3,7 @@ import { useQuery, useQueries } from "@tanstack/react-query";
 import AppHeader from "@/components/AppHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, ChevronDown, ChevronUp, Menu, Smartphone } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, Smartphone } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Order, OrderItem as DBOrderItem, Table } from "@shared/schema";
@@ -15,8 +15,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-
-const kitchenTimerStore = new Map<string, { startTime: number; itemIds: string[] }>();
 
 interface OrderWithDetails {
   order: Order;
@@ -167,34 +165,7 @@ function KitchenOrderCard({
   items,
   kotBatch,
 }: KitchenOrderCardProps) {
-  const [elapsedTime, setElapsedTime] = useState(0);
   const [isItemsCollapsed, setIsItemsCollapsed] = useState(false);
-
-  const currentItemIds = items.map(i => i.id).sort();
-
-  if (!kitchenTimerStore.has(orderId)) {
-    kitchenTimerStore.set(orderId, {
-      startTime: orderTime.getTime(),
-      itemIds: currentItemIds,
-    });
-  }
-
-  useEffect(() => {
-    const timerData = kitchenTimerStore.get(orderId)!;
-    const updateTime = () => {
-      const elapsed = Math.floor((Date.now() - timerData.startTime) / 1000);
-      setElapsedTime(Math.max(0, elapsed));
-    };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
-    return () => clearInterval(interval);
-  }, [orderId, orderTime]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
 
   return (
     <div
@@ -227,10 +198,6 @@ function KitchenOrderCard({
             {order.customerName && (
               <p className="text-xs opacity-75 mt-0.5">{order.customerName} • {order.customerPhone}</p>
             )}
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            <span className="font-mono font-semibold">{formatTime(elapsedTime)}</span>
           </div>
         </div>
       </div>

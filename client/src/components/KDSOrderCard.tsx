@@ -1,8 +1,8 @@
-import { Clock, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 interface KDSOrderItem {
   name: string;
@@ -33,22 +33,6 @@ export default function KDSOrderCard({
   orderTime,
   onStatusChange,
 }: KDSOrderCardProps) {
-  const [elapsedTime, setElapsedTime] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - orderTime.getTime()) / 1000);
-      setElapsedTime(elapsed);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [orderTime]);
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
 
   return (
     <div
@@ -63,10 +47,6 @@ export default function KDSOrderCard({
           <div>
             <h3 className="font-bold text-lg">Order #{orderId}</h3>
             <p className="text-sm opacity-90">Table {tableNumber}</p>
-          </div>
-          <div className="flex items-center gap-1">
-            <Clock className="h-4 w-4" />
-            <span className="font-mono font-semibold">{formatTime(elapsedTime)}</span>
           </div>
         </div>
       </div>
