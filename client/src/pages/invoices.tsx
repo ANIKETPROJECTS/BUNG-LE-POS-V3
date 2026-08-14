@@ -802,15 +802,15 @@ export default function InvoicesPage() {
                   <span>₹{parseFloat(selectedInvoice.subtotal).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>CGST:</span>
+                  <span>CGST ({((parseFloat(selectedInvoice.cgst || "0") / Math.max(parseFloat(selectedInvoice.subtotal), 1)) * 100 / 1).toFixed(0)}%):</span>
                   <span>₹{parseFloat(selectedInvoice.cgst || "0").toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>SGST:</span>
+                  <span>SGST ({((parseFloat(selectedInvoice.sgst || "0") / Math.max(parseFloat(selectedInvoice.subtotal), 1)) * 100).toFixed(0)}%):</span>
                   <span>₹{parseFloat(selectedInvoice.sgst || "0").toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Service Charge:</span>
+                  <span>Service Charge ({((parseFloat(selectedInvoice.serviceCharge || "0") / Math.max(parseFloat(selectedInvoice.subtotal), 1)) * 100).toFixed(0)}%):</span>
                   <span>₹{parseFloat(selectedInvoice.serviceCharge || "0").toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
