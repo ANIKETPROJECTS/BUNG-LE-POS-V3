@@ -434,9 +434,6 @@ export default function OrderCart({
                   KOT
                 </Button>
               )}
-            </div>
-            
-            <div className="grid grid-cols-2 gap-2 mb-2">
               {onSave && (
                 <Button
                   variant="outline"
