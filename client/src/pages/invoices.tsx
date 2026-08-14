@@ -730,12 +730,10 @@ export default function InvoicesPage() {
       </div>
 
       <Dialog open={showViewDialog} onOpenChange={setShowViewDialog}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-md bg-white text-black border-black rounded-none shadow-2xl">
           <DialogHeader>
-            <DialogTitle>Invoice Details</DialogTitle>
-            <DialogDescription>
-              Complete invoice information
-            </DialogDescription>
+            <DialogTitle className="text-center text-xl font-black tracking-widest uppercase border-b-2 border-black pb-2">BUNGLE</DialogTitle>
+            <DialogDescription className="text-center text-black font-mono text-xs uppercase">Restaurant Bill</DialogDescription>
           </DialogHeader>
           {selectedInvoice && (
             <div className="space-y-4">
@@ -796,7 +794,7 @@ export default function InvoicesPage() {
                 </table>
               </div>
 
-                <div className="bg-muted p-4 rounded-lg space-y-2 font-mono text-sm">
+                <div className="bg-white p-0 py-3 rounded-none space-y-2 font-mono text-xs border-y border-dashed border-black">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal:</span>
                   <span>₹{parseFloat(selectedInvoice.subtotal).toFixed(2)}</span>
@@ -812,10 +810,6 @@ export default function InvoicesPage() {
                 <div className="flex justify-between text-sm">
                   <span>Service Charge ({((parseFloat(selectedInvoice.serviceCharge || "0") / Math.max(parseFloat(selectedInvoice.subtotal), 1)) * 100).toFixed(0)}%):</span>
                   <span>₹{parseFloat(selectedInvoice.serviceCharge || "0").toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Total Tax:</span>
-                  <span>₹{parseFloat(selectedInvoice.tax).toFixed(2)}</span>
                 </div>
                 {parseFloat(selectedInvoice.discount) > 0 && (
                   <div className="flex justify-between text-sm">
