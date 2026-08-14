@@ -138,20 +138,6 @@ export default function AppHeader({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      if (location !== "/tables") {
-                        setLocation("/tables");
-                      }
-                      if (onReservationClick) {
-                        onReservationClick();
-                      }
-                    }}
-                    data-testid="menu-reservation"
-                  >
-                    <Calendar className="h-4 w-4 mr-2" />
-                    Reservation
-                  </DropdownMenuItem>
                   {mainNavButtons.map((button) => {
                     const Icon = button.icon;
                     return (
@@ -171,37 +157,6 @@ export default function AppHeader({
 
             {/* Desktop Navigation - Hidden on mobile */}
             <div className="hidden lg:flex items-center gap-1">
-              {/* Reservation Button */}
-              <Button
-                variant="ghost"
-                onClick={() => {
-                  if (location !== "/tables") {
-                    setLocation("/tables");
-                  }
-                  if (onReservationClick) {
-                    onReservationClick();
-                  }
-                }}
-                className={cn(
-                  "flex items-center gap-2 px-3 py-2 rounded-lg transition-all",
-                  isReservationMode 
-                    ? "bg-blue-100 dark:bg-blue-900 shadow-sm" 
-                    : "hover:bg-gray-100 dark:hover:bg-gray-800"
-                )}
-                data-testid="button-reservation"
-              >
-                <Calendar className={cn(
-                  "h-4 w-4",
-                  isReservationMode ? "text-blue-600 dark:text-blue-400" : "text-gray-500 dark:text-gray-400"
-                )} />
-                <span className={cn(
-                  "text-sm font-medium",
-                  isReservationMode ? "text-blue-900 dark:text-blue-100" : "text-gray-600 dark:text-gray-300"
-                )}>
-                  Reservation
-                </span>
-              </Button>
-
               {/* Main Navigation Buttons */}
               {mainNavButtons.map((button) => {
                 const Icon = button.icon;
