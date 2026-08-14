@@ -683,12 +683,41 @@ export default function KOTPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeOrders]);
 
-  // Filter to today's orders only
+  // Filter to today's orders only. The day boundary must recompute when the
+  // calendar day rolls over (even if this screen stays open overnight), so the
+  // KOT board resets its ordering + content every morning. A change in dayKey
+  // re-derives todayStart and triggers a refetch below.
+  const [dayKey, setDayKey] = useState(() => new Date().toDateString());
+  useEffect(() => {
+    const now = new Date();
+    const nextMidnight = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1,
+      0,
+      0,
+      0,
+      0,
+    );
+    const timer = setTimeout(() => {
+      setDayKey(new Date().toDateString());
+    }, nextMidnight.getTime() - now.getTime() + 1000);
+    return () => clearTimeout(timer);
+  }, [dayKey]);
+
   const todayStart = useMemo(() => {
     const d = new Date();
     d.setHours(0, 0, 0, 0);
     return d;
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dayKey]);
+
+  // When the calendar day changes, refetch so the board contains only today's
+  // tickets (and KOT numbering restarts from KOT-0001 the next morning).
+  useEffect(() => {
+    queryClient.invalidateQueries({ queryKey: ["/api/orders/active"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/orders/completed"] });
+  }, [dayKey]);
 
   const kitchenOrders = useMemo(() =>
     activeOrders.filter(o => new Date(o.createdAt) >= todayStart),
