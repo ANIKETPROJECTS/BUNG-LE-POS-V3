@@ -186,11 +186,14 @@ export default function InvoicesPage() {
   });
 
   const regenerateInvoiceMutation = useMutation({
-    mutationFn: async (data: { id: string; items: InvoiceItem[]; subtotal: number; tax: number; total: number }) => {
+    mutationFn: async (data: { id: string; items: InvoiceItem[]; subtotal: number; tax: number; cgst: number; sgst: number; serviceCharge: number; total: number }) => {
       const updates = {
         items: JSON.stringify(data.items),
         subtotal: data.subtotal.toFixed(2),
         tax: data.tax.toFixed(2),
+        cgst: data.cgst.toFixed(2),
+        sgst: data.sgst.toFixed(2),
+        serviceCharge: data.serviceCharge.toFixed(2),
         total: data.total.toFixed(2),
       };
       const res = await apiRequest("PATCH", `/api/invoices/${data.id}`, updates);
@@ -334,14 +337,24 @@ export default function InvoicesPage() {
     }
 
     const subtotal = regenerateItems.reduce((sum, item) => sum + (item.quantity * item.price), 0);
-    const tax = subtotal * 0.05;
-    const total = subtotal + tax;
+    const originalSubtotal = parseFloat(selectedInvoice.subtotal) || 0;
+    const cgstRate = originalSubtotal > 0 ? (parseFloat(selectedInvoice.cgst || "0") / originalSubtotal) : 0;
+    const sgstRate = originalSubtotal > 0 ? (parseFloat(selectedInvoice.sgst || "0") / originalSubtotal) : 0;
+    const serviceChargeRate = originalSubtotal > 0 ? (parseFloat(selectedInvoice.serviceCharge || "0") / originalSubtotal) : 0;
+    const cgst = subtotal * cgstRate;
+    const sgst = subtotal * sgstRate;
+    const serviceCharge = subtotal * serviceChargeRate;
+    const tax = cgst + sgst;
+    const total = subtotal + tax + serviceCharge - (parseFloat(selectedInvoice.discount || "0") || 0);
 
     await regenerateInvoiceMutation.mutateAsync({
       id: selectedInvoice.id,
       items: regenerateItems,
       subtotal,
       tax,
+        cgst,
+        sgst,
+        serviceCharge,
       total,
     });
   };
@@ -1070,20 +1083,24 @@ export default function InvoicesPage() {
                 <div className="bg-muted p-3 rounded-lg space-y-2 border">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal:</span>
-                    <span className="font-medium">
-                      ₹{regenerateItems.reduce((sum, item) => sum + (item.quantity * item.price), 0).toFixed(2)}
-                    </span>
+                    <span className="font-medium">₹{regenerateItems.reduce((sum, item) => sum + (item.quantity * item.price), 0).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Tax:</span>
-                    <span className="font-medium">
-                      ₹{(regenerateItems.reduce((sum, item) => sum + (item.quantity * item.price), 0) * 0.05).toFixed(2)}
-                    </span>
+                    <span>CGST:</span>
+                    <span className="font-medium">₹{(regenerateItems.reduce((sum, item) => sum + (item.quantity * item.price), 0) * ((parseFloat(selectedInvoice.cgst || "0")) / Math.max(parseFloat(selectedInvoice.subtotal), 1))).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>SGST:</span>
+                    <span className="font-medium">₹{(regenerateItems.reduce((sum, item) => sum + (item.quantity * item.price), 0) * ((parseFloat(selectedInvoice.sgst || "0")) / Math.max(parseFloat(selectedInvoice.subtotal), 1))).toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span>Service Charge:</span>
+                    <span className="font-medium">₹{(regenerateItems.reduce((sum, item) => sum + (item.quantity * item.price), 0) * ((parseFloat(selectedInvoice.serviceCharge || "0")) / Math.max(parseFloat(selectedInvoice.subtotal), 1))).toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg border-t pt-2">
                     <span>Total:</span>
                     <span className="text-primary">
-                      ₹{(regenerateItems.reduce((sum, item) => sum + (item.quantity * item.price), 0) * 1.05).toFixed(2)}
+                      ₹{(regenerateItems.reduce((sum, item) => sum + (item.quantity * item.price), 0) * (1 + ((parseFloat(selectedInvoice.cgst || "0") + parseFloat(selectedInvoice.sgst || "0") + parseFloat(selectedInvoice.serviceCharge || "0")) / Math.max(parseFloat(selectedInvoice.subtotal), 1))) - (parseFloat(selectedInvoice.discount || "0") || 0)).toFixed(2)}
                     </span>
                   </div>
                 </div>
