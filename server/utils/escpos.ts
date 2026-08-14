@@ -316,9 +316,11 @@ export function buildBillEscPos(opts: {
 
   // Bold total
   parts.push(cmd(ESC, 0x45, 0x01));
-  parts.push(cmd(ESC, 0x21, 0x10)); // double width
-  const totalLabel = "TOTAL".padEnd(13);
-  const totalVal = `Rs.${total.toFixed(2)}`.padStart(18);
+  // Keep this line at the printer's normal 48-column width. Double-width
+  // formatting makes the line overflow and causes some thermal printers to
+  // wrap/center the amount instead of keeping it on the right.
+  const totalLabel = "TOTAL".padEnd(32);
+  const totalVal = `Rs.${total.toFixed(2)}`.padStart(16);
   parts.push(text(`${totalLabel}${totalVal}\n`));
   parts.push(cmd(ESC, 0x21, 0x00));
   parts.push(cmd(ESC, 0x45, 0x00));
