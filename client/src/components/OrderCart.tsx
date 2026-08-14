@@ -41,9 +41,7 @@ interface OrderCartProps {
   onCheckout: () => void;
   onSplitBill?: () => void;
   onKOT?: () => void;
-  onKOTPrint?: () => void;
   onSave?: () => void;
-  onSavePrint?: () => void;
   selectedCustomer?: Customer | null;
   onSelectCustomer?: () => void;
   currentTableId?: string | null;
@@ -72,9 +70,7 @@ export default function OrderCart({
   onCheckout,
   onSplitBill,
   onKOT,
-  onKOTPrint,
   onSave,
-  onSavePrint,
   selectedCustomer,
   onSelectCustomer,
   currentTableId,
@@ -438,18 +434,6 @@ export default function OrderCart({
                   KOT
                 </Button>
               )}
-              {onKOTPrint && (
-                <Button
-                  variant="outline"
-                  className="border border-primary text-primary hover:bg-primary hover:text-white text-sm"
-                  disabled={items.length === 0}
-                  onClick={onKOTPrint}
-                  data-testid="button-kot-print"
-                >
-                  <Send className="h-4 w-4 mr-1" />
-                  KOT & Print
-                </Button>
-              )}
             </div>
             
             <div className="grid grid-cols-2 gap-2 mb-2">
@@ -462,17 +446,6 @@ export default function OrderCart({
                   data-testid="button-save"
                 >
                   Save
-                </Button>
-              )}
-              {onSavePrint && (
-                <Button
-                  variant="outline"
-                  className="text-sm"
-                  disabled={items.length === 0}
-                  onClick={onSavePrint}
-                  data-testid="button-save-print"
-                >
-                  Save & Print
                 </Button>
               )}
             </div>

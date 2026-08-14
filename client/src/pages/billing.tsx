@@ -1154,9 +1154,7 @@ export default function BillingPage() {
             onCheckout={handleCheckout}
             onSplitBill={handleSplitBill}
             onKOT={handleSendKOT}
-            onKOTPrint={handleKOTPrint}
             onSave={handleSaveOrder}
-            onSavePrint={handleSavePrint}
             selectedCustomer={selectedCustomer}
             onSelectCustomer={() => setShowCustomerDialog(true)}
             currentTableId={currentTableId}
@@ -1213,9 +1211,7 @@ export default function BillingPage() {
               onCheckout={handleCheckout}
               onSplitBill={handleSplitBill}
               onKOT={handleSendKOT}
-              onKOTPrint={handleKOTPrint}
               onSave={handleSaveOrder}
-              onSavePrint={handleSavePrint}
               selectedCustomer={selectedCustomer}
               onSelectCustomer={() => setShowCustomerDialog(true)}
               currentTableId={currentTableId}
