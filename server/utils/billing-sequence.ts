@@ -14,8 +14,34 @@ export async function getDailyBillingNumber(st: IStorage, order: Order): Promise
 }
 
 export async function getDailyKotSequence(st: IStorage, order: Order): Promise<number> {
-  const orders = (await st.getOrders()).filter((o) => dayOf(o) === dayOf(order))
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
-  return orders.filter((o) => new Date(o.createdAt).getTime() < new Date(order.createdAt).getTime())
-    .reduce((total, o) => total + (o.kotCount ?? 0), 0) + (order.kotCount ?? 1);
+  // KOT numbers are ticket numbers, not order numbers. An add-on creates
+  // another ticket for the same order, so counting order.kotCount against
+  // other orders can reuse a number when tickets were created out of order.
+  const orders = (await st.getOrders()).filter((o) => dayOf(o) === dayOf(order));
+  const tickets: { key: string; createdAt: number }[] = [];
+
+  for (const candidate of orders) {
+    const items = await st.getOrderItems(candidate.id);
+    const batches = new Map<string, number>();
+    for (const item of items) {
+      const batch = item.kotBatch ?? 1;
+      const createdAt = new Date(item.createdAt ?? candidate.createdAt).getTime();
+      const key = `${candidate.id}:${batch}`;
+      batches.set(key, Math.min(batches.get(key) ?? Infinity, createdAt));
+    }
+    // Orders with no persisted item timestamps still contribute their
+    // historical KOT count in creation order.
+    if (!items.length) {
+      for (let batch = 1; batch <= (candidate.kotCount ?? 0); batch++) {
+        batches.set(`${candidate.id}:${batch}`, new Date(candidate.createdAt).getTime() + batch);
+      }
+    }
+    for (const [key, createdAt] of batches) tickets.push({ key, createdAt });
+  }
+
+  tickets.sort((a, b) => a.createdAt - b.createdAt || a.key.localeCompare(b.key));
+  const currentBatch = Math.max(1, order.kotCount ?? 1);
+  const currentKey = `${order.id}:${currentBatch}`;
+  const index = tickets.findIndex((ticket) => ticket.key === currentKey);
+  return index >= 0 ? index + 1 : tickets.length + 1;
 }
