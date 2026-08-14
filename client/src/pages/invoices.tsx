@@ -796,13 +796,25 @@ export default function InvoicesPage() {
                 </table>
               </div>
 
-              <div className="bg-muted p-4 rounded-lg space-y-2">
+                <div className="bg-muted p-4 rounded-lg space-y-2 font-mono text-sm">
                 <div className="flex justify-between text-sm">
                   <span>Subtotal:</span>
                   <span>₹{parseFloat(selectedInvoice.subtotal).toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Tax (5%):</span>
+                  <span>CGST:</span>
+                  <span>₹{parseFloat(selectedInvoice.cgst || "0").toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>SGST:</span>
+                  <span>₹{parseFloat(selectedInvoice.sgst || "0").toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Service Charge:</span>
+                  <span>₹{parseFloat(selectedInvoice.serviceCharge || "0").toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Total Tax:</span>
                   <span>₹{parseFloat(selectedInvoice.tax).toFixed(2)}</span>
                 </div>
                 {parseFloat(selectedInvoice.discount) > 0 && (
@@ -1069,7 +1081,7 @@ export default function InvoicesPage() {
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span>Tax (5%):</span>
+                    <span>Tax:</span>
                     <span className="font-medium">
                       ₹{(regenerateItems.reduce((sum, item) => sum + (item.quantity * item.price), 0) * 0.05).toFixed(2)}
                     </span>
