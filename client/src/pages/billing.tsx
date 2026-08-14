@@ -1048,7 +1048,7 @@ export default function BillingPage() {
       <AppHeader title="Billing / POS" showSearch={false} />
 
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        <div className="w-40 shrink-0 hidden xl:block bg-white border-r border-gray-200">
+        <div className="w-40 shrink-0 hidden lg:block bg-white border-r border-gray-200">
           <CategorySidebar
             categories={categories}
             selectedCategory={selectedCategory}
@@ -1071,7 +1071,7 @@ export default function BillingPage() {
               </div>
             )}
             
-            <div className="xl:hidden mb-3">
+            <div className="lg:hidden mb-3">
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                 <SelectTrigger className="h-11 text-base" data-testid="select-category-mobile">
                   <SelectValue placeholder="Select Category" />
