@@ -88,7 +88,14 @@ export async function getDailyKotInvoiceNumber(
     return existingInvoiceOrder.invoiceNumber;
   }
 
-  const sequence = await getDailyKotSequence(st, order);
+  // Multiple KOTs can be printed before checkout creates the final invoice.
+  // In that case, keep the invoice number anchored to this order's first KOT.
+  const sequence = await getDailyKotSequence(
+    st,
+    order.kotCount && order.kotCount > 1
+      ? { ...order, kotCount: 1 }
+      : order,
+  );
   const yymmdd = dayOf(order).replace(/-/g, "").slice(2);
   return `BG${yymmdd}${String(sequence).padStart(2, "0")}`;
 }
