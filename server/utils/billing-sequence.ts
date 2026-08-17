@@ -66,6 +66,28 @@ export async function getDailyKotInvoiceNumber(
   st: IStorage,
   order: Order,
 ): Promise<string> {
+  const [orders, invoices] = await Promise.all([
+    st.getOrders(),
+    st.getInvoices(),
+  ]);
+  const invoiceByOrderId = new Map(invoices.map((invoice) => [invoice.orderId, invoice]));
+
+  // Keep one invoice number for an ongoing table order. This also covers a
+  // new order added to a table that already has an invoiced order in progress.
+  const existingInvoiceOrder = orders
+    .filter((candidate) =>
+      candidate.id === order.id ||
+      (order.tableId &&
+        candidate.tableId === order.tableId &&
+        candidate.status !== "completed")
+    )
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .map((candidate) => invoiceByOrderId.get(candidate.id))
+    .find((invoice) => invoice);
+  if (existingInvoiceOrder) {
+    return existingInvoiceOrder.invoiceNumber;
+  }
+
   const sequence = await getDailyKotSequence(st, order);
   const yymmdd = dayOf(order).replace(/-/g, "").slice(2);
   return `BG${yymmdd}${String(sequence).padStart(2, "0")}`;
