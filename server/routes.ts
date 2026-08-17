@@ -1344,16 +1344,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tableNumber = tbl?.tableNumber;
           if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
         }
-        const baseKotNumber = await getDailyBillingNumber(st, updatedOrder);
         const kotSequence = await getDailyKotSequence(st, updatedOrder);
-        const kotNumber = baseKotNumber;
+        const kotNumber = `KOT-${String(kotSequence).padStart(4, "0")}`;
         const escData = buildKOTEscPos({
           order: updatedOrder,
           items: orderItems,
           tableNumber,
           floorName,
           kotNumber,
-          sequence: String(kotSequence).padStart(2, "0"),
+          sequence: String(kotSequence).padStart(4, "0"),
           isUpdated: (updatedOrder.kotCount ?? 0) > 1,
         });
         const escBase64 = Buffer.from(escData).toString("base64");
@@ -3441,16 +3440,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.json({ results: [], allFailed: true });
         }
 
-        const baseKotNumber = await getDailyBillingNumber(st, order);
         const kotSequence = await getDailyKotSequence(st, order);
-        const kotNumber = baseKotNumber;
+        const kotNumber = `KOT-${String(kotSequence).padStart(4, "0")}`;
         const escData = buildKOTEscPos({
           order,
           items: orderItems.filter((item) => item.status === "new"),
           tableNumber,
           floorName,
           kotNumber,
-          sequence: String(kotSequence).padStart(2, "0"),
+          sequence: String(kotSequence).padStart(4, "0"),
           isUpdated: (order.kotCount ?? 0) > 1,
         });
 
