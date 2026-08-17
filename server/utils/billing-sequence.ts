@@ -61,3 +61,12 @@ export async function getDailyKotSequence(st: IStorage, order: Order): Promise<n
   const index = tickets.findIndex((ticket) => ticket.key === currentKey);
   return index >= 0 ? index + 1 : tickets.length + 1;
 }
+
+export async function getDailyKotInvoiceNumber(
+  st: IStorage,
+  order: Order,
+): Promise<string> {
+  const sequence = await getDailyKotSequence(st, order);
+  const yymmdd = dayOf(order).replace(/-/g, "").slice(2);
+  return `BG${yymmdd}${String(sequence).padStart(2, "0")}`;
+}
