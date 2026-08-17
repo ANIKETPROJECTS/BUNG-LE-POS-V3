@@ -754,6 +754,243 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(orders);
   });
 
+  // Dashboard aggregates computed from real stored data. The client passes its
+  // UTC offset (minutes east of UTC) so "today" lines up with the browser.
+  app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    const tzEast = Number(req.query.tzOffset) || 0; // minutes east of UTC
+
+    const startOfLocalDay = (instant: Date, daysBack = 0): number => {
+      const localMs = instant.getTime() + tzEast * 60000 +
+        Math.floor(daysBack) * 86400000;
+      const localDayStartMs = Math.floor(localMs / 86400000) * 86400000;
+      // Convert back to an absolute UTC instant.
+      return localDayStartMs - tzEast * 60000;
+    };
+
+    const localHourOf = (instant: Date): number => {
+      const localMs = instant.getTime() + tzEast * 60000;
+      return Math.floor((localMs % 86400000) / 3600000);
+    };
+
+    try {
+      const [
+        orders,
+        invoices,
+        tables,
+        menuItems,
+      ] = await Promise.all([
+        st.getOrders(),
+        st.getInvoices(),
+        st.getTables(),
+        st.getMenuItems(),
+      ]);
+
+      const now = new Date();
+      const todayStart = startOfLocalDay(now, 0);
+      const yesterdayStart = startOfLocalDay(now, -1);
+
+      const isToday = (d: Date) => new Date(d).getTime() >= todayStart;
+      const isRange = (d: Date, s: number, e: number) => {
+        const t = new Date(d).getTime();
+        return t >= s && t < e;
+      };
+      const toMoney = (v: string | number) => Number(v) || 0;
+
+      const todaysInvoices = invoices.filter((i) => isToday(i.createdAt));
+      const yesterdaysInvoices = invoices.filter((i) =>
+        isRange(i.createdAt, yesterdayStart, todayStart)
+      );
+
+      const todaySales = todaysInvoices.reduce(
+        (s, i) => s + toMoney(i.total), 0
+      );
+      const yesterdaySales = yesterdaysInvoices.reduce(
+        (s, i) => s + toMoney(i.total), 0
+      );
+      const salesChange = yesterdaySales > 0
+        ? ((todaySales - yesterdaySales) / yesterdaySales) * 100
+        : todaySales > 0 ? 100 : 0;
+
+      const todaysOrders = orders.filter((o) => isToday(o.createdAt));
+      const yesterdaysOrders = orders.filter((o) =>
+        isRange(o.createdAt, yesterdayStart, todayStart)
+      );
+      const ordersChange = yesterdaysOrders.length > 0
+        ? ((todaysOrders.length - yesterdaysOrders.length) / yesterdaysOrders.length) * 100
+        : todaysOrders.length > 0 ? 100 : 0;
+
+      const distinctCust = (list: { customerPhone: string | null; customerName: string | null }[]) => {
+        const set = new Set<string>();
+        for (const o of list) {
+          const key = (o.customerPhone || o.customerName || "").trim();
+          if (key) set.add(key);
+        }
+        return set.size;
+      };
+      const todayCustomers = distinctCust(todaysOrders);
+      const yesterdayCustomers = distinctCust(yesterdaysOrders);
+      const customersChange = yesterdayCustomers > 0
+        ? ((todayCustomers - yesterdayCustomers) / yesterdayCustomers) * 100
+        : todayCustomers > 0 ? 100 : 0;
+
+      const invoiceCountToday = todaysInvoices.length;
+      const avgOrderValue = invoiceCountToday > 0
+        ? todaySales / invoiceCountToday
+        : todaysOrders.length > 0 ? todaySales / todaysOrders.length : 0;
+
+      // Hourly buckets 9AM→8PM (matching the chart's 12 bars).
+      const hourlyData = Array.from({ length: 12 }, (_, i) => {
+        const hour = 9 + i;
+        const hourOrders = todaysOrders.filter((o) => localHourOf(o.createdAt) === hour);
+        const hourInvoices = todaysInvoices.filter((i2) => localHourOf(i2.createdAt) === hour);
+        const label = hour <= 12 ? `${hour}AM` : `${hour - 12}PM`;
+        return {
+          hour: label,
+          orders: hourOrders.length,
+          revenue: hourInvoices.reduce((s, i2) => s + toMoney(i2.total), 0),
+        };
+      });
+
+      // Weekly: current week Mon→Sun.
+      const weekdayLabel = (d: Date) => {
+        const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        return days[new Date(d).getUTCDay()];
+      };
+      const dayStartUtc = (offsetDays: number) => {
+        const d = new Date(now);
+        d.setUTCHours(0, 0, 0, 0);
+        d.setUTCDate(d.getUTCDate() + offsetDays);
+        return d.getTime();
+      };
+      const dow = new Date(now).getUTCDay();
+      const weekStartKey = startOfLocalDay(now, -dow); // local Monday
+      const weeklyData = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+        .map((day, index) => {
+          const s = startOfLocalDay(now, -dow + index);
+          const e = s + 86400000;
+          const dayInvoices = invoices.filter((i) => isRange(i.createdAt, s, e));
+          const dayOrders = orders.filter((o) => isRange(o.createdAt, s, e));
+          return {
+            day,
+            sales: dayInvoices.reduce((sum, i) => sum + toMoney(i.total), 0),
+            orders: dayOrders.length,
+          };
+        });
+
+      // Invoice items are stored as JSON: [{name,quantity,price,isVeg}].
+      const nameToCategory = new Map<string, string>();
+      for (const m of menuItems) nameToCategory.set(m.name, m.category);
+
+      const categoryAgg = new Map<string, number>();
+      const itemAgg = new Map<string, { name: string; qty: number; revenue: number }>();
+      for (const inv of invoices) {
+        if (inv.status !== "Paid" && inv.paymentMode !== "paid") continue;
+        let itemsArr: { name?: string; quantity?: number | string; price?: number | string }[] = [];
+        try {
+          itemsArr = JSON.parse(inv.items || "[]");
+        } catch { itemsArr = []; }
+        for (const it of itemsArr) {
+          if (!it || typeof it.name !== "string") continue;
+          const qty = Math.max(1, Number(it.quantity ?? 1) || 1);
+          const price = Number(it.price ?? 0) || 0;
+          const revenue = qty * price;
+          const cat = nameToCategory.get(it.name) || "Other";
+          categoryAgg.set(cat, (categoryAgg.get(cat) || 0) + revenue);
+          const cur = itemAgg.get(it.name) || { name: it.name, qty: 0, revenue: 0 };
+          cur.qty += qty;
+          cur.revenue += revenue;
+          itemAgg.set(it.name, cur);
+        }
+      }
+
+      const categoryData = Array.from(categoryAgg.entries())
+        .map(([name, value]) => ({ name, value: Math.round(value) }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 6);
+
+      const topItems = Array.from(itemAgg.values())
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5)
+        .map((t) => ({ name: t.name, orders: t.qty, revenue: t.revenue }));
+
+      // Payment methods from paymentMode on paid invoices/orders.
+      const paymentAgg = new Map<string, number>();
+      for (const inv of todaysInvoices) {
+        const mode = (inv.paymentMode || "other").toLowerCase();
+        const key = ["cash", "card", "upi", "other"].includes(mode) ? mode : "other";
+        paymentAgg.set(key, (paymentAgg.get(key) || 0) + toMoney(inv.total));
+      }
+      const paymentData = [
+        { name: "Cash", value: paymentAgg.get("cash") || 0, color: "#10B981" },
+        { name: "Card", value: paymentAgg.get("card") || 0, color: "#3B82F6" },
+        { name: "UPI",  value: paymentAgg.get("upi")  || 0, color: "#F59E0B" },
+        { name: "Other",value: paymentAgg.get("other") || 0, color: "#8B5CF6" },
+      ].filter((p) => p.value > 0);
+
+      // Quick stats.
+      const completed = orders.filter((o) =>
+        o.status === "completed" || o.status === "paid"
+      ).length;
+      const pending = orders.filter((o) =>
+        !["completed", "paid"].includes(o.status)
+      ).length;
+      const tableToNumber = new Map(tables.map((t) => [t.id, t.tableNumber]));
+      const occupiedTables = tables.filter((t) => t.status === "occupied" || !!t.currentOrderId).length;
+      const prepTimes = todaysOrders
+        .filter((o) => o.completedAt || o.paidAt)
+        .map((o) => {
+          const end = new Date(o.completedAt || o.paidAt!).getTime();
+          const start = new Date(o.createdAt).getTime();
+          return Math.max(0, (end - start) / 60000);
+        });
+      const avgPrepTime = prepTimes.length > 0
+        ? Math.round(prepTimes.reduce((s, m) => s + m, 0) / prepTimes.length)
+        : 0;
+
+      // Recent orders (Top 5 by creation time).
+      const recentOrders = [...todaysOrders]
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+        .concat([...orders.filter((o) => !isToday(o.createdAt))].sort(
+          (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ))
+        .slice(0, 5)
+        .map((o) => ({
+          id: o.id,
+          table: tableToNumber.get(o.tableId || "") || "—",
+          createdAt: o.createdAt,
+          status: o.status,
+          total: toMoney(o.total),
+        }));
+
+      res.json({
+        todaySales,
+        salesChange,
+        todayOrders: todaysOrders.length,
+        ordersChange,
+        todayCustomers,
+        customersChange,
+        avgOrderValue,
+        hourlyData,
+        weeklyData,
+        categoryData,
+        paymentData,
+        topItems,
+        quickStats: {
+          completed,
+          pending,
+          occupiedTables,
+          totalTables: tables.length,
+          avgPrepTime,
+        },
+        recentOrders,
+      });
+    } catch (error) {
+      console.error("Error building dashboard stats:", error);
+      res.status(500).json({ error: "Failed to load dashboard stats" });
+    }
+  });
+
   app.get("/api/delivery-persons", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const persons = await st.getDeliveryPersons();

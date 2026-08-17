@@ -4,85 +4,67 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  AreaChart, Area, BarChart, Bar, PieChart, Pie, Cell, Legend
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  BarChart, Bar, PieChart, Pie, Cell, Legend
 } from "recharts";
-import type { Order, Table } from "@shared/schema";
 
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
 
+// Shape of the data returned by GET /api/dashboard/stats
+interface DashboardStats {
+  todaySales: number;
+  salesChange: number;
+  todayOrders: number;
+  ordersChange: number;
+  todayCustomers: number;
+  customersChange: number;
+  avgOrderValue: number;
+  hourlyData: { hour: string; orders: number; revenue: number }[];
+  weeklyData: { day: string; sales: number; orders: number }[];
+  categoryData: { name: string; value: number }[];
+  paymentData: { name: string; value: number; color: string }[];
+  topItems: { name: string; orders: number; revenue: number }[];
+  quickStats: {
+    completed: number;
+    pending: number;
+    occupiedTables: number;
+    totalTables: number;
+    avgPrepTime: number;
+  };
+  recentOrders: { id: string; table: string; createdAt: string; status: string; total: number }[];
+}
+
+// Browser's UTC offset in minutes east of UTC (positive east). The server uses
+// this so "today" means the same day the cashier is looking at.
+const tzOffset = -new Date().getTimezoneOffset();
+
 export default function DashboardPage() {
-  const { data: orders = [] } = useQuery<Order[]>({
-    queryKey: ['/api/orders'],
+  const { data: stats } = useQuery<DashboardStats>({
+    queryKey: ['/api/dashboard/stats', tzOffset],
+    queryFn: () =>
+      fetch(`/api/dashboard/stats?tzOffset=${tzOffset}`).then((r) => r.json()),
+    refreshInterval: 30000,
   });
 
-  const { data: tables = [] } = useQuery<Table[]>({
-    queryKey: ['/api/tables'],
-  });
+  const todaysSales = stats?.todaySales ?? 0;
+  const todayOrders = stats?.todayOrders ?? 0;
+  const todayCustomers = stats?.todayCustomers ?? 0;
+  const avgOrderValue = stats?.avgOrderValue ?? 0;
+  const quick = stats?.quickStats;
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-
-  const todaysOrders = orders.filter(order => {
-    const orderDate = new Date(order.createdAt);
-    orderDate.setHours(0, 0, 0, 0);
-    return orderDate.getTime() === today.getTime();
-  });
-
-  const todaysSales = todaysOrders.reduce((sum, order) => sum + (Number(order.total) || 0), 0);
-  const completedOrders = orders.filter(o => o.status === 'completed').length;
-  const pendingOrders = orders.filter(o => ['new', 'preparing', 'ready'].includes(o.status)).length;
-  const occupiedTables = tables.filter(t => t.status !== 'available').length;
-  const avgOrderValue = todaysOrders.length > 0 ? Math.round(todaysSales / todaysOrders.length) : 0;
-
-  const hourlyData = Array.from({ length: 12 }, (_, i) => {
-    const hour = 9 + i;
-    const hourOrders = todaysOrders.filter(order => {
-      const orderHour = new Date(order.createdAt).getHours();
-      return orderHour === hour;
-    });
-    return {
-      hour: hour <= 12 ? `${hour}AM` : `${hour - 12}PM`,
-      orders: hourOrders.length || Math.floor(Math.random() * 30) + 5,
-      revenue: hourOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0) || Math.floor(Math.random() * 5000) + 1000,
-    };
-  });
-
-  const weeklyData = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => ({
-    day,
-    sales: Math.floor(Math.random() * 30000) + 15000,
-    orders: Math.floor(Math.random() * 80) + 40,
+  const hourlyData = stats?.hourlyData ?? [];
+  const weeklyData = stats?.weeklyData ?? [];
+  const categoryData = (stats?.categoryData ?? []).map((c, i) => ({
+    ...c,
+    color: COLORS[i % COLORS.length],
   }));
-
-  const categoryData = [
-    { name: 'Main Course', value: 35, color: '#10B981' },
-    { name: 'Starters', value: 25, color: '#3B82F6' },
-    { name: 'Beverages', value: 20, color: '#F59E0B' },
-    { name: 'Desserts', value: 12, color: '#EC4899' },
-    { name: 'Sides', value: 8, color: '#8B5CF6' },
-  ];
-
-  const paymentData = [
-    { name: 'Cash', value: 45, color: '#10B981' },
-    { name: 'Card', value: 35, color: '#3B82F6' },
-    { name: 'UPI', value: 15, color: '#F59E0B' },
-    { name: 'Other', value: 5, color: '#8B5CF6' },
-  ];
-
-  const topItems = [
-    { name: 'Butter Chicken', orders: 42, revenue: 12600 },
-    { name: 'Paneer Tikka', orders: 38, revenue: 7600 },
-    { name: 'Biryani', orders: 35, revenue: 10500 },
-    { name: 'Naan', orders: 65, revenue: 3250 },
-    { name: 'Dal Makhani', orders: 28, revenue: 5600 },
-  ];
-
-  const recentOrders = orders.slice(0, 5).map((order, index) => ({
-    id: `#${String(order.id).padStart(3, '0')}`,
-    table: `T${order.tableId}`,
-    time: getTimeAgo(order.createdAt),
-    status: order.status,
-    total: order.total || 0,
+  const paymentData = stats?.paymentData ?? [];
+  const topItems = stats?.topItems ?? [];
+  const recentOrders = (stats?.recentOrders ?? []).map((o) => ({
+    ...o,
+    id: `#${o.id.slice(0, 8)}`,
+    time: getTimeAgo(o.createdAt),
+    table: o.table,
   }));
 
   function getTimeAgo(dateString: string | Date): string {
@@ -104,11 +86,38 @@ export default function DashboardPage() {
       ready: 'bg-green-500 text-white',
       served: 'bg-blue-500 text-white',
       completed: 'bg-gray-500 text-white',
+      paid: 'bg-gray-500 text-white',
+      sent_to_kitchen: 'bg-amber-500 text-white',
+      ready_to_bill: 'bg-green-500 text-white',
+      billed: 'bg-blue-500 text-white',
+    };
+    const label: Record<string, string> = {
+      new: 'New',
+      preparing: 'Preparing',
+      ready: 'Ready',
+      served: 'Served',
+      completed: 'Completed',
+      paid: 'Paid',
+      sent_to_kitchen: 'New',
+      ready_to_bill: 'Ready',
+      billed: 'Billed',
     };
     return (
       <Badge className={styles[status] || 'bg-gray-500 text-white'}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {label[status] || status.charAt(0).toUpperCase() + status.slice(1)}
       </Badge>
+    );
+  };
+
+  const ChangeBadge = ({ value, invert = false }: { value: number; invert?: boolean }) => {
+    const up = value >= 0;
+    const good = invert ? !up : up;
+    const Icon = up ? ArrowUpRight : ArrowDownRight;
+    return (
+      <div className={`flex items-center gap-1 mt-2 text-sm ${good ? 'text-emerald-100' : 'text-red-100'}`}>
+        <Icon className={`h-4 w-4 ${up ? '' : 'rotate-0'}`} />
+        <span>{Math.abs(value).toFixed(1)}% from yesterday</span>
+      </div>
     );
   };
 
@@ -124,11 +133,8 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-emerald-100 text-sm font-medium">Today's Sales</p>
-                  <h3 className="text-3xl font-bold mt-1">₹{todaysSales.toLocaleString() || '45,320'}</h3>
-                  <div className="flex items-center gap-1 mt-2 text-emerald-100">
-                    <ArrowUpRight className="h-4 w-4" />
-                    <span className="text-sm">+12.5% from yesterday</span>
-                  </div>
+                  <h3 className="text-3xl font-bold mt-1">₹{todaysSales.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h3>
+                  <ChangeBadge value={stats?.salesChange ?? 0} />
                 </div>
                 <div className="bg-white/20 p-3 rounded-xl">
                   <DollarSign className="h-8 w-8" />
@@ -142,11 +148,8 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-blue-100 text-sm font-medium">Today's Orders</p>
-                  <h3 className="text-3xl font-bold mt-1">{todaysOrders.length || 156}</h3>
-                  <div className="flex items-center gap-1 mt-2 text-blue-100">
-                    <ArrowUpRight className="h-4 w-4" />
-                    <span className="text-sm">+8.2% from yesterday</span>
-                  </div>
+                  <h3 className="text-3xl font-bold mt-1">{todayOrders}</h3>
+                  <ChangeBadge value={stats?.ordersChange ?? 0} />
                 </div>
                 <div className="bg-white/20 p-3 rounded-xl">
                   <ShoppingCart className="h-8 w-8" />
@@ -160,11 +163,8 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-amber-100 text-sm font-medium">Total Customers</p>
-                  <h3 className="text-3xl font-bold mt-1">89</h3>
-                  <div className="flex items-center gap-1 mt-2 text-amber-100">
-                    <ArrowDownRight className="h-4 w-4" />
-                    <span className="text-sm">-3.1% from yesterday</span>
-                  </div>
+                  <h3 className="text-3xl font-bold mt-1">{todayCustomers}</h3>
+                  <ChangeBadge value={stats?.customersChange ?? 0} />
                 </div>
                 <div className="bg-white/20 p-3 rounded-xl">
                   <Users className="h-8 w-8" />
@@ -178,10 +178,10 @@ export default function DashboardPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-purple-100 text-sm font-medium">Avg Order Value</p>
-                  <h3 className="text-3xl font-bold mt-1">₹{avgOrderValue || 290}</h3>
+                  <h3 className="text-3xl font-bold mt-1">₹{avgOrderValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h3>
                   <div className="flex items-center gap-1 mt-2 text-purple-100">
-                    <ArrowUpRight className="h-4 w-4" />
-                    <span className="text-sm">+5.4% from yesterday</span>
+                    <TrendingUp className="h-4 w-4" />
+                    <span className="text-sm">Per bill today</span>
                   </div>
                 </div>
                 <div className="bg-white/20 p-3 rounded-xl">
@@ -222,6 +222,9 @@ export default function DashboardPage() {
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff' }}
                     labelStyle={{ color: '#9CA3AF' }}
+                    formatter={(value: number, name: string) =>
+                      name === 'Revenue (₹)' ? [`₹${value.toLocaleString()}`, name] : [value, name]
+                    }
                   />
                   <Legend />
                   <Area yAxisId="left" type="monotone" dataKey="orders" stroke="#3B82F6" strokeWidth={2} fillOpacity={1} fill="url(#colorOrders)" name="Orders" />
@@ -244,7 +247,7 @@ export default function DashboardPage() {
                   </div>
                   <span className="font-medium">Completed</span>
                 </div>
-                <span className="text-2xl font-bold text-green-600">{completedOrders || 124}</span>
+                <span className="text-2xl font-bold text-green-600">{quick?.completed ?? 0}</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg">
                 <div className="flex items-center gap-3">
@@ -253,7 +256,7 @@ export default function DashboardPage() {
                   </div>
                   <span className="font-medium">Pending</span>
                 </div>
-                <span className="text-2xl font-bold text-amber-600">{pendingOrders || 18}</span>
+                <span className="text-2xl font-bold text-amber-600">{quick?.pending ?? 0}</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <div className="flex items-center gap-3">
@@ -262,11 +265,11 @@ export default function DashboardPage() {
                   </div>
                   <span className="font-medium">Tables Occupied</span>
                 </div>
-                <span className="text-2xl font-bold text-blue-600">{occupiedTables}/{tables.length || 12}</span>
+                <span className="text-2xl font-bold text-blue-600">{quick?.occupiedTables ?? 0}/{quick?.totalTables ?? 0}</span>
               </div>
               <div className="border-t pt-4 mt-4">
                 <div className="text-sm text-muted-foreground mb-1">Avg Preparation Time</div>
-                <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">12 min</div>
+                <div className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">{quick?.avgPrepTime ?? 0} min</div>
               </div>
             </CardContent>
           </Card>
@@ -290,7 +293,7 @@ export default function DashboardPage() {
                   <YAxis stroke="#6B7280" fontSize={12} />
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff' }}
-                    formatter={(value: number) => [`₹${value.toLocaleString()}`, 'Sales']}
+                    formatter={(value: number) => [`₹${Math.round(value).toLocaleString()}`, 'Sales']}
                   />
                   <Bar dataKey="sales" fill="url(#barGradient)" radius={[4, 4, 0, 0]} />
                   <defs>
@@ -323,6 +326,7 @@ export default function DashboardPage() {
                     outerRadius={70}
                     paddingAngle={5}
                     dataKey="value"
+                    nameKey="name"
                   >
                     {categoryData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -330,7 +334,7 @@ export default function DashboardPage() {
                   </Pie>
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff' }}
-                    formatter={(value: number) => [`${value}%`, 'Share']}
+                    formatter={(value: number) => [`₹${Math.round(value).toLocaleString()}`, 'Sales']}
                   />
                   <Legend 
                     layout="vertical" 
@@ -364,6 +368,7 @@ export default function DashboardPage() {
                     outerRadius={70}
                     paddingAngle={5}
                     dataKey="value"
+                    nameKey="name"
                   >
                     {paymentData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -371,7 +376,7 @@ export default function DashboardPage() {
                   </Pie>
                   <Tooltip 
                     contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff' }}
-                    formatter={(value: number) => [`${value}%`, 'Share']}
+                    formatter={(value: number) => [`₹${Math.round(value).toLocaleString()}`, 'Sales']}
                   />
                   <Legend 
                     layout="vertical" 
@@ -398,27 +403,31 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                {topItems.map((item, index) => (
-                  <div key={item.name} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
-                        index === 0 ? 'bg-gradient-to-br from-yellow-400 to-orange-500' :
-                        index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400' :
-                        index === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-700' :
-                        'bg-gradient-to-br from-slate-400 to-slate-500'
-                      }`}>
-                        {index + 1}
+              {topItems.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-6 text-center">No sales yet</p>
+              ) : (
+                <div className="space-y-3">
+                  {topItems.map((item, index) => (
+                    <div key={item.name} className="flex items-center justify-between p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm ${
+                          index === 0 ? 'bg-gradient-to-br from-yellow-400 to-orange-500' :
+                          index === 1 ? 'bg-gradient-to-br from-gray-300 to-gray-400' :
+                          index === 2 ? 'bg-gradient-to-br from-amber-600 to-amber-700' :
+                          'bg-gradient-to-br from-slate-400 to-slate-500'
+                        }`}>
+                          {index + 1}
+                        </div>
+                        <div>
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-sm text-muted-foreground">{item.orders} units</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="font-medium">{item.name}</p>
-                        <p className="text-sm text-muted-foreground">{item.orders} orders</p>
-                      </div>
+                      <span className="text-lg font-bold text-green-600">₹{Math.round(item.revenue).toLocaleString()}</span>
                     </div>
-                    <span className="text-lg font-bold text-green-600">₹{item.revenue.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -443,21 +452,20 @@ export default function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {(recentOrders.length > 0 ? recentOrders : [
-                      { id: "#001", table: "T5", time: "2 min ago", status: "preparing", total: 450 },
-                      { id: "#002", table: "T3", time: "5 min ago", status: "ready", total: 680 },
-                      { id: "#003", table: "T8", time: "8 min ago", status: "new", total: 320 },
-                      { id: "#004", table: "T2", time: "12 min ago", status: "completed", total: 890 },
-                      { id: "#005", table: "T10", time: "15 min ago", status: "preparing", total: 540 },
-                    ]).map((order) => (
+                    {recentOrders.map((order) => (
                       <tr key={order.id} className="border-b last:border-0">
                         <td className="py-2 px-3 font-medium">{order.id}</td>
                         <td className="py-2 px-3">{order.table}</td>
                         <td className="py-2 px-3 text-muted-foreground text-sm">{order.time}</td>
                         <td className="py-2 px-3">{getStatusBadge(order.status)}</td>
-                        <td className="py-2 px-3 text-right font-semibold">₹{order.total}</td>
+                        <td className="py-2 px-3 text-right font-semibold">₹{Number(order.total).toLocaleString(undefined, { maximumFractionDigits: 2 })}</td>
                       </tr>
                     ))}
+                    {recentOrders.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="py-6 text-center text-sm text-muted-foreground">No orders yet</td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
