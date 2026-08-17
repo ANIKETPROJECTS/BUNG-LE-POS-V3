@@ -6,7 +6,15 @@ function dayOf(order: Order): string {
 }
 
 export async function getDailyBillingNumber(st: IStorage, order: Order): Promise<string> {
-  const orders = (await st.getOrders()).filter((o) => dayOf(o) === dayOf(order))
+  const [allOrders, invoices] = await Promise.all([
+    st.getOrders(),
+    st.getInvoices(),
+  ]);
+  const invoicedOrderIds = new Set(invoices.map((invoice) => invoice.orderId));
+  const orders = allOrders.filter((o) =>
+    dayOf(o) === dayOf(order) &&
+    (o.id === order.id || invoicedOrderIds.has(o.id))
+  )
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
   const sequence = Math.max(1, orders.findIndex((o) => o.id === order.id) + 1);
   const yymmdd = dayOf(order).replace(/-/g, "").slice(2);
