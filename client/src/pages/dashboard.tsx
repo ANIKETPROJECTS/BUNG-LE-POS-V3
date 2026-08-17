@@ -123,7 +123,7 @@ export default function DashboardPage() {
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gradient-to-br from-slate-50 to-slate-100 dark:from-gray-900 dark:to-gray-800">
-      <AppHeader title="Dashboard" showSearch={true} />
+      <AppHeader title="Dashboard" showSearch={false} />
 
       <div className="flex-1 overflow-y-auto p-4 sm:p-6">
         {/* Stats Cards */}
