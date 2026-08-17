@@ -178,7 +178,7 @@ function KitchenOrderCard({
         <div className="flex justify-between items-start">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-bold text-lg">Order #{order.id.substring(0, 8)} · KOT {kotBatch}</h3>
+              <h3 className="font-bold text-lg">KOT-{String(kotBatch).padStart(3, "0")}</h3>
               {order.orderType && order.orderType !== "dine-in" && (
                 <Badge className="bg-white/20 text-white border-white/30 text-xs">
                   {order.orderType === "delivery" ? "DELIVERY" : "PICKUP"}
