@@ -39,15 +39,15 @@ export default function MenuItemCard({
       data-testid={`menu-item-${id}`}
     >
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${borderColor}`}></div>
+      {kotEnabled === false && (
+        <Badge className="absolute bottom-1 left-3 z-10 bg-gray-500 text-white shadow-sm text-[8px] leading-3 px-1 py-0">
+          Non-KOT
+        </Badge>
+      )}
       <div className="p-2.5 pl-3 relative flex flex-col h-full">
         {!available && (
           <Badge className="absolute top-1 right-1 bg-red-500 text-white shadow-md text-xs px-1.5 py-0">
             Out of Stock
-          </Badge>
-        )}
-        {kotEnabled === false && (
-          <Badge className="absolute bottom-1 left-3 bg-gray-500 text-white shadow-sm text-[8px] leading-3 px-1 py-0">
-            Non-KOT
           </Badge>
         )}
         <h3 className="font-semibold text-gray-900 text-sm mb-0.5 line-clamp-2 min-h-[2.5rem]" data-testid={`text-item-name-${id}`}>
