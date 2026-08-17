@@ -546,7 +546,7 @@ export default function BillingPage() {
 
   const handleUpdateQuantity = (id: string, quantity: number) => {
     const item = orderItems.find((i) => i.id === id);
-    if (item?.isFromDatabase) {
+    if (item?.isFromDatabase && item.status !== "non_kot") {
       toast({
         title: "Cannot modify",
         description: "This item has already been sent to kitchen. Add a new order for changes.",
@@ -565,7 +565,7 @@ export default function BillingPage() {
 
   const handleRemoveItem = (id: string) => {
     const item = orderItems.find((i) => i.id === id);
-    if (item?.isFromDatabase) {
+    if (item?.isFromDatabase && item.status !== "non_kot") {
       toast({
         title: "Cannot remove",
         description: "This item has already been sent to kitchen. It cannot be removed from this view.",
@@ -579,7 +579,7 @@ export default function BillingPage() {
 
   const handleUpdateNotes = (id: string, notes: string) => {
     const item = orderItems.find((i) => i.id === id);
-    if (item?.isFromDatabase) {
+    if (item?.isFromDatabase && item.status !== "non_kot") {
       toast({
         title: "Cannot modify",
         description: "This item has already been sent to kitchen. Add a new order for changes.",
