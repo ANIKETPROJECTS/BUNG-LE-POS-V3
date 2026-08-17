@@ -1102,7 +1102,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           .json({ error: "Invoice not found for this order" });
       }
 
-      const orderItems = await st.getOrderItems(req.params.id);
+      const orderItems = (await st.getOrderItems(req.params.id))
+        .filter(item => item.status !== "non_kot");
 
       const pdfBuffer = generateInvoicePDF({
         invoice,
@@ -1134,7 +1135,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ error: "Order not found" });
       }
 
-      const orderItems = await st.getOrderItems(req.params.id);
+      const orderItems = (await st.getOrderItems(req.params.id))
+        .filter(item => item.status !== "non_kot");
       if (!orderItems || orderItems.length === 0) {
         return res.status(400).json({ error: "No items in order" });
       }
@@ -1179,6 +1181,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders/:id/items", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const items = await st.getOrderItems(req.params.id);
+    const menuItems = await st.getMenuItems();
+    for (const item of items) {
+      const menuItem = menuItems.find(menu => menu.id === item.menuItemId);
+      if (menuItem?.kotEnabled === false && item.status !== "non_kot") {
+        item.status = "non_kot";
+        await st.updateOrderItemStatus(item.id, "non_kot");
+      }
+    }
     res.json(items);
   });
 
@@ -1282,6 +1292,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: result.error });
     }
 
+    const allOrderItems = await st.getOrderItems(req.params.id);
+    const menuItems = await st.getMenuItems();
+    for (const item of allOrderItems) {
+      const menuItem = menuItems.find(menu => menu.id === item.menuItemId);
+      if (menuItem?.kotEnabled === false && item.status !== "non_kot") {
+        item.status = "non_kot";
+        await st.updateOrderItemStatus(item.id, "non_kot");
+      }
+    }
     console.log("[Server] Sending order to kitchen:", req.params.id);
     const order = await st.updateOrderStatus(req.params.id, "sent_to_kitchen");
     if (!order) {

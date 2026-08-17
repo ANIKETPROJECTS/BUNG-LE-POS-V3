@@ -755,7 +755,7 @@ export default function KOTPage() {
         ? (floor?.name ?? "")
         : (order.customerName ?? "");
       const batches = new Map<number, OrderItem[]>();
-      for (const item of items) {
+      for (const item of items.filter(item => item.status !== "non_kot")) {
         const batch = (item as any).kotBatch ?? 1;
         if (!batches.has(batch)) batches.set(batch, []);
         batches.get(batch)!.push(item);
