@@ -39,11 +39,6 @@ export default function MenuItemCard({
       data-testid={`menu-item-${id}`}
     >
       <div className={`absolute left-0 top-0 bottom-0 w-1 ${borderColor}`}></div>
-      {kotEnabled === false && (
-        <Badge className="absolute bottom-1 right-3 z-10 bg-gray-500 text-white shadow-sm text-[8px] leading-3 px-1 py-0">
-          Non-KOT
-        </Badge>
-      )}
       <div className="p-2.5 pl-3 relative flex flex-col h-full">
         {!available && (
           <Badge className="absolute top-1 right-1 bg-red-500 text-white shadow-md text-xs px-1.5 py-0">
@@ -64,6 +59,13 @@ export default function MenuItemCard({
             </Badge>
           )}
         </div>
+        {kotEnabled === false && (
+          <div className="flex justify-end mt-1">
+            <Badge className="bg-gray-500 text-white shadow-sm text-[8px] leading-3 px-1 py-0">
+              Non-KOT
+            </Badge>
+          </div>
+        )}
       </div>
     </div>
   );
