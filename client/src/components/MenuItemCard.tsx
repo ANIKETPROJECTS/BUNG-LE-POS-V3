@@ -46,7 +46,7 @@ export default function MenuItemCard({
           </Badge>
         )}
         {kotEnabled === false && (
-          <Badge className="absolute top-1 right-1 bg-gray-500 text-white shadow-md text-[10px] px-1.5 py-0">
+          <Badge className="absolute bottom-1 left-3 bg-gray-500 text-white shadow-sm text-[8px] leading-3 px-1 py-0">
             Non-KOT
           </Badge>
         )}
