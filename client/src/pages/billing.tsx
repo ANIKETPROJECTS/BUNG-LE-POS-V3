@@ -1396,7 +1396,7 @@ export default function BillingPage() {
                  <div key={index} className="space-y-2 p-3 border rounded-md bg-background">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Person {index + 1}</span>
-                    {splitMode === "custom" && index < splitCount - 1 ? (
+                    {splitMode === "custom" ? (
                       <Input
                         type="number"
                         value={amount}
