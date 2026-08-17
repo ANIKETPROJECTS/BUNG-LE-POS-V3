@@ -1344,8 +1344,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           tableNumber = tbl?.tableNumber;
           if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
         }
+        const baseKotNumber = await getDailyBillingNumber(st, updatedOrder);
         const kotSequence = await getDailyKotSequence(st, updatedOrder);
-        const kotNumber = `KOT ${kotSequence}`;
+        const kotNumber = baseKotNumber;
         const escData = buildKOTEscPos({
           order: updatedOrder,
           items: orderItems,
@@ -3440,8 +3441,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           return res.json({ results: [], allFailed: true });
         }
 
+        const baseKotNumber = await getDailyBillingNumber(st, order);
         const kotSequence = await getDailyKotSequence(st, order);
-        const kotNumber = `KOT ${kotSequence}`;
+        const kotNumber = baseKotNumber;
         const escData = buildKOTEscPos({
           order,
           items: orderItems.filter((item) => item.status === "new"),
