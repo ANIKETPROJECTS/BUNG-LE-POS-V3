@@ -47,7 +47,9 @@ export default function KitchenPage() {
     }
 
     return activeOrders.flatMap((order, index) => {
-      const items = orderItemQueries[index]?.data || [];
+      const items = (orderItemQueries[index]?.data || [])
+        .filter(item => item.status !== "non_kot");
+      if (items.length === 0) return [];
 
       let tableNumber = "";
       if (order.tableId) {
