@@ -1345,7 +1345,7 @@ export default function BillingPage() {
       </Dialog>
 
       <Dialog open={showSplitBillDialog} onOpenChange={setShowSplitBillDialog}>
-        <DialogContent className="sm:max-w-lg">
+         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Split Bill</DialogTitle>
             <DialogDescription>
@@ -1391,8 +1391,9 @@ export default function BillingPage() {
                 <span>Total Bill:</span>
                 <span className="text-primary">₹{total.toFixed(2)}</span>
               </div>
-              {splitAmounts.map((amount, index) => (
-                <div key={index} className="space-y-2 pb-2 border-b last:border-0">
+               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+               {splitAmounts.map((amount, index) => (
+                 <div key={index} className="space-y-2 p-3 border rounded-md bg-background">
                   <div className="flex justify-between items-center">
                     <span className="text-sm font-medium">Person {index + 1}</span>
                     {splitMode === "custom" && index < splitCount - 1 ? (
@@ -1422,6 +1423,7 @@ export default function BillingPage() {
                   </div>
                 </div>
               ))}
+               </div>
               {splitMode === "custom" && (
                 <div className="pt-2 border-t">
                   <div className="flex justify-between text-sm">
