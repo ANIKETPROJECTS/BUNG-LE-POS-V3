@@ -1206,7 +1206,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: result.error });
     }
     console.log("[Server] Creating order item for order:", req.params.id);
-    const item = await st.createOrderItem(result.data);
+    const menuItem = await st.getMenuItem(result.data.menuItemId);
+    const item = await st.createOrderItem({
+      ...result.data,
+      status: menuItem?.kotEnabled === false ? "non_kot" : result.data.status,
+    });
 
     const orderItems = await st.getOrderItems(req.params.id);
     const total = orderItems.reduce((sum, item) => {
@@ -1282,6 +1286,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const order = await st.updateOrderStatus(req.params.id, "sent_to_kitchen");
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
+    }
+    const pendingKotItems = (await st.getOrderItems(req.params.id))
+      .filter((item) => item.status === "new");
+    if (pendingKotItems.length === 0) {
+      return res.status(400).json({ error: "There are no KOT items in this order" });
     }
     // POS-created items do not always carry a batch until the KOT is sent.
     // Assign the pending items to this KOT before incrementing the count so

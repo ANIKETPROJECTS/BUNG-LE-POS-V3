@@ -742,7 +742,7 @@ export default function BillingPage() {
   const handleKOTPrint = () => handleKOT(true);
   const kotDisabled =
     orderItems.length > 0 &&
-    orderItems.every(item => item.status === "sent_to_kitchen");
+    orderItems.every(item => item.status === "sent_to_kitchen" || item.status === "non_kot");
   const handleSaveOrder = () => handleSave(false);
   const handleSavePrint = () => handleSave(true);
 

@@ -628,7 +628,7 @@ export class MemStorage implements IStorage {
 
   async assignMissingKotBatch(orderId: string, batch: number): Promise<void> {
     for (const [id, item] of this.orderItems.entries()) {
-      if (item.orderId === orderId && item.kotBatch == null) {
+      if (item.orderId === orderId && item.status !== "non_kot" && item.kotBatch == null) {
         this.orderItems.set(id, { ...item, kotBatch: batch });
       }
     }

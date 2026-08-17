@@ -340,6 +340,10 @@ export default function MenuPage() {
     });
   };
 
+  const toggleKOT = async (id: string, kotEnabled: boolean) => {
+    await updateMenuItemMutation.mutateAsync({ id, data: { kotEnabled: !kotEnabled } });
+  };
+
   const openEditDialog = async (item: MenuItem) => {
     setEditingItem(item);
     setIsEditDialogOpen(true);
@@ -827,6 +831,14 @@ export default function MenuPage() {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center justify-center gap-2">
+                          <Button
+                            size="sm"
+                            variant={item.kotEnabled !== false ? "default" : "secondary"}
+                            onClick={() => toggleKOT(item.id, item.kotEnabled !== false)}
+                            data-testid={`button-toggle-kot-${item.id}`}
+                          >
+                            {item.kotEnabled !== false ? "KOT" : "Non-KOT"}
+                          </Button>
                           <Button
                             size="icon"
                             variant="ghost"
