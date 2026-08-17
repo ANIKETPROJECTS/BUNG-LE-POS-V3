@@ -799,7 +799,7 @@ export default function KOTPage() {
     );
     return sorted.map((ticket, index) => ({
       ...ticket,
-      kotNumber: `KOT-${String(index + 1).padStart(4, "0")}`,
+      kotNumber: `KOT ${index + 1}`,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [kitchenOrders, completedOrders, activeQueries, completedQueries, tables, floors]);
