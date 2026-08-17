@@ -296,18 +296,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const input = z.object({
         tableId: z.string().min(1).max(100).optional(),
-        tableName: z.string().trim().min(1).max(100),
-        floorName: z.string().trim().min(1).max(100),
-        sessionSecret: z.string().min(1).max(500),
+        tableName: z.string().trim().min(1).max(100).optional(),
+        floorName: z.string().trim().min(1).max(100).optional(),
       }).safeParse(req.body);
-      if (!input.success) return res.status(400).json({ error: "Table name, floor name, and session secret are required" });
-      const tableName = input.data.tableName;
-      const floorName = input.data.floorName;
+      if (!input.success) return res.status(400).json({ error: "A table is required" });
+      let tableName = input.data.tableName;
+      let floorName = input.data.floorName;
+      if (input.data.tableId) {
+        const st = getStorage(req);
+        const table = await st.getTable(input.data.tableId);
+        if (!table) return res.status(404).json({ error: "Table not found" });
+        const floor = await st.getFloor(table.floorId);
+        if (!floor) return res.status(404).json({ error: "Floor not found" });
+        tableName = table.tableNumber;
+        floorName = floor.name;
+      }
+      const sessionSecret = process.env.QR_SESSION_SECRET;
+      if (!tableName || !floorName || !sessionSecret) {
+        return res.status(400).json({ error: "QR session secret is not configured" });
+      }
       if (!/^[^\u0000-\u001f\u007f]+$/.test(tableName) || !/^[^\u0000-\u001f\u007f]+$/.test(floorName)) {
         return res.status(400).json({ error: "Table or floor name is invalid" });
       }
       const encodedPayload = Buffer.from(JSON.stringify({ tableName, floorName, v: 1 }), "utf8").toString("base64url");
-      const encodedSignature = crypto.createHmac("sha256", input.data.sessionSecret).update(encodedPayload).digest("base64url");
+      const encodedSignature = crypto.createHmac("sha256", sessionSecret).update(encodedPayload).digest("base64url");
       const token = `${encodedPayload}.${encodedSignature}`;
       const url = `https://bungle.atdigitalmenu.com/${token}`;
       const qrDataUrl = await QRCode.toDataURL(url, { errorCorrectionLevel: "M", margin: 2, width: 320 });

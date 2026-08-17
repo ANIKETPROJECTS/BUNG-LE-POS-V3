@@ -315,10 +315,9 @@ export default function TableManagementPage() {
   const [qrTable, setQrTable] = useState<Table | null>(null);
   const [qrDialogOpen, setQrDialogOpen] = useState(false);
   const [qrData, setQrData] = useState<{ url: string; token: string; qrDataUrl: string } | null>(null);
-  const [qrForm, setQrForm] = useState({ tableName: "", floorName: "", sessionSecret: "" });
   const qrMutation = useMutation({
-    mutationFn: async (form: typeof qrForm) => {
-      const res = await apiRequest("POST", "/api/admin/qr-token", form);
+    mutationFn: async (tableId: string) => {
+      const res = await apiRequest("POST", "/api/admin/qr-token", { tableId });
       return res.json();
     },
     onSuccess: setQrData,
@@ -326,17 +325,7 @@ export default function TableManagementPage() {
   });
   const openQR = (table: Table) => {
     setQrTable(table); setQrData(null); setQrDialogOpen(true);
-    setQrForm({
-      tableName: table.tableNumber,
-      floorName: floors.find(f => f.id === table.floorId)?.name ?? "",
-      sessionSecret: "",
-    });
-  };
-  const openQRGenerator = () => {
-    setQrTable(null);
-    setQrData(null);
-    setQrForm({ tableName: "", floorName: "", sessionSecret: "" });
-    setQrDialogOpen(true);
+    qrMutation.mutate(table.id);
   };
   const downloadQR = () => {
     if (!qrData) return;
@@ -472,9 +461,6 @@ export default function TableManagementPage() {
             {floors.length} floor{floors.length !== 1 ? "s" : ""} · {tables.length} table{tables.length !== 1 ? "s" : ""}
           </p>
         </div>
-        <Button size="sm" className="ml-auto" onClick={openQRGenerator}>
-          <QrCode className="mr-1.5 h-4 w-4" /> QR Generator
-        </Button>
       </div>
 
       {/* Content */}
@@ -662,21 +648,7 @@ export default function TableManagementPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader><DialogTitle>Generate QR Token</DialogTitle></DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-1">
-              <Label>Table name</Label>
-              <Input value={qrForm.tableName} onChange={e => setQrForm({ ...qrForm, tableName: e.target.value })} />
-            </div>
-            <div className="space-y-1">
-              <Label>Floor name</Label>
-              <Input value={qrForm.floorName} onChange={e => setQrForm({ ...qrForm, floorName: e.target.value })} />
-            </div>
-            <div className="space-y-1">
-              <Label>Session secret</Label>
-              <Input type="password" value={qrForm.sessionSecret} onChange={e => setQrForm({ ...qrForm, sessionSecret: e.target.value })} autoComplete="off" />
-            </div>
-            <Button className="bg-zinc-900 hover:bg-zinc-800" onClick={() => qrMutation.mutate(qrForm)} disabled={qrMutation.isPending}>
-              {qrMutation.isPending ? "Generating…" : "Generate"}
-            </Button>
+             <p className="text-sm text-muted-foreground">The QR uses the permanently configured QR session secret and this table’s current floor automatically.</p>
             {qrData && <>
               <div className="rounded-md bg-muted/50 p-4 space-y-3">
                 <div className="space-y-1">
@@ -689,7 +661,7 @@ export default function TableManagementPage() {
                 </div>
               </div>
               <img src={qrData.qrDataUrl} alt={`QR code for ${qrTable?.tableNumber}`} className="mx-auto h-64 w-64" />
-              <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => qrMutation.mutate(qrForm)}><RefreshCw className="mr-1 h-4 w-4" />Regenerate</Button><Button onClick={downloadQR}><Download className="mr-1 h-4 w-4" />Download QR</Button></div>
+               <div className="flex justify-end gap-2"><Button variant="outline" onClick={() => qrTable && qrMutation.mutate(qrTable.id)}><RefreshCw className="mr-1 h-4 w-4" />Regenerate</Button><Button onClick={downloadQR}><Download className="mr-1 h-4 w-4" />Download QR</Button></div>
             </>}
           </div>
         </DialogContent>
