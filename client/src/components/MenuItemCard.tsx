@@ -10,6 +10,7 @@ interface MenuItemCardProps {
   isVeg?: boolean;
   foodType?: 'veg' | 'non-veg' | 'egg';
   quickCode?: string | null;
+  kotEnabled?: boolean;
   onAdd: (id: string) => void;
 }
 
@@ -23,6 +24,7 @@ export default function MenuItemCard({
   isVeg = true,
   foodType,
   quickCode,
+  kotEnabled = true,
   onAdd,
 }: MenuItemCardProps) {
   const type = foodType || (isVeg ? 'veg' : 'non-veg');
@@ -41,6 +43,11 @@ export default function MenuItemCard({
         {!available && (
           <Badge className="absolute top-1 right-1 bg-red-500 text-white shadow-md text-xs px-1.5 py-0">
             Out of Stock
+          </Badge>
+        )}
+        {kotEnabled === false && (
+          <Badge className="absolute top-1 right-1 bg-gray-500 text-white shadow-md text-[10px] px-1.5 py-0">
+            Non-KOT
           </Badge>
         )}
         <h3 className="font-semibold text-gray-900 text-sm mb-0.5 line-clamp-2 min-h-[2.5rem]" data-testid={`text-item-name-${id}`}>

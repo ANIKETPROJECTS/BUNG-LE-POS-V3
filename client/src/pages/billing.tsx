@@ -480,6 +480,7 @@ export default function BillingPage() {
                 notes: undefined,
                 isFromDatabase: false,
                 isVeg: menuItem.isVeg,
+                status: menuItem.kotEnabled === false ? "non_kot" : "new",
               }
             ];
           }
@@ -537,6 +538,7 @@ export default function BillingPage() {
           notes: undefined,
           isFromDatabase: false,
           isVeg: menuItem.isVeg,
+          status: menuItem.kotEnabled === false ? "non_kot" : "new",
         },
       ]);
     }
@@ -619,7 +621,7 @@ export default function BillingPage() {
             quantity: item.quantity,
             price: item.price.toFixed(2),
             notes: item.notes || null,
-            status: "new",
+            status: item.status === "non_kot" ? "non_kot" : "new",
             isVeg: item.isVeg ?? true,
           },
         });
@@ -635,6 +637,14 @@ export default function BillingPage() {
         title: "Cart is empty",
         description: "Please add items before sending to kitchen",
         variant: "destructive",
+      });
+      return;
+    }
+
+    if (!orderItems.some(item => item.status !== "non_kot")) {
+      toast({
+        title: "No KOT items",
+        description: "All items in this cart are marked Non-KOT.",
       });
       return;
     }
@@ -1141,6 +1151,7 @@ export default function BillingPage() {
                     available={item.available}
                     isVeg={item.isVeg}
                     quickCode={item.quickCode}
+                    kotEnabled={item.kotEnabled !== false}
                     onAdd={handleAddItem} 
                   />
                 ))}
