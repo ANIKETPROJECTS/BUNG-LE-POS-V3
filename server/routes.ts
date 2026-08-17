@@ -824,10 +824,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ? ((todaySales - yesterdaySales) / yesterdaySales) * 100
         : todaySales > 0 ? 100 : 0;
 
-      const todaysOrders = orders.filter((o) => isToday(o.createdAt));
-      const yesterdaysOrders = orders.filter((o) =>
-        isRange(o.createdAt, yesterdayStart, todayStart)
-      );
+      // An order is counted on the dashboard only once it has an invoice.
+      // Using invoices here keeps the count in sync when invoices are deleted.
+      const todaysOrders = todaysInvoices;
+      const yesterdaysOrders = yesterdaysInvoices;
       const ordersChange = yesterdaysOrders.length > 0
         ? ((todaysOrders.length - yesterdaysOrders.length) / yesterdaysOrders.length) * 100
         : todaysOrders.length > 0 ? 100 : 0;
