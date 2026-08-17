@@ -136,9 +136,6 @@ function FloorRow({
           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(true)}>
             <Pencil className="h-3.5 w-3.5" />
           </Button>
-          <Button size="icon" variant="ghost" className="h-8 w-8 text-primary" onClick={() => onGenerateQR(table)} title="Generate QR">
-            <QrCode className="h-3.5 w-3.5" />
-          </Button>
           <Button
             size="icon"
             variant="ghost"
@@ -276,6 +273,15 @@ function TableRow({
             <span className="text-sm text-muted-foreground ml-2">· {floorName}</span>
           </div>
           <Badge variant="outline" className="text-xs">{table.seats} seat{table.seats !== 1 ? "s" : ""}</Badge>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="h-8 w-8 text-primary"
+            onClick={() => onGenerateQR(table)}
+            title={`View QR for ${table.tableNumber}`}
+          >
+            <QrCode className="h-3.5 w-3.5" />
+          </Button>
           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(true)}>
             <Pencil className="h-3.5 w-3.5" />
           </Button>
