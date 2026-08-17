@@ -29,6 +29,7 @@ interface OrderItem {
   quantity: number;
   notes?: string;
   isVeg?: boolean;
+  status?: string;
 }
 
 interface OrderCartProps {
@@ -41,6 +42,7 @@ interface OrderCartProps {
   onCheckout: () => void;
   onSplitBill?: () => void;
   onKOT?: () => void;
+  kotDisabled?: boolean;
   onSave?: () => void;
   selectedCustomer?: Customer | null;
   onSelectCustomer?: () => void;
@@ -70,6 +72,7 @@ export default function OrderCart({
   onCheckout,
   onSplitBill,
   onKOT,
+  kotDisabled = false,
   onSave,
   selectedCustomer,
   onSelectCustomer,
@@ -426,7 +429,8 @@ export default function OrderCart({
                 <Button
                   variant="outline"
                   className="border border-primary text-primary hover:bg-primary hover:text-white text-sm"
-                  disabled={items.length === 0}
+                  disabled={items.length === 0 || kotDisabled}
+                  title={kotDisabled ? "All items in this cart have already been sent to KOT" : "Send items to KOT"}
                   onClick={onKOT}
                   data-testid="button-kot"
                 >

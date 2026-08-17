@@ -46,6 +46,7 @@ interface OrderItem {
   notes?: string;
   isFromDatabase?: boolean;
   isVeg?: boolean;
+  status?: string;
 }
 
 export default function BillingPage() {
@@ -146,6 +147,7 @@ export default function BillingPage() {
         notes: item.notes || undefined,
         isFromDatabase: true,
         isVeg: item.isVeg,
+        status: item.status,
       }));
 
       // Actions continue to target the newest order, while the bill view
@@ -185,6 +187,7 @@ export default function BillingPage() {
         notes: item.notes || undefined,
         isFromDatabase: true,
         isVeg: item.isVeg,
+        status: item.status,
       }));
       
       setOrderItems(formattedItems);
@@ -737,6 +740,9 @@ export default function BillingPage() {
 
   const handleSendKOT = () => handleKOT(false);
   const handleKOTPrint = () => handleKOT(true);
+  const kotDisabled =
+    orderItems.length > 0 &&
+    orderItems.every(item => item.status === "sent_to_kitchen");
   const handleSaveOrder = () => handleSave(false);
   const handleSavePrint = () => handleSave(true);
 
@@ -1154,6 +1160,7 @@ export default function BillingPage() {
             onCheckout={handleCheckout}
             onSplitBill={handleSplitBill}
             onKOT={handleSendKOT}
+            kotDisabled={kotDisabled}
             onSave={handleSaveOrder}
             selectedCustomer={selectedCustomer}
             onSelectCustomer={() => setShowCustomerDialog(true)}
@@ -1211,6 +1218,7 @@ export default function BillingPage() {
               onCheckout={handleCheckout}
               onSplitBill={handleSplitBill}
               onKOT={handleSendKOT}
+              kotDisabled={kotDisabled}
               onSave={handleSaveOrder}
               selectedCustomer={selectedCustomer}
               onSelectCustomer={() => setShowCustomerDialog(true)}
