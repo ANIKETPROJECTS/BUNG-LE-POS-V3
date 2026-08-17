@@ -17,7 +17,15 @@ export async function getDailyKotSequence(st: IStorage, order: Order): Promise<n
   // KOT numbers are ticket numbers, not order numbers. An add-on creates
   // another ticket for the same order, so counting order.kotCount against
   // other orders can reuse a number when tickets were created out of order.
-  const orders = (await st.getOrders()).filter((o) => dayOf(o) === dayOf(order));
+  const [allOrders, invoices] = await Promise.all([
+    st.getOrders(),
+    st.getInvoices(),
+  ]);
+  const invoicedOrderIds = new Set(invoices.map((invoice) => invoice.orderId));
+  const orders = allOrders.filter((o) =>
+    dayOf(o) === dayOf(order) &&
+    (o.status !== "completed" || invoicedOrderIds.has(o.id))
+  );
   const tickets: { key: string; createdAt: number }[] = [];
 
   for (const candidate of orders) {
