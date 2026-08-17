@@ -158,12 +158,14 @@ function TableRow({
   allTables,
   onDelete,
   onGenerateQR,
+  isGrid = false,
 }: {
   table: Table;
   floors: Floor[];
   allTables: Table[];
   onDelete: (id: string, name: string) => void;
   onGenerateQR: (table: Table) => void;
+  isGrid?: boolean;
 }) {
   const { toast } = useToast();
   const [editing, setEditing] = useState(false);
@@ -172,6 +174,14 @@ function TableRow({
   const [floorId, setFloorId] = useState(table.floorId ?? "");
 
   const floorName = floors.find(f => f.id === table.floorId)?.name ?? "—";
+  const { data: qrPreview } = useQuery<{ qrDataUrl: string }>({
+    queryKey: ["/api/admin/qr-token/preview", table.id],
+    enabled: isGrid,
+    queryFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/qr-token", { tableId: table.id });
+      return res.json();
+    },
+  });
 
   const updateMutation = useMutation({
     mutationFn: async (data: { tableNumber: string; seats: number; floorId: string | null }) => {
@@ -266,33 +276,44 @@ function TableRow({
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-3">
+        <div className={isGrid ? "flex flex-col gap-3 h-full" : "flex items-center gap-3"}>
           <LayoutGrid className="h-4 w-4 text-muted-foreground shrink-0" />
-          <div className="flex-1 min-w-0">
-            <span className="font-medium">{table.tableNumber}</span>
-            <span className="text-sm text-muted-foreground ml-2">· {floorName}</span>
+          {isGrid && (
+            <div className="flex justify-center rounded-md bg-muted/30 p-2">
+              {qrPreview?.qrDataUrl ? (
+                <img src={qrPreview.qrDataUrl} alt={`QR code for ${table.tableNumber}`} className="h-28 w-28" />
+              ) : (
+                <div className="h-28 w-28 animate-pulse rounded bg-muted" />
+              )}
+            </div>
+          )}
+          <div className="flex items-center gap-3 flex-1">
+            <div className="flex-1 min-w-0">
+              <span className="font-medium">{table.tableNumber}</span>
+              <span className="text-sm text-muted-foreground ml-2">· {floorName}</span>
+            </div>
+            <Badge variant="outline" className="text-xs">{table.seats} seat{table.seats !== 1 ? "s" : ""}</Badge>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-primary"
+              onClick={() => onGenerateQR(table)}
+              title={`View QR for ${table.tableNumber}`}
+            >
+              <QrCode className="h-3.5 w-3.5" />
+            </Button>
+            <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(true)}>
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 text-destructive hover:text-destructive"
+              onClick={() => onDelete(table.id, table.tableNumber)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
           </div>
-          <Badge variant="outline" className="text-xs">{table.seats} seat{table.seats !== 1 ? "s" : ""}</Badge>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 text-primary"
-            onClick={() => onGenerateQR(table)}
-            title={`View QR for ${table.tableNumber}`}
-          >
-            <QrCode className="h-3.5 w-3.5" />
-          </Button>
-          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setEditing(true)}>
-            <Pencil className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-8 w-8 text-destructive hover:text-destructive"
-            onClick={() => onDelete(table.id, table.tableNumber)}
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </Button>
         </div>
       )}
     </div>
@@ -520,7 +541,7 @@ export default function TableManagementPage() {
                 </Button>
               </div>
             </div>
-            <div className={floorView === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" : "space-y-2"}>
+            <div className={floorView === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" : "grid grid-cols-1 lg:grid-cols-2 gap-3"}>
               {floors.length === 0 ? (
                 <div className="text-center py-10 text-muted-foreground">
                   <Building2 className="h-8 w-8 mx-auto mb-2 opacity-40" />
@@ -627,7 +648,7 @@ export default function TableManagementPage() {
                 </Button>
               </div>
             </div>
-            <div className={tableView === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" : "space-y-2"}>
+            <div className={tableView === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" : "grid grid-cols-1 lg:grid-cols-2 gap-3"}>
               {filteredTables.length === 0 ? (
                 <div className="text-center py-10 text-muted-foreground">
                   <LayoutGrid className="h-8 w-8 mx-auto mb-2 opacity-40" />
@@ -640,6 +661,7 @@ export default function TableManagementPage() {
                     table={table}
                     floors={floors}
                     allTables={tables}
+                    isGrid={tableView === "grid"}
                     onDelete={(id, name) => setDeleteTarget({ type: "table", id, name })}
                     onGenerateQR={openQR}
                   />
