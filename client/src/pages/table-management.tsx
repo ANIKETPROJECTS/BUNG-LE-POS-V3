@@ -24,7 +24,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Pencil, Trash2, Plus, ArrowLeft, Check, X, Building2, LayoutGrid, QrCode, Copy, Download, RefreshCw } from "lucide-react";
+import { Pencil, Trash2, Plus, ArrowLeft, Check, X, Building2, LayoutGrid, List, QrCode, Copy, Download, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Floor, Table } from "@shared/schema";
@@ -315,6 +315,8 @@ export default function TableManagementPage() {
 
   // Floor filter for table tab
   const [filterFloorId, setFilterFloorId] = useState<string>("all");
+  const [floorView, setFloorView] = useState<"list" | "grid">("list");
+  const [tableView, setTableView] = useState<"list" | "grid">("list");
 
   // Delete confirmation
   const [deleteTarget, setDeleteTarget] = useState<{ type: "floor" | "table"; id: string; name: string } | null>(null);
@@ -471,7 +473,7 @@ export default function TableManagementPage() {
 
       {/* Content */}
       <div className="flex-1 overflow-y-auto p-4">
-        <Tabs defaultValue="floors" className="w-full max-w-2xl mx-auto">
+        <Tabs defaultValue="floors" className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="floors" className="flex items-center gap-2">
               <Building2 className="h-4 w-4" />
@@ -507,7 +509,18 @@ export default function TableManagementPage() {
             </div>
 
             {/* Floor list */}
-            <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-sm">All Floors</h3>
+              <div className="flex rounded-md border bg-white p-0.5">
+                <Button size="sm" variant={floorView === "list" ? "secondary" : "ghost"} className="h-8 px-2" onClick={() => setFloorView("list")} title="List view">
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant={floorView === "grid" ? "secondary" : "ghost"} className="h-8 px-2" onClick={() => setFloorView("grid")} title="Grid view">
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className={floorView === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" : "space-y-2"}>
               {floors.length === 0 ? (
                 <div className="text-center py-10 text-muted-foreground">
                   <Building2 className="h-8 w-8 mx-auto mb-2 opacity-40" />
@@ -603,7 +616,18 @@ export default function TableManagementPage() {
             )}
 
             {/* Table list */}
-            <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-sm">Tables</h3>
+              <div className="flex rounded-md border bg-white p-0.5">
+                <Button size="sm" variant={tableView === "list" ? "secondary" : "ghost"} className="h-8 px-2" onClick={() => setTableView("list")} title="List view">
+                  <List className="h-4 w-4" />
+                </Button>
+                <Button size="sm" variant={tableView === "grid" ? "secondary" : "ghost"} className="h-8 px-2" onClick={() => setTableView("grid")} title="Grid view">
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+            <div className={tableView === "grid" ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3" : "space-y-2"}>
               {filteredTables.length === 0 ? (
                 <div className="text-center py-10 text-muted-foreground">
                   <LayoutGrid className="h-8 w-8 mx-auto mb-2 opacity-40" />
