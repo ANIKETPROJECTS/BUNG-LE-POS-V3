@@ -15,6 +15,9 @@ app.use(express.json({
     req.rawBody = buf;
   }
 }));
+// QZ Tray signs the exact text/plain challenge it sends. This parser must
+// come after JSON so normal API requests keep their existing behavior.
+app.use(express.text({ type: "text/plain", limit: "32kb" }));
 app.use(express.urlencoded({ extended: false }));
 
 setupAuthRoutes(app);

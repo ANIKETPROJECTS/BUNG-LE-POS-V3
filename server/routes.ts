@@ -46,6 +46,7 @@ import {
 
 const orderActionSchema = z.object({
   print: z.boolean().optional().default(false),
+  printVia: z.enum(["qz", "agent"]).optional().default("qz"),
   taxRate: z.number().min(0).max(100).optional(),
   serviceCharge: z.number().min(0).max(100).optional(),
 });
@@ -53,6 +54,7 @@ const orderActionSchema = z.object({
 const checkoutSchema = z.object({
   paymentMode: z.string().optional(),
   print: z.boolean().optional().default(false),
+  printVia: z.enum(["qz", "agent"]).optional().default("qz"),
   taxRate: z.number().min(0).max(100).optional(),
   serviceCharge: z.number().min(0).max(100).optional(),
   splitPayments: z
@@ -65,6 +67,18 @@ const checkoutSchema = z.object({
     )
     .optional(),
 });
+
+function normalizeQzPem(raw: string): string {
+  const value = raw.replace(/\\n/g, "\n").trim();
+  const match = value.match(/-----BEGIN (.+?)-----/);
+  if (!match) throw new Error("Invalid QZ PEM");
+  const type = match[1];
+  const body = value
+    .replace(/-----BEGIN .+?-----/g, "")
+    .replace(/-----END .+?-----/g, "")
+    .replace(/\s+/g, "");
+  return `-----BEGIN ${type}-----\n${(body.match(/.{1,64}/g) || []).join("\n")}\n-----END ${type}-----`;
+}
 
 async function getTaxSettings(st: IStorage): Promise<TaxSettings> {
   const [taxRate, serviceCharge, gstEnabled, gstNumber] = await Promise.all([
@@ -1395,7 +1409,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     let invoice = null;
-    if (result.data.print) {
+    if (result.data.print && result.data.printVia !== "qz") {
       const orderItems = await st.getOrderItems(req.params.id);
       const subtotal = orderItems.reduce(
         (sum, item) => sum + parseFloat(item.price) * item.quantity,
@@ -1530,7 +1544,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     broadcastUpdate("order_updated", order);
     broadcastUpdate("invoice_created", invoice);
-    if (result.data.print) {
+    if (result.data.print && result.data.printVia !== "qz") {
       await queueBillPrintJobs({
         invoice,
         orderType: order.orderType,
@@ -1708,7 +1722,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("order_paid", settled);
     }
     broadcastUpdate("invoice_created", invoice);
-    if (result.data.print) {
+    if (result.data.print && result.data.printVia !== "qz") {
       await queueBillPrintJobs({
         invoice,
         orderType: primaryOrder.orderType,
