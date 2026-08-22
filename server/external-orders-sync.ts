@@ -389,6 +389,7 @@ export class ExternalOrdersSyncService {
           kotNumber,
           printerIp: printer.ip,
           printerPort: printer.port,
+          printerName: printer.name,
           escposData,
           status: "pending",
         });
@@ -803,6 +804,7 @@ export class ExternalOrdersSyncService {
             kotNumber,
             printerIp: printer.ip,
             printerPort: printer.port,
+            printerName: printer.name,
             escposData: escBase64,
             status: "pending",
           });

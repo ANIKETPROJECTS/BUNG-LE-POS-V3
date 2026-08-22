@@ -4,6 +4,11 @@ type QzPrinterResult = {
   printer?: string;
 };
 
+export type QzPrintPayload = {
+  data: string;
+  printers?: string[];
+};
+
 type QzApi = {
   security: {
     setCertificatePromise(fn: (resolve: (value: string) => void, reject: (reason?: unknown) => void) => void): void;
@@ -71,6 +76,16 @@ export async function qzPrintEndpoint(endpoint: string): Promise<QzPrinterResult
     const response = await fetch(endpoint, { credentials: "include" });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || "Could not prepare print");
+    return await printQzPayload(payload);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "QZ Tray print failed";
+    console.error("[QZ] Print job failed", { endpoint, error: message });
+    return { success: false, error: message };
+  }
+}
+
+export async function printQzPayload(payload: QzPrintPayload): Promise<QzPrinterResult> {
+  try {
     const qz = await getQz();
     const preferred = Array.isArray(payload.printers) ? payload.printers : [];
     const discovered = await qz.printers.find();
@@ -96,11 +111,11 @@ export async function qzPrintEndpoint(endpoint: string): Promise<QzPrinterResult
       scaleContent: true,
     });
     await qz.print(config, [{ type: "raw", format: "base64", data: payload.data }]);
-    console.info("[QZ] Print job sent successfully", { endpoint, printer });
+    console.info("[QZ] Print job sent successfully", { printer });
     return { success: true, printer };
   } catch (error) {
     const message = error instanceof Error ? error.message : "QZ Tray print failed";
-    console.error("[QZ] Print job failed", { endpoint, error: message });
+    console.error("[QZ] Print job failed", { error: message });
     return { success: false, error: message };
   }
 }

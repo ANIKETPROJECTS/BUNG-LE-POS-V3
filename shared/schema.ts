@@ -459,17 +459,22 @@ export const categoryUnits: Record<string, string[]> = {
   "Other": ["kg", "g", "L", "ml", "pcs", "box"],
 };
 
-// Print job — created when a KOT is sent, consumed by the local print agent
+// Print job — created by server actions and consumed by the local print worker
 export interface PrintJob {
   id: string;
   orderId: string;
   kotNumber: string;
   printerIp: string;
   printerPort: number;
+  printerName?: string;
   escposData: string;   // base64-encoded ESC/POS bytes
-  status: "pending" | "done" | "failed";
+  status: "pending" | "processing" | "done" | "failed";
   createdAt: Date;
   doneAt?: Date | null;
+  workerId?: string;
+  leaseUntil?: Date | null;
+  attempts?: number;
+  lastError?: string | null;
 }
 
 // Printer types

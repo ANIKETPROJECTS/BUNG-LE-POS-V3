@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useQuery, useQueries, useMutation } from "@tanstack/react-query";
 import AppHeader from "@/components/AppHeader";
 import { Badge } from "@/components/ui/badge";
@@ -18,9 +18,6 @@ import type { Order, OrderItem, Table, Floor, MenuItem, PrinterDevice } from "@s
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { tryQzPrint } from "@/lib/qz-print";
-
-// localStorage key for tracking which orders have been auto-printed
-const PRINTED_KEY = "kot_auto_printed_ids";
 
 /* ─── Types ─────────────────────────────────────────────────────────────── */
 interface KOTTicket {
@@ -614,103 +611,6 @@ export default function KOTPage() {
   const { data: tables          = [] } = useQuery<Table[]>({ queryKey: ["/api/tables"] });
   const { data: floors          = [] } = useQuery<Floor[]>({ queryKey: ["/api/floors"] });
   const { data: printers        = [] } = useQuery<PrinterDevice[]>({ queryKey: ["/api/printers"] });
-
-  // Auto-print: track which orders have already been printed
-  const printedRef = useRef<Set<string>>(new Set(
-    JSON.parse(localStorage.getItem(PRINTED_KEY) || "[]")
-  ));
-  const markPrinted = (orderId: string) => {
-    printedRef.current.add(orderId);
-    const arr = Array.from(printedRef.current).slice(-200); // keep last 200
-    localStorage.setItem(PRINTED_KEY, JSON.stringify(arr));
-  };
-
-  // Trigger browser print dialog as fallback
-  const browserPrintFallback = async (orderId: string) => {
-    const res = await fetch(`/api/orders/${orderId}/kot/pdf`);
-    if (!res.ok) return;
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const iframe = document.createElement("iframe");
-    iframe.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;";
-    iframe.src = url;
-    document.body.appendChild(iframe);
-    iframe.onload = () => {
-      setTimeout(() => {
-        iframe.contentWindow?.print();
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-          URL.revokeObjectURL(url);
-        }, 2000);
-      }, 300);
-    };
-  };
-
-  // Auto-print effect: fires when active orders or printer configuration
-  // changes. Printer data can load after orders; including printers here
-  // ensures an order is retried once the local KOT printer is available.
-  useEffect(() => {
-    if (printers.length === 0) return;
-    const autoPrintKOTPrinters = printers.filter(p => p.type === "KOT" && p.autoPrint);
-    if (autoPrintKOTPrinters.length === 0) return;
-
-    const newOrders = activeOrders.filter(o => !printedRef.current.has(o.id));
-    if (newOrders.length === 0) return;
-
-    newOrders.forEach(async (order) => {
-      console.info("[KOT auto-print] New KOT detected", {
-        orderId: order.id,
-        printers: autoPrintKOTPrinters.map(p => p.name),
-      });
-      markPrinted(order.id); // mark immediately to avoid double-print
-
-      // Fetch order items for KOT
-      let items: OrderItem[] = [];
-      try {
-        const res = await fetch(`/api/orders/${order.id}/items`);
-        if (res.ok) items = await res.json();
-      } catch { /* fallback with empty items */ }
-
-      // Find table/floor info
-      const tableData = (tables as Table[]).find((t: Table) => t.id === order.tableId);
-
-      // QZ Tray prints on the local POS computer. The server route is the
-      // controlled fallback for installations still using the print agent.
-      try {
-        const qzPrinted = await tryQzPrint(`/api/printers/qz/kot/${order.id}`);
-        if (qzPrinted) {
-          console.info("[KOT auto-print] QZ Tray accepted the KOT print job", {
-            orderId: order.id,
-          });
-          return;
-        }
-        console.warn("[KOT auto-print] QZ Tray did not accept the job; trying fallback", {
-          orderId: order.id,
-        });
-        const res = await fetch(`/api/printers/print-kot/${order.id}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ printerIds: autoPrintKOTPrinters.map(p => p.id) }),
-        });
-        const data = await res.json();
-        if (data.allFailed) {
-          console.warn("[KOT auto-print] Server print fallback failed; opening browser fallback", {
-            orderId: order.id,
-          });
-          await browserPrintFallback(order.id);
-        } else {
-          console.info("[KOT auto-print] Server fallback accepted the KOT print job", {
-            orderId: order.id,
-          });
-        }
-      } catch {
-        console.error("[KOT auto-print] Print request errored; opening browser fallback", {
-          orderId: order.id,
-        });
-        await browserPrintFallback(order.id);
-      }
-    });
-  }, [activeOrders, printers]);
 
   // Filter to today's orders only. The day boundary must recompute when the
   // calendar day rolls over (even if this screen stays open overnight), so the

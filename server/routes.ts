@@ -187,6 +187,7 @@ async function queueBillPrintJobs(opts: {
           kotNumber: opts.invoice.invoiceNumber,
           printerIp: p.ip,
           printerPort: p.port,
+          printerName: p.name,
           escposData: escData.toString("base64"),
           status: "pending",
         }),
@@ -1380,6 +1381,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             kotNumber,
             printerIp: printer.ip,
             printerPort: printer.port,
+            printerName: printer.name,
             escposData: escBase64,
             status: "pending",
           });
@@ -1722,7 +1724,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       broadcastUpdate("order_paid", settled);
     }
     broadcastUpdate("invoice_created", invoice);
-    if (result.data.print && result.data.printVia !== "qz") {
+    if (result.data.print) {
       await queueBillPrintJobs({
         invoice,
         orderType: primaryOrder.orderType,
@@ -3662,6 +3664,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         kotNumber: "TEST",
         printerIp: printer.ip,
         printerPort: printer.port,
+        printerName: printer.name,
         escposData: data.toString("base64"),
         status: "pending",
       });
@@ -3671,7 +3674,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // ── Print Agent endpoints ──────────────────────────────────────────────────
+  // ── Shared local print-worker endpoints ─────────────────────────────────────
 
   // Agent polls this every few seconds to get pending print jobs
   app.get("/api/print-jobs/pending", requireAuth, async (_req, res) => {
@@ -3683,10 +3686,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post("/api/print-jobs/claim", requireAuth, async (req, res) => {
+    try {
+      const workerId = typeof req.body?.workerId === "string" ? req.body.workerId : "";
+      const printerNames = Array.isArray(req.body?.printerNames)
+        ? req.body.printerNames.filter((name: unknown): name is string => typeof name === "string")
+        : [];
+      if (!workerId) return res.status(400).json({ error: "workerId is required" });
+      const job = await mongoStorage.claimNextPrintJob(workerId, printerNames);
+      res.json(job ?? null);
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // Agent calls this after successfully printing a job
   app.post("/api/print-jobs/:id/done", requireAuth, async (req, res) => {
     try {
-      await mongoStorage.markPrintJobDone(req.params.id);
+      const workerId = typeof req.body?.workerId === "string" ? req.body.workerId : undefined;
+      await mongoStorage.markPrintJobDone(req.params.id, workerId);
       res.json({ ok: true });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
@@ -3696,7 +3714,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Agent calls this if printing failed
   app.post("/api/print-jobs/:id/failed", requireAuth, async (req, res) => {
     try {
-      await mongoStorage.markPrintJobFailed(req.params.id);
+      const workerId = typeof req.body?.workerId === "string" ? req.body.workerId : undefined;
+      const error = typeof req.body?.error === "string" ? req.body.error : undefined;
+      await mongoStorage.markPrintJobFailed(req.params.id, workerId, error);
       res.json({ ok: true });
     } catch (e: any) {
       res.status(500).json({ error: e.message });

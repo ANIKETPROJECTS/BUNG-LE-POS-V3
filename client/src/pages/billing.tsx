@@ -394,10 +394,6 @@ export default function BillingPage() {
     }) => {
       const res = await apiRequest("POST", `/api/orders/${orderId}/checkout`, { paymentMode, splitPayments, print, printVia: "qz", taxRate, serviceCharge });
       const checkoutData = await res.json();
-      if (print && checkoutData.invoice) {
-        const qzPrinted = await tryQzPrint(`/api/printers/qz/invoice/${checkoutData.invoice.id}`);
-        if (!qzPrinted) await downloadPDF(orderId, checkoutData.invoice.invoiceNumber);
-      }
       return checkoutData;
     },
     onSuccess: (data) => {
@@ -818,38 +814,13 @@ export default function BillingPage() {
       });
 
       if (pendingKotAction !== "none") {
-        if (shouldPrint && checkoutResponse.invoice) {
-          try {
-            const pdfUrl = `/api/invoices/${checkoutResponse.invoice.id}/pdf`;
-            const response = await fetch(pdfUrl);
-            if (!response.ok) throw new Error('Failed to download invoice');
-            
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `${checkoutResponse.invoice.invoiceNumber}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-          } catch (error) {
-            console.error('Failed to download invoice PDF:', error);
-            toast({
-              title: "Warning",
-              description: "Invoice PDF download failed, but order was completed successfully",
-              variant: "destructive",
-            });
-          }
-        }
-        
         await billMutation.mutateAsync({ orderId: orderId!, print: false });
         
         await kotMutation.mutateAsync({ orderId: orderId!, print: false });
         
         toast({
           title: "Order completed!",
-          description: shouldPrint ? "Invoice downloaded & bill sent to printer" : "Order marked as completed",
+          description: "Invoice sent to the shared printer",
         });
         
         setPendingKotAction("none");
@@ -982,40 +953,13 @@ export default function BillingPage() {
       });
 
       if (pendingKotAction !== "none") {
-        if (shouldPrint && checkoutResponse.invoice) {
-          try {
-            const pdfUrl = `/api/invoices/${checkoutResponse.invoice.id}/pdf`;
-            const response = await fetch(pdfUrl);
-            if (!response.ok) throw new Error('Failed to download invoice');
-            
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = `${checkoutResponse.invoice.invoiceNumber}.pdf`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-          } catch (error) {
-            console.error('Failed to download invoice PDF:', error);
-            toast({
-              title: "Warning",
-              description: "Invoice PDF download failed, but order was completed successfully",
-              variant: "destructive",
-            });
-          }
-        }
-        
         await billMutation.mutateAsync({ orderId: orderId!, print: false });
         
         await kotMutation.mutateAsync({ orderId: orderId!, print: false });
         
         toast({
           title: "Order completed!",
-          description: shouldPrint 
-            ? "Payment confirmed, invoice downloaded, and KOT sent to kitchen!"
-            : "Payment confirmed and KOT sent to kitchen!",
+          description: "Payment confirmed, invoice sent to the shared printer, and KOT sent to kitchen!",
         });
       } else {
         toast({

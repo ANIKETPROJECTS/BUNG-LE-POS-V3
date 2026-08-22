@@ -1434,20 +1434,57 @@ export class MongoStorage implements IStorage {
     return docs.map(d => { const { _id, ...rest } = d as any; return rest as PrintJob; });
   }
 
-  async markPrintJobDone(id: string): Promise<void> {
+  async claimNextPrintJob(workerId: string, printerNames: string[]): Promise<PrintJob | undefined> {
+    await this.ensureConnection();
+    const now = new Date();
+    const leaseUntil = new Date(now.getTime() + 60_000);
+    const collection = mongodb.getCollection<PrintJob>('print_jobs');
+    if (printerNames.length === 0) return undefined;
+    const result = await collection.findOneAndUpdate(
+      {
+        $or: [
+          { status: 'pending' },
+          { status: 'processing', leaseUntil: { $lt: now } },
+        ],
+        printerName: { $in: printerNames },
+      } as any,
+      {
+        $set: {
+          status: 'processing',
+          workerId,
+          leaseUntil,
+          lastError: null,
+        },
+        $inc: { attempts: 1 },
+      } as any,
+      { sort: { createdAt: 1 }, returnDocument: 'after' } as any,
+    );
+    const document = (result as any)?.value ?? result;
+    if (!document) return undefined;
+    const { _id, ...job } = document as any;
+    return job as PrintJob;
+  }
+
+  async markPrintJobDone(id: string, workerId?: string): Promise<void> {
     await this.ensureConnection();
     await mongodb.getCollection('print_jobs').updateOne(
-      { id } as any,
-      { $set: { status: 'done', doneAt: new Date() } }
+      { id, ...(workerId ? { workerId } : {}) } as any,
+      { $set: { status: 'done', doneAt: new Date() }, $unset: { leaseUntil: '' } } as any,
     );
   }
 
-  async markPrintJobFailed(id: string): Promise<void> {
+  async markPrintJobFailed(id: string, workerId?: string, error?: string): Promise<void> {
     await this.ensureConnection();
-    await mongodb.getCollection('print_jobs').updateOne(
-      { id } as any,
-      { $set: { status: 'failed', doneAt: new Date() } }
-    );
+    const filter = { id, ...(workerId ? { workerId } : {}) } as any;
+    const current = await mongodb.getCollection<PrintJob>('print_jobs').findOne(filter);
+    const attempts = current?.attempts ?? 1;
+    const permanentlyFailed = attempts >= 5;
+    await mongodb.getCollection('print_jobs').updateOne(filter, {
+      $set: permanentlyFailed
+        ? { status: 'failed', doneAt: new Date(), lastError: error || null }
+        : { status: 'pending', lastError: error || null },
+      $unset: { leaseUntil: '', workerId: '' },
+    } as any);
   }
 }
 

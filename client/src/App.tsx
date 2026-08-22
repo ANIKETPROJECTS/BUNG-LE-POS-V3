@@ -65,6 +65,7 @@ import IntegrationsPage from "@/pages/integrations";
 import DatabasePage from "@/pages/database";
 import DigitalMenuOrdersPage from "@/pages/digital-menu-orders";
 import KOTPage from "@/pages/kot";
+import PrintWorker from "@/components/print-worker";
 
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -193,6 +194,7 @@ function AppContent() {
   
   return (
     <AuthenticatedLayout>
+      <PrintWorker />
       <Router />
     </AuthenticatedLayout>
   );
