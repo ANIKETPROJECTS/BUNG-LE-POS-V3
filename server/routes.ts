@@ -1432,7 +1432,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         tableInfo = await st.getTable(order.tableId);
       }
 
-       const invoiceNumber = await getDailyBillingNumber(st, order);
+      // Keep the invoice number anchored to this ongoing table/order.  KOTs
+      // already use this lookup; billing must use it too so a later Save/Bill
+      // action cannot replace the number with another order's daily sequence.
+      const invoiceNumber = await getDailyKotInvoiceNumber(st, order);
 
       const invoiceItemsData = orderItems.map((item) => ({
         name: item.name,
@@ -1511,7 +1514,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       tableInfo = await st.getTable(order.tableId);
     }
 
-    const invoiceNumber = await getDailyBillingNumber(st, order);
+    // Reuse the number already assigned to this order/table instead of
+    // recalculating it from the current daily order sequence.
+    const invoiceNumber = await getDailyKotInvoiceNumber(st, order);
 
     const invoiceItemsData = orderItems.map((item) => ({
       name: item.name,
@@ -1631,6 +1636,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
+    // Resolve this before checkout changes the orders to "completed".  The
+    // stable lookup can then still see an existing invoice on an active
+    // sibling order at the same table.
+    const invoiceNumber = await getDailyKotInvoiceNumber(st, primaryOrder);
+
     // Check out every order settled in this bill. The primary order is the
     // first (earliest) of the set; it carries the combined invoice while all
     // sibling orders are marked completed at the same time.
@@ -1663,8 +1673,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         );
       }
     }
-
-    const invoiceNumber = await getDailyBillingNumber(st, primaryOrder);
 
     const invoiceItemsData = orderItems.map((item) => ({
       name: item.name,
