@@ -5,6 +5,7 @@ import type { PrintJob, PrinterDevice } from "@shared/schema";
 
 const WORKER_ID_KEY = "bungle_qz_print_worker_id";
 const POLL_MS = 2500;
+const QZ_RETRY_MS = 15000;
 
 function getWorkerId() {
   const existing = localStorage.getItem(WORKER_ID_KEY);
@@ -19,6 +20,7 @@ export default function PrintWorker() {
   const runningRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
   const workerIdRef = useRef<string>();
+  const nextPollDelayRef = useRef(POLL_MS);
 
   useEffect(() => {
     if (!isAuthenticated || isLoading) return;
@@ -40,8 +42,10 @@ export default function PrintWorker() {
         const qzStatus = await checkQzTray();
         if (!qzStatus.connected) {
           console.debug("[Print worker] QZ Tray unavailable; waiting", { error: qzStatus.error });
+          nextPollDelayRef.current = QZ_RETRY_MS;
           return;
         }
+        nextPollDelayRef.current = POLL_MS;
         const availablePrinters = await getAvailableQzPrinters();
         const localPrinterNames = printerNames.filter((configuredName) =>
           availablePrinters.some((availableName) =>
@@ -107,7 +111,7 @@ export default function PrintWorker() {
         });
       } finally {
         runningRef.current = false;
-        if (!stopped) timerRef.current = setTimeout(poll, POLL_MS);
+        if (!stopped) timerRef.current = setTimeout(poll, nextPollDelayRef.current);
       }
     };
 

@@ -1,0 +1,426 @@
+[WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ Established connection with QZ Tray on wss://localhost:8181
+ [WebSocket] Message received: order_created Data: Object
+ [WebSocket] Invalidating order queries for order: 9caef3ec-f6e9-4764-a729-74b9570ddac6
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 9caef3ec-f6e9-4764-a729-74b9570ddac6
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 9caef3ec-f6e9-4764-a729-74b9570ddac6
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: 9caef3ec-f6e9-4764-a729-74b9570ddac6
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: 40b7bc28-ac51-4fb0-b271-465426fbbbc3
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 40b7bc28-ac51-4fb0-b271-465426fbbbc3
+ [WebSocket] Message received: kot_created Data: Object
+ [WebSocket] Message received: external_orders_batch_synced Data: Object
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+api/printers:1  Failed to load resource: the server responded with a status of 502 (Bad Gateway)
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 6283b5d6-aad7-4af8-a707-d7661daf7098
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 6283b5d6-aad7-4af8-a707-d7661daf7098
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 6283b5d6-aad7-4af8-a707-d7661daf7098
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: 6283b5d6-aad7-4af8-a707-d7661daf7098
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [WebSocket] Disconnected
+ [WebSocket] Reconnecting in 3s...
+ [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+ [WebSocket] Connected successfully!
+ [WebSocket] Message received: order_created Data: Object
+ [WebSocket] Invalidating order queries for order: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [Print worker] Claimed print job Object
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [QZ] Local printers discovered Object
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 8097253f-a281-4da6-a806-a821058b2619
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: 53bd3232-5cee-4f01-8f4b-18ccf416521e
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 53bd3232-5cee-4f01-8f4b-18ccf416521e
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 6283b5d6-aad7-4af8-a707-d7661daf7098
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 6283b5d6-aad7-4af8-a707-d7661daf7098
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 6283b5d6-aad7-4af8-a707-d7661daf7098
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: cc25daaf-3a5d-456c-9666-e09664e60c35
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 8097253f-a281-4da6-a806-a821058b2619
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 8097253f-a281-4da6-a806-a821058b2619
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: 8097253f-a281-4da6-a806-a821058b2619
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 8097253f-a281-4da6-a806-a821058b2619
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: fedcbc80-951b-4775-b8c5-b01140a1e548
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: fedcbc80-951b-4775-b8c5-b01140a1e548
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: fedcbc80-951b-4775-b8c5-b01140a1e548
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: fedcbc80-951b-4775-b8c5-b01140a1e548
+ Closed connection with QZ Tray
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: 6283b5d6-aad7-4af8-a707-d7661daf7098
+ [WebSocket] Message received: order_item_deleted Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 6283b5d6-aad7-4af8-a707-d7661daf7098
+ WebSocket connection to 'wss://localhost:8181/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+ WebSocket connection to 'wss://localhost:8282/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+ WebSocket connection to 'wss://localhost:8383/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+ WebSocket connection to 'wss://localhost:8484/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+ WebSocket connection to 'wss://localhost.qz.io:8181/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+ WebSocket connection to 'wss://localhost.qz.io:8282/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+ WebSocket connection to 'wss://localhost.qz.io:8383/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+ WebSocket connection to 'wss://localhost.qz.io:8484/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+ WebSocket connection to 'wss://localhost:8181/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+ WebSocket connection to 'wss://localhost:8282/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+ WebSocket connection to 'wss://localhost:8383/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+ [WebSocket] Message received: order_created Data: Object
+ [WebSocket] Invalidating order queries for order: 071f505d-b830-41a2-bfde-3d5a9a485297
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 071f505d-b830-41a2-bfde-3d5a9a485297
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 071f505d-b830-41a2-bfde-3d5a9a485297
+ [WebSocket] Message received: order_updated Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating order queries for order: 071f505d-b830-41a2-bfde-3d5a9a485297
+qz-tray.js:162 WebSocket connection to 'wss://localhost:8484/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost.qz.io:8181/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost.qz.io:8282/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost.qz.io:8383/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost.qz.io:8484/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+index-CqmDP_8L.js:558 [WebSocket] Message received: order_created Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating order queries for order: dfff1fc3-bbcf-44a1-9b2c-d4eb9bc6d861
+index-CqmDP_8L.js:558 [WebSocket] Message received: table_updated Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating tables queries
+index-CqmDP_8L.js:558 [WebSocket] Message received: order_item_added Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating order items queries for orderId: dfff1fc3-bbcf-44a1-9b2c-d4eb9bc6d861
+index-CqmDP_8L.js:558 [WebSocket] Message received: table_updated Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating tables queries
+index-CqmDP_8L.js:558 [WebSocket] Message received: order_item_added Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating order items queries for orderId: dfff1fc3-bbcf-44a1-9b2c-d4eb9bc6d861
+index-CqmDP_8L.js:558 [WebSocket] Message received: order_updated Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating order queries for order: dfff1fc3-bbcf-44a1-9b2c-d4eb9bc6d861
+qz-tray.js:162 WebSocket connection to 'wss://localhost:8181/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost:8282/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost:8383/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost:8484/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost.qz.io:8181/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost.qz.io:8282/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost.qz.io:8383/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost.qz.io:8484/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+deeper @ qz-tray.js:150
+_qz.websocket.connection.onerror @ qz-tray.js:210
+qz-tray.js:162 WebSocket connection to 'wss://localhost:8181/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+delayed @ qz-tray.js:1307
+attempt @ qz-tray.js:1310
+(anonymous) @ qz-tray.js:1316
+promise @ qz-tray.js:665
+connect @ qz-tray.js:1242
+Zk @ index-CqmDP_8L.js:664
+qz-tray.js:162 WebSocket connection to 'wss://localhost:8282/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+deeper @ qz-tray.js:150
+_qz.websocket.connection.onerror @ qz-tray.js:210
+index-CqmDP_8L.js:558 [WebSocket] Disconnected
+index-CqmDP_8L.js:558 [WebSocket] Reconnecting in 3s...
+index-CqmDP_8L.js:558 [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+index-CqmDP_8L.js:558 [WebSocket] Connected successfully!
+qz-tray.js:162 WebSocket connection to 'wss://localhost:8383/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+deeper @ qz-tray.js:150
+_qz.websocket.connection.onerror @ qz-tray.js:210
+qz-tray.js:162 WebSocket connection to 'wss://localhost:8484/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+deeper @ qz-tray.js:150
+_qz.websocket.connection.onerror @ qz-tray.js:210
+api/orders/071f505d-b830-41a2-bfde-3d5a9a485297/checkout:1  Failed to load resource: the server responded with a status of 504 (Gateway Time-out)
+index-CqmDP_8L.js:664 Checkout failed: Error: 504: <html>
+<head><title>504 Gateway Time-out</title></head>
+<body>
+<center><h1>504 Gateway Time-out</h1></center>
+<hr><center>nginx/1.28.0 (Ubuntu)</center>
+</body>
+</html>
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+
+    at z7 (index-CqmDP_8L.js:48:50292)
+    at async wt (index-CqmDP_8L.js:48:50493)
+    at async Object.mutationFn (index-CqmDP_8L.js:664:12757)
+ul @ index-CqmDP_8L.js:664
+qz-tray.js:162 WebSocket connection to 'wss://localhost.qz.io:8181/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost.qz.io:8282/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost.qz.io:8383/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+index-CqmDP_8L.js:558 [WebSocket] Message received: order_item_deleted Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating order items queries for orderId: 071f505d-b830-41a2-bfde-3d5a9a485297
+index-CqmDP_8L.js:558 [WebSocket] Message received: table_updated Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating tables queries
+index-CqmDP_8L.js:558 [WebSocket] Message received: order_updated Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating order queries for order: 071f505d-b830-41a2-bfde-3d5a9a485297
+index-CqmDP_8L.js:558 [WebSocket] Message received: order_item_deleted Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating order items queries for orderId: 071f505d-b830-41a2-bfde-3d5a9a485297
+qz-tray.js:162 WebSocket connection to 'wss://localhost.qz.io:8484/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+index-CqmDP_8L.js:558 [WebSocket] Message received: table_updated Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating tables queries
+index-CqmDP_8L.js:558 [WebSocket] Message received: table_updated Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating tables queries
+index-CqmDP_8L.js:558 [WebSocket] Message received: order_updated Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating order queries for order: dfff1fc3-bbcf-44a1-9b2c-d4eb9bc6d861
+index-CqmDP_8L.js:558 [WebSocket] Message received: order_item_deleted Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating order items queries for orderId: dfff1fc3-bbcf-44a1-9b2c-d4eb9bc6d861
+index-CqmDP_8L.js:558 [WebSocket] Message received: order_updated Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating order queries for order: dfff1fc3-bbcf-44a1-9b2c-d4eb9bc6d861
+index-CqmDP_8L.js:558 [WebSocket] Message received: order_item_deleted Data: Object
+index-CqmDP_8L.js:558 [WebSocket] Invalidating order items queries for orderId: dfff1fc3-bbcf-44a1-9b2c-d4eb9bc6d861
+qz-tray.js:162 WebSocket connection to 'wss://localhost:8181/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+api/orders/071f505d-b830-41a2-bfde-3d5a9a485297/checkout:1  Failed to load resource: the server responded with a status of 504 (Gateway Time-out)
+index-CqmDP_8L.js:664 Checkout failed: Error: 504: <html>
+<head><title>504 Gateway Time-out</title></head>
+<body>
+<center><h1>504 Gateway Time-out</h1></center>
+<hr><center>nginx/1.28.0 (Ubuntu)</center>
+</body>
+</html>
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+<!-- a padding to disable MSIE and Chrome friendly error page -->
+
+    at z7 (index-CqmDP_8L.js:48:50292)
+    at async wt (index-CqmDP_8L.js:48:50493)
+    at async Object.mutationFn (index-CqmDP_8L.js:664:12757)
+ul @ index-CqmDP_8L.js:664
+qz-tray.js:162 WebSocket connection to 'wss://localhost:8282/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost:8383/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+qz-tray.js:162 WebSocket connection to 'wss://localhost:8484/' failed: Error in connection establishment: net::ERR_CONNECTION_REFUSED
+findConnection @ qz-tray.js:162
+deeper @ qz-tray.js:150
+_qz.websocket.connection.onerror @ qz-tray.js:210

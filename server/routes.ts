@@ -36,6 +36,7 @@ import { mongoStorage } from "./mongo-storage";
 import {
   getDailyBillingNumber,
   getDailyKotInvoiceNumber,
+  getDailyKotInvoiceNumbers,
   getDailyKotSequence,
 } from "./utils/billing-sequence";
 import {
@@ -770,24 +771,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders/active", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const orders = await st.getActiveOrders();
-    const ordersWithInvoiceNumbers = await Promise.all(
-      orders.map(async (order) => ({
-        ...order,
-        invoiceNumber: await getDailyKotInvoiceNumber(st, order),
-      })),
-    );
+    const invoiceNumbers = await getDailyKotInvoiceNumbers(st, orders);
+    const ordersWithInvoiceNumbers = orders.map((order) => ({
+      ...order,
+      invoiceNumber: invoiceNumbers.get(order.id),
+    }));
     res.json(ordersWithInvoiceNumbers);
   });
 
   app.get("/api/orders/completed", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const orders = await st.getCompletedOrders();
-    const ordersWithInvoiceNumbers = await Promise.all(
-      orders.map(async (order) => ({
-        ...order,
-        invoiceNumber: await getDailyKotInvoiceNumber(st, order),
-      })),
-    );
+    const invoiceNumbers = await getDailyKotInvoiceNumbers(st, orders);
+    const ordersWithInvoiceNumbers = orders.map((order) => ({
+      ...order,
+      invoiceNumber: invoiceNumbers.get(order.id),
+    }));
     res.json(ordersWithInvoiceNumbers);
   });
 
@@ -1648,6 +1647,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
+    const primaryOrder = order;
+
     // Resolve this before checkout changes the orders to "completed".  The
     // stable lookup can then still see an existing invoice on an active
     // sibling order at the same table.
@@ -1656,7 +1657,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Check out every order settled in this bill. The primary order is the
     // first (earliest) of the set; it carries the combined invoice while all
     // sibling orders are marked completed at the same time.
-    const primaryOrder = order;
     const checkedOutOrders = [];
     for (const ord of ordersToSettle) {
       const settled = await st.checkoutOrder(

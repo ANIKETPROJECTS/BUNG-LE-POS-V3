@@ -1,2 +1,3 @@
 - [Mongo poll-sync duplicate-on-restart](mongo-poll-sync-claim-pattern.md) — mark-synced-at-end sync loops duplicate work across restarts; claim before create, not after.
 - [Stable table invoice numbers](stable-table-invoice-number.md) — resolve an ongoing table invoice before recalculating any daily sequence.
+- [POS performance](pos-performance.md) — batch derived order data and back off aggressively when QZ is unavailable.
