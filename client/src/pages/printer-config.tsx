@@ -16,7 +16,7 @@ import { Printer, Plus, Trash2, Wifi, WifiOff, TestTube } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PrinterDevice } from "@shared/schema";
-import { checkQzTray, tryQzPrint } from "@/lib/qz-print";
+import { checkQzTray, qzPrintEndpoint } from "@/lib/qz-print";
 
 interface PrinterWithStatus extends PrinterDevice {
   online?: boolean;
@@ -109,11 +109,17 @@ export default function PrinterConfigPage() {
 
   const handleTestPrint = async (printer: PrinterDevice) => {
     try {
-      if (await tryQzPrint(`/api/printers/qz/test/${printer.id}`)) {
+      const qzResult = await qzPrintEndpoint(`/api/printers/qz/test/${printer.id}`);
+      if (qzResult.success) {
         toast({ title: "QZ Tray test print sent", description: `${printer.name} should have printed a slip.` });
         setPrinterStatuses(prev => ({ ...prev, [printer.id]: true }));
         return;
       }
+      toast({
+        title: "QZ Tray print failed; using fallback",
+        description: qzResult.error || "QZ Tray could not print to the local printer.",
+        variant: "destructive",
+      });
       await apiRequest("POST", `/api/printers/${printer.id}/test`, {});
       toast({ title: "Test print sent ✓", description: `${printer.name} should have printed a slip.` });
       setPrinterStatuses(prev => ({ ...prev, [printer.id]: true }));
