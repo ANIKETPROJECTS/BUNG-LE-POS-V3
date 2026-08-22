@@ -1,0 +1,47 @@
+root@srv1232657:/etc/bungle/qz# pm2 list
+ps -ef | grep '[d]ist/index.js'
+┌────┬────────────────────┬──────────┬──────┬───────────┬──────────┬──────────┐
+│ id │ name               │ mode     │ ↺    │ status    │ cpu      │ memory   │
+├────┼────────────────────┼──────────┼──────┼───────────┼──────────┼──────────┤
+│ 41 │ Bung-le-pos        │ cluster  │ 6    │ online    │ 0%       │ 205.4mb  │
+│ 40 │ BungleDigitalMenu  │ cluster  │ 3    │ online    │ 0%       │ 130.4mb  │
+│ 3  │ DM-pos             │ fork     │ 2    │ online    │ 0%       │ 119.8mb  │
+│ 11 │ Tarangdigitalmenu  │ cluster  │ 1    │ online    │ 0%       │ 123.3mb  │
+│ 32 │ aes-vault          │ cluster  │ 1    │ online    │ 0%       │ 80.6mb   │
+│ 15 │ airavata-app       │ fork     │ 2    │ online    │ 0%       │ 135.2mb  │
+│ 45 │ airavata-whatsapp… │ cluster  │ 1    │ online    │ 0%       │ 223.5mb  │
+│ 1  │ airavatatechnolog… │ fork     │ 1    │ online    │ 0%       │ 97.4mb   │
+│ 10 │ at-digital-menu    │ fork     │ 6    │ online    │ 0%       │ 152.2mb  │
+│ 37 │ at-smart-salon     │ fork     │ 0    │ online    │ 0%       │ 180.7mb  │
+│ 9  │ atdigitalmenu      │ cluster  │ 1    │ online    │ 0%       │ 118.4mb  │
+│ 8  │ barrelborn         │ fork     │ 0    │ online    │ 0%       │ 118.7mb  │
+│ 5  │ bg-remover-portal  │ fork     │ 1    │ online    │ 0%       │ 123.6mb  │
+│ 33 │ csv-profiler       │ cluster  │ 2    │ online    │ 0%       │ 81.5mb   │
+│ 7  │ eva-jewels         │ cluster  │ 1    │ online    │ 0%       │ 119.7mb  │
+│ 39 │ krushisuvidha-api  │ fork     │ 0    │ online    │ 0%       │ 199.2mb  │
+│ 31 │ labourcodes        │ fork     │ 3    │ online    │ 0%       │ 111.8mb  │
+│ 12 │ mings-chinese-cui… │ cluster  │ 1    │ online    │ 0%       │ 107.7mb  │
+│ 4  │ portfolio-app      │ fork     │ 1    │ online    │ 0%       │ 78.0mb   │
+│ 14 │ prism-server       │ fork     │ 1    │ online    │ 0%       │ 84.3mb   │
+│ 6  │ rest-express       │ fork     │ 1    │ online    │ 0%       │ 80.3mb   │
+│ 0  │ restaurant-manage… │ fork     │ 1    │ online    │ 0%       │ 77.2mb   │
+│ 2  │ restaurant-pos     │ cluster  │ 2    │ online    │ 0%       │ 134.1mb  │
+│ 30 │ vip-networkscatal… │ cluster  │ 1    │ online    │ 0%       │ 89.5mb   │
+│ 29 │ vip-networkswebsi… │ cluster  │ 2    │ online    │ 0%       │ 92.7mb   │
+│ 17 │ whamo-app          │ fork     │ 13   │ online    │ 0%       │ 101.6mb  │
+└────┴────────────────────┴──────────┴──────┴───────────┴──────────┴──────────┘
+root      408754   47555  0 Aug11 ?        00:43:51 node /var/www/airavata/Airav                                                                                                                                                             ataWebsiteDeployed/dist/index.js
+root      408800   47555  0 Aug11 ?        00:52:24 node /var/www/BarrelBornV5/d                                                                                                                                                             ist/index.js
+root      408821   47555  0 Aug11 ?        01:19:40 node /var/www/JwelryCatalogV                                                                                                                                                             2/dist/index.js
+root      408824   47555  0 Aug11 ?        00:50:45 node /var/www/ATdigitalmenuV                                                                                                                                                             2/dist/index.js
+root      408876   47555  0 Aug11 ?        00:43:29 node /var/www/MINGSCHINESECU                                                                                                                                                             ISINEWEBSITE/dist/index.js
+root      408877   47555  0 Aug11 ?        01:00:56 node /var/www/TARANGDIGITALM                                                                                                                                                             ENUV1/dist/index.js
+root      408941  408763  0 Aug11 ?        00:00:00 sh -c cross-env NODE_ENV=pro                                                                                                                                                             duction node dist/index.js
+root      408942  408941  0 Aug11 ?        00:00:00 node /var/www/restaurant-app                                                                                                                                                             /DigitalMenuRestraunt-Admin-panel-v4-deployment/node_modules/.bin/cross-env NODE                                                                                                                                                             _ENV=production node dist/index.js
+root      408981  408942  0 Aug11 ?        00:40:14 node dist/index.js
+root      411800   47555  1 Aug11 ?        02:38:39 node /var/www/NewATdigitalme                                                                                                                                                             nuAdminPanelv1/dist/index.js
+root      428621   47555  0 Aug13 ?        01:20:04 node /var/www/RestrauntPOSV6                                                                                                                                                             /dist/index.js
+root      440401   47555  0 Aug14 ?        01:16:45 node /var/www/BUNG-LE-Digita                                                                                                                                                             l-Menu-V3/dist/index.js
+root      469067   47555  3 Aug17 ?        04:46:15 node /var/www/BUNG-LE-POS-V3                                                                                                                                                             /dist/index.js
+root      518434   47555  0 04:55 ?        00:01:03 node /var/www/DigitalMenuPOS                                                                                                                                                             V3/dist/index.js
+root@srv1232657:/etc/bungle/qz#
