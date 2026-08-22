@@ -3501,6 +3501,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/printers/qz/test/:id", requireAuth, async (req, res) => {
+    try {
+      const printer = await mongoStorage.getPrinter(req.params.id);
+      if (!printer) return res.status(404).json({ error: "Printer not found" });
+      const ESC = 0x1b;
+      const GS = 0x1d;
+      const LF = 0x0a;
+      const now = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+      const data = Buffer.concat([
+        Buffer.from([ESC, 0x40]),
+        Buffer.from([ESC, 0x61, 0x01]),
+        Buffer.from([ESC, 0x21, 0x30]),
+        Buffer.from("TEST PRINT\n", "utf8"),
+        Buffer.from([ESC, 0x21, 0x00]),
+        Buffer.from(`${printer.name}\nIP: ${printer.ip}:${printer.port}\n`, "utf8"),
+        Buffer.from(`Type: ${printer.type}\nTime: ${now}\n`, "utf8"),
+        Buffer.from("--------------------------------\n", "utf8"),
+        Buffer.from([ESC, 0x45, 0x01]),
+        Buffer.from("QZ Tray is working!\n", "utf8"),
+        Buffer.from([ESC, 0x45, 0x00, LF, LF, LF, LF]),
+        Buffer.from([GS, 0x56, 0x42, 0x03]),
+      ]);
+      res.json({ data: data.toString("base64"), printers: [printer.name] });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message || "Failed to prepare test print" });
+    }
+  });
+
   app.get("/api/printers/qz/invoice/:id", requireAuth, async (req, res) => {
     const st = getStorage(req);
     try {
