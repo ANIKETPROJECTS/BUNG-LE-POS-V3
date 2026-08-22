@@ -358,6 +358,16 @@ export class SessionStorage implements IStorage {
     return (await collection.findOne({ id } as any)) ?? undefined;
   }
 
+  async setOrderInvoiceNumber(id: string, invoiceNumber: string): Promise<Order | undefined> {
+    await this.ensureConnection();
+    const result = await this.getCollection<Order>("orders").findOneAndUpdate(
+      { id } as any,
+      { $set: { invoiceNumber } },
+      { returnDocument: "after" },
+    );
+    return result ?? undefined;
+  }
+
   async updateOrderTotal(id: string, total: string): Promise<Order | undefined> {
     await this.ensureConnection();
     const result = await this.getCollection<Order>('orders').findOneAndUpdate(
