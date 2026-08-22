@@ -392,7 +392,10 @@ export default function BillingPage() {
       taxRate?: number;
       serviceCharge?: number;
     }) => {
-      const res = await apiRequest("POST", `/api/orders/${orderId}/checkout`, { paymentMode, splitPayments, print, printVia: "qz", taxRate, serviceCharge });
+      // Checkout invoices must always go through the shared server queue.
+      // QZ Tray runs only on the designated printer computer, not the
+      // browser/device accepting payment.
+      const res = await apiRequest("POST", `/api/orders/${orderId}/checkout`, { paymentMode, splitPayments, print, printVia: "agent", taxRate, serviceCharge });
       const checkoutData = await res.json();
       return checkoutData;
     },

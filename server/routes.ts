@@ -54,7 +54,7 @@ const orderActionSchema = z.object({
 const checkoutSchema = z.object({
   paymentMode: z.string().optional(),
   print: z.boolean().optional().default(false),
-  printVia: z.enum(["qz", "agent"]).optional().default("qz"),
+  printVia: z.enum(["qz", "agent"]).optional().default("agent"),
   taxRate: z.number().min(0).max(100).optional(),
   serviceCharge: z.number().min(0).max(100).optional(),
   splitPayments: z
