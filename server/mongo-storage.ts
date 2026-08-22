@@ -1420,7 +1420,21 @@ export class MongoStorage implements IStorage {
 
   async createPrintJob(job: Omit<PrintJob, 'id' | 'createdAt'>): Promise<PrintJob> {
     await this.ensureConnection();
+    const dedupeKey = job.orderId !== "test"
+      ? `${job.orderId}:${job.kotNumber}:${job.printerName || `${job.printerIp}:${job.printerPort}`}`
+      : undefined;
+    if (dedupeKey) {
+      const existing = await mongodb.getCollection<PrintJob>('print_jobs').findOne({
+        dedupeKey,
+        status: { $in: ["pending", "processing", "done"] },
+      } as any);
+      if (existing) {
+        const { _id, ...rest } = existing as any;
+        return rest as PrintJob;
+      }
+    }
     const newJob: PrintJob = { id: randomUUID(), ...job, createdAt: new Date() };
+    if (dedupeKey) newJob.dedupeKey = dedupeKey;
     await mongodb.getCollection('print_jobs').insertOne(newJob as any);
     return newJob;
   }
@@ -1477,12 +1491,11 @@ export class MongoStorage implements IStorage {
     await this.ensureConnection();
     const filter = { id, ...(workerId ? { workerId } : {}) } as any;
     const current = await mongodb.getCollection<PrintJob>('print_jobs').findOne(filter);
-    const attempts = current?.attempts ?? 1;
-    const permanentlyFailed = attempts >= 5;
     await mongodb.getCollection('print_jobs').updateOne(filter, {
-      $set: permanentlyFailed
-        ? { status: 'failed', doneAt: new Date(), lastError: error || null }
-        : { status: 'pending', lastError: error || null },
+      // A QZ error is ambiguous: the printer may have accepted the bytes
+      // before the browser received the error. Never automatically resend it,
+      // otherwise one KOT can be printed more than once.
+      $set: { status: 'failed', doneAt: new Date(), lastError: error || null },
       $unset: { leaseUntil: '', workerId: '' },
     } as any);
   }

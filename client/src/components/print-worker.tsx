@@ -83,7 +83,7 @@ export default function PrintWorker() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ workerId: workerIdRef.current, error: result.error }),
           });
-          console.error("[Print worker] Print job failed", {
+          console.error("[Print worker] Print job failed; it was stopped to prevent duplicate output", {
             jobId: job.id,
             error: result.error,
           });

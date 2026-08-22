@@ -1,0 +1,78 @@
+[WebSocket] Message received: order_created Data: Object
+ [WebSocket] Invalidating order queries for order: 85481f7d-87fd-4a06-afc4-779d7e9348ab
+ [WebSocket] Message received: table_updated Data: Object
+ [WebSocket] Invalidating tables queries
+ [WebSocket] Message received: order_item_added Data: Object
+ [WebSocket] Invalidating order items queries for orderId: 85481f7d-87fd-4a06-afc4-779d7e9348ab
+ [WebSocket] Message received: order_updated Data: Object
+ [WebSocket] Invalidating order queries for order: 85481f7d-87fd-4a06-afc4-779d7e9348ab
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job failed Object
+ [Print worker] Print job failed Object
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job failed Object
+ [Print worker] Print job failed Object
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job failed Object
+ [Print worker] Print job failed Object
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job failed Object
+ [Print worker] Print job failed Object
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job failed Object
+ [Print worker] Print job failed Object
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+ [Print worker] Claimed print job Object
+ [QZ] Local printers discovered Object
+ [QZ] Print job sent successfully Object
+ [Print worker] Print job completed Object
+index-ClKFwupO.js:558 [WebSocket] Message received: order_created Data: Object
+index-ClKFwupO.js:558 [WebSocket] Invalidating order queries for order: ccfc927b-af6e-495b-ab47-7bfe454fbc62
+index-ClKFwupO.js:558 [WebSocket] Message received: table_updated Data: Object
+index-ClKFwupO.js:558 [WebSocket] Invalidating tables queries
+index-ClKFwupO.js:558 [WebSocket] Message received: order_item_added Data: Object
+index-ClKFwupO.js:558 [WebSocket] Invalidating order items queries for orderId: ccfc927b-af6e-495b-ab47-7bfe454fbc62
+index-ClKFwupO.js:558 [WebSocket] Message received: order_updated Data: Object
+index-ClKFwupO.js:558 [WebSocket] Invalidating order queries for order: ccfc927b-af6e-495b-ab47-7bfe454fbc62
+index-ClKFwupO.js:833 [Print worker] Claimed print job Object
+index-ClKFwupO.js:664 [QZ] Local printers discovered Object
+index-ClKFwupO.js:664 [QZ] Print job failed Object
+oH @ index-ClKFwupO.js:664
+index-ClKFwupO.js:833 [Print worker] Print job failed Object
+o @ index-ClKFwupO.js:833
+index-ClKFwupO.js:833 [Print worker] Claimed print job Object
+index-ClKFwupO.js:664 [QZ] Local printers discovered Object
+index-ClKFwupO.js:664 [QZ] Print job failed Object
+oH @ index-ClKFwupO.js:664
+index-ClKFwupO.js:833 [Print worker] Print job failed Object
+o @ index-ClKFwupO.js:833
+index-ClKFwupO.js:833 [Print worker] Claimed print job Object
+index-ClKFwupO.js:664 [QZ] Local printers discovered Object
+index-ClKFwupO.js:664 [QZ] Print job failed Object
+oH @ index-ClKFwupO.js:664
+index-ClKFwupO.js:833 [Print worker] Print job failed Object
+o @ index-ClKFwupO.js:833
+index-ClKFwupO.js:833 [Print worker] Claimed print job Object
+index-ClKFwupO.js:664 [QZ] Local printers discovered Object
+index-ClKFwupO.js:664 [QZ] Print job failed Object
+oH @ index-ClKFwupO.js:664
+index-ClKFwupO.js:833 [Print worker] Print job failed Object
+o @ index-ClKFwupO.js:833
+index-ClKFwupO.js:833 [Print worker] Claimed print job Object
+index-ClKFwupO.js:664 [QZ] Local printers discovered Object
+index-ClKFwupO.js:664 [QZ] Print job failed Object
+oH @ index-ClKFwupO.js:664
+index-ClKFwupO.js:833 [Print worker] Print job failed Object
+o @ index-ClKFwupO.js:833
+index-ClKFwupO.js:833 [Print worker] Claimed print job Object
+index-ClKFwupO.js:664 [QZ] Local printers discovered Object
+index-ClKFwupO.js:664 [QZ] Print job sent successfully Object
+index-ClKFwupO.js:833 [Print worker] Pr

@@ -300,14 +300,8 @@ export default function BillingPage() {
 
   const kotMutation = useMutation({
     mutationFn: async ({ orderId, print }: { orderId: string; print: boolean }) => {
-      const res = await apiRequest("POST", `/api/orders/${orderId}/kot`, { print, printVia: "qz" });
+      const res = await apiRequest("POST", `/api/orders/${orderId}/kot`, { print, printVia: "agent" });
       const kotData = await res.json();
-      
-      if (print) {
-        const qzPrinted = await tryQzPrint(`/api/printers/qz/kot/${orderId}`);
-        if (!qzPrinted) await downloadKOTPDF(orderId);
-      }
-      
       return kotData;
     },
     onSuccess: (data) => {

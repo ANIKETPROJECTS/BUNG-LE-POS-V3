@@ -467,6 +467,7 @@ export interface PrintJob {
   printerIp: string;
   printerPort: number;
   printerName?: string;
+  dedupeKey?: string;
   escposData: string;   // base64-encoded ESC/POS bytes
   status: "pending" | "processing" | "done" | "failed";
   createdAt: Date;
