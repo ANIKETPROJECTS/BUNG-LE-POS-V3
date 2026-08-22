@@ -646,7 +646,9 @@ export default function KOTPage() {
     };
   };
 
-  // Auto-print effect: fires when activeOrders changes
+  // Auto-print effect: fires when active orders or printer configuration
+  // changes. Printer data can load after orders; including printers here
+  // ensures an order is retried once the local KOT printer is available.
   useEffect(() => {
     if (printers.length === 0) return;
     const autoPrintKOTPrinters = printers.filter(p => p.type === "KOT" && p.autoPrint);
@@ -683,8 +685,7 @@ export default function KOTPage() {
         await browserPrintFallback(order.id);
       }
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeOrders]);
+  }, [activeOrders, printers]);
 
   // Filter to today's orders only. The day boundary must recompute when the
   // calendar day rolls over (even if this screen stays open overnight), so the
