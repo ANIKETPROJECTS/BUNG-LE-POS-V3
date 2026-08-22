@@ -94,7 +94,11 @@ export async function getDailyKotInvoiceNumber(
   for (const [key, members] of sortedGroups) {
     const numbers = new Set<string>();
     for (const member of members) {
-      if (member.invoiceNumber) numbers.add(member.invoiceNumber);
+      // An invoiceNumber copied from an external order document is not trusted.
+      // Only a number explicitly assigned by this POS can anchor a table session.
+      if (member.invoiceNumber && member.invoiceNumberSource === "pos") {
+        numbers.add(member.invoiceNumber);
+      }
       const invoice = invoiceByOrderId.get(member.id);
       if (invoice?.invoiceNumber) numbers.add(invoice.invoiceNumber);
     }

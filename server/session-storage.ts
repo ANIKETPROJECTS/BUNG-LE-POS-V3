@@ -351,7 +351,7 @@ export class SessionStorage implements IStorage {
     const collection = this.getCollection<Order>("orders");
     const result = await collection.findOneAndUpdate(
       { id, invoiceNumber: { $exists: false } } as any,
-      { $set: { invoiceNumber } },
+      { $set: { invoiceNumber, invoiceNumberSource: "pos" } },
       { returnDocument: "after" },
     );
     if (result) return result;
@@ -362,7 +362,7 @@ export class SessionStorage implements IStorage {
     await this.ensureConnection();
     const result = await this.getCollection<Order>("orders").findOneAndUpdate(
       { id } as any,
-      { $set: { invoiceNumber } },
+      { $set: { invoiceNumber, invoiceNumberSource: "pos" } },
       { returnDocument: "after" },
     );
     return result ?? undefined;

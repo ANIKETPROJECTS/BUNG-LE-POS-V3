@@ -100,6 +100,7 @@ export interface Order {
   paidAt: Date | null;
   kotCount: number;
   invoiceNumber?: string;
+  invoiceNumberSource?: "pos";
 }
 
 export const insertOrderSchema = z.object({

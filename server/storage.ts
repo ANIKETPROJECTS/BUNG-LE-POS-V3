@@ -539,6 +539,7 @@ export class MemStorage implements IStorage {
     const updated: Order = {
       ...order,
       invoiceNumber: order.invoiceNumber ?? invoiceNumber,
+      invoiceNumberSource: "pos",
     };
     this.orders.set(id, updated);
     return updated;
@@ -547,7 +548,7 @@ export class MemStorage implements IStorage {
   async setOrderInvoiceNumber(id: string, invoiceNumber: string): Promise<Order | undefined> {
     const order = this.orders.get(id);
     if (!order) return undefined;
-    const updated: Order = { ...order, invoiceNumber };
+    const updated: Order = { ...order, invoiceNumber, invoiceNumberSource: "pos" };
     this.orders.set(id, updated);
     return updated;
   }
