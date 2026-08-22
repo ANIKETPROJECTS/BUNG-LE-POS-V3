@@ -73,15 +73,21 @@ export async function qzPrintEndpoint(endpoint: string): Promise<QzPrinterResult
     if (!response.ok) throw new Error(payload.error || "Could not prepare print");
     const qz = await getQz();
     const preferred = Array.isArray(payload.printers) ? payload.printers : [];
-    let found: string | string[] = "";
-    for (const name of preferred) {
-      try {
-        found = await qz.printers.find(name);
-        if (found) break;
-      } catch { /* try the next configured printer */ }
-    }
-    if (!found) found = await qz.printers.find();
-    const printer = Array.isArray(found) ? found[0] : found;
+    const discovered = await qz.printers.find();
+    const available = (Array.isArray(discovered) ? discovered : [discovered])
+      .filter((name): name is string => typeof name === "string" && name.length > 0);
+    console.info("[QZ] Local printers discovered", { preferred, available });
+
+    // Never silently send a job to an arbitrary local printer. This is
+    // especially important for automatic KOT printing, where Windows may
+    // expose virtual printers such as OneNote alongside the kitchen printer.
+    const printer = preferred.length
+      ? available.find((availableName) =>
+          preferred.some((preferredName) =>
+            availableName.trim().toLowerCase() === preferredName.trim().toLowerCase(),
+          ),
+        )
+      : available[0];
     if (!printer) throw new Error("No local printer found in QZ Tray");
     const config = qz.configs.create(printer, {
       units: "mm",
