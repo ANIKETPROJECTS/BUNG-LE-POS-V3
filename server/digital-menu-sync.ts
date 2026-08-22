@@ -4,7 +4,7 @@ import { type IStorage } from './storage';
 import { ObjectId } from 'mongodb';
 import { computeBillTotals, DEFAULT_TAX_SETTINGS } from '@shared/tax';
 import { mongoStorage } from './mongo-storage';
-import { getDailyBillingNumber, getDailyKotSequence } from './utils/billing-sequence';
+import { getDailyKotInvoiceNumber, getDailyKotSequence } from './utils/billing-sequence';
 
 // If a claim (syncedToPOS set, no posOrderId yet) is older than this, assume
 // the process that claimed it crashed before finishing and allow it to be
@@ -406,7 +406,7 @@ export class DigitalMenuSyncService {
       const floorName = table?.floorId
         ? (await this.storage.getFloor(table.floorId))?.name
         : undefined;
-      const kotNumber = await getDailyBillingNumber(this.storage, updatedOrder);
+      const kotNumber = await getDailyKotInvoiceNumber(this.storage, updatedOrder);
       const sequence = await getDailyKotSequence(this.storage, updatedOrder);
       const escData = buildKOTEscPos({
         order: updatedOrder,
@@ -559,7 +559,7 @@ export class DigitalMenuSyncService {
           tableNumber = tbl?.tableNumber;
           if (tbl?.floorId) floorName = (await this.storage.getFloor(tbl.floorId))?.name;
         }
-        const kotNumber = await getDailyBillingNumber(this.storage, updatedOrder);
+        const kotNumber = await getDailyKotInvoiceNumber(this.storage, updatedOrder);
         const kotSequence = await getDailyKotSequence(this.storage, updatedOrder);
         const escData = buildKOTEscPos({
           order: updatedOrder,
@@ -724,8 +724,7 @@ export class DigitalMenuSyncService {
       }
 
       // Generate invoice number
-      const invoices = await this.storage.getInvoices();
-      const invoiceNumber = await getDailyBillingNumber(this.storage, checkedOutOrder);
+      const invoiceNumber = await getDailyKotInvoiceNumber(this.storage, checkedOutOrder);
 
       // Prepare invoice items data
       const invoiceItemsData = orderItems.map(item => ({

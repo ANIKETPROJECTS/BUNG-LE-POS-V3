@@ -28,7 +28,7 @@
 import { MongoClient, Db } from "mongodb";
 import type { IStorage } from "./storage";
 import { mongoStorage } from "./mongo-storage";
-import { getDailyBillingNumber, getDailyKotSequence } from "./utils/billing-sequence";
+import { getDailyKotInvoiceNumber, getDailyKotSequence } from "./utils/billing-sequence";
 
 const EXTERNAL_DB_NAME = "Orders";
 const EXTERNAL_COLL    = "orders";
@@ -371,7 +371,7 @@ export class ExternalOrdersSyncService {
       const floorName = table?.floorId
         ? (await this.storage.getFloor(table.floorId))?.name
         : undefined;
-      const kotNumber = await getDailyBillingNumber(this.storage, updatedOrder);
+      const kotNumber = await getDailyKotInvoiceNumber(this.storage, updatedOrder);
       const kotSequence = await getDailyKotSequence(this.storage, updatedOrder);
       const escData = buildKOTEscPos({
         order: updatedOrder,
@@ -787,7 +787,7 @@ export class ExternalOrdersSyncService {
         if (resolvedTable?.floorId) {
           floorName = (await this.storage.getFloor(resolvedTable.floorId))?.name;
         }
-        const kotNumber = await getDailyBillingNumber(this.storage, updatedOrder);
+        const kotNumber = await getDailyKotInvoiceNumber(this.storage, updatedOrder);
         const kotSequence = await getDailyKotSequence(this.storage, updatedOrder);
         const escData = buildKOTEscPos({
           order: updatedOrder,
