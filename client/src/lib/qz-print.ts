@@ -101,6 +101,11 @@ export async function tryQzPrint(endpoint: string): Promise<boolean> {
 
 export async function checkQzTray(): Promise<{ connected: boolean; error?: string }> {
   try {
+    const certificate = await fetch("/api/qz-certificate", { credentials: "include" });
+    if (!certificate.ok) {
+      const message = await certificate.text();
+      return { connected: false, error: message || "QZ certificate is not configured" };
+    }
     await getQz();
     return { connected: true };
   } catch (error) {
