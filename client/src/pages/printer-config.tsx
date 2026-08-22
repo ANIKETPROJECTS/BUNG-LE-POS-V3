@@ -16,6 +16,7 @@ import { Printer, Plus, Trash2, Wifi, WifiOff, TestTube } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { PrinterDevice } from "@shared/schema";
+import { checkQzTray } from "@/lib/qz-print";
 
 interface PrinterWithStatus extends PrinterDevice {
   online?: boolean;
@@ -28,6 +29,7 @@ export default function PrinterConfigPage() {
   const [deleteTarget, setDeleteTarget] = useState<PrinterDevice | null>(null);
   const [printerStatuses, setPrinterStatuses] = useState<Record<string, boolean | null>>({});
   const [checkingIds, setCheckingIds] = useState<Set<string>>(new Set());
+  const [qzStatus, setQzStatus] = useState<{ connected: boolean; error?: string } | null>(null);
 
   // Form state
   const [form, setForm] = useState({
@@ -119,6 +121,18 @@ export default function PrinterConfigPage() {
     }
   };
 
+  const checkQz = async () => {
+    const status = await checkQzTray();
+    setQzStatus(status);
+    if (!status.connected) {
+      toast({
+        title: "QZ Tray unavailable",
+        description: status.error || "Start QZ Tray and verify its certificate is configured.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleAdd = () => {
     if (!form.name.trim() || !form.ip.trim()) {
       toast({ title: "Name and IP are required", variant: "destructive" });
@@ -154,9 +168,17 @@ export default function PrinterConfigPage() {
               Total Printers: <span className="font-semibold">{printers.length}</span>
             </span>
           </div>
-          <Button onClick={() => setShowAddDialog(true)} data-testid="button-add-printer">
-            <Plus className="h-4 w-4 mr-2" /> Add Printer
-          </Button>
+          <div className="flex items-center gap-2">
+            {qzStatus && (
+              <Badge className={qzStatus.connected ? "bg-success text-white" : "bg-danger text-white"}>
+                {qzStatus.connected ? "QZ Tray connected" : "QZ Tray unavailable"}
+              </Badge>
+            )}
+            <Button variant="outline" onClick={checkQz}>Check QZ Tray</Button>
+            <Button onClick={() => setShowAddDialog(true)} data-testid="button-add-printer">
+              <Plus className="h-4 w-4 mr-2" /> Add Printer
+            </Button>
+          </div>
         </div>
       </div>
 

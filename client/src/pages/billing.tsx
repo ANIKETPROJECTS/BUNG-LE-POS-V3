@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { tryQzPrint } from "@/lib/qz-print";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { MenuItem, Customer, Invoice, Order, OrderItem as SchemaOrderItem } from "@shared/schema";
 import { computeBillTotals } from "@shared/tax";
@@ -299,11 +300,12 @@ export default function BillingPage() {
 
   const kotMutation = useMutation({
     mutationFn: async ({ orderId, print }: { orderId: string; print: boolean }) => {
-      const res = await apiRequest("POST", `/api/orders/${orderId}/kot`, { print });
+      const res = await apiRequest("POST", `/api/orders/${orderId}/kot`, { print, printVia: "qz" });
       const kotData = await res.json();
       
       if (print) {
-        await downloadKOTPDF(orderId);
+        const qzPrinted = await tryQzPrint(`/api/printers/qz/kot/${orderId}`);
+        if (!qzPrinted) await downloadKOTPDF(orderId);
       }
       
       return kotData;
@@ -316,11 +318,12 @@ export default function BillingPage() {
 
   const saveMutation = useMutation({
     mutationFn: async ({ orderId, print }: { orderId: string; print: boolean }) => {
-      const res = await apiRequest("POST", `/api/orders/${orderId}/save`, { print, taxRate, serviceCharge: serviceChargeRate });
+      const res = await apiRequest("POST", `/api/orders/${orderId}/save`, { print, printVia: "qz", taxRate, serviceCharge: serviceChargeRate });
       const saveData = await res.json();
       
       if (print && saveData.invoice) {
-        await downloadPDF(orderId, saveData.invoice.invoiceNumber);
+        const qzPrinted = await tryQzPrint(`/api/printers/qz/invoice/${saveData.invoice.id}`);
+        if (!qzPrinted) await downloadPDF(orderId, saveData.invoice.invoiceNumber);
       }
       
       return saveData;
@@ -364,11 +367,12 @@ export default function BillingPage() {
 
   const billMutation = useMutation({
     mutationFn: async ({ orderId, print }: { orderId: string; print: boolean }) => {
-      const res = await apiRequest("POST", `/api/orders/${orderId}/bill`, { print, taxRate, serviceCharge: serviceChargeRate });
+      const res = await apiRequest("POST", `/api/orders/${orderId}/bill`, { print, printVia: "qz", taxRate, serviceCharge: serviceChargeRate });
       const billData = await res.json();
       
       if (print && billData.invoice) {
-        await downloadPDF(orderId, billData.invoice.invoiceNumber);
+        const qzPrinted = await tryQzPrint(`/api/printers/qz/invoice/${billData.invoice.id}`);
+        if (!qzPrinted) await downloadPDF(orderId, billData.invoice.invoiceNumber);
       }
       
       return billData;
@@ -388,8 +392,13 @@ export default function BillingPage() {
       taxRate?: number;
       serviceCharge?: number;
     }) => {
-      const res = await apiRequest("POST", `/api/orders/${orderId}/checkout`, { paymentMode, splitPayments, print, taxRate, serviceCharge });
-      return await res.json();
+      const res = await apiRequest("POST", `/api/orders/${orderId}/checkout`, { paymentMode, splitPayments, print, printVia: "qz", taxRate, serviceCharge });
+      const checkoutData = await res.json();
+      if (print && checkoutData.invoice) {
+        const qzPrinted = await tryQzPrint(`/api/printers/qz/invoice/${checkoutData.invoice.id}`);
+        if (!qzPrinted) await downloadPDF(orderId, checkoutData.invoice.invoiceNumber);
+      }
+      return checkoutData;
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });

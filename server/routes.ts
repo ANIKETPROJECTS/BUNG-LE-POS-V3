@@ -3424,6 +3424,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // QZ Tray receives ESC/POS bytes in the browser and sends them to the
+  // printer installed on the operator's computer. The server never receives
+  // or exposes the private signing key.
+  app.get("/api/qz-certificate", requireAuth, (_req, res) => {
+    const certificate = process.env.QZ_CERTIFICATE;
+    if (!certificate) {
+      return res.status(503).type("text/plain").send("QZ certificate is not configured");
+    }
+    try {
+      res.type("text/plain").send(normalizeQzPem(certificate));
+    } catch {
+      res.status(503).type("text/plain").send("QZ certificate is invalid");
+    }
+  });
+
+  app.post("/api/sign-message", requireAuth, (req, res) => {
+    const privateKey = process.env.QZ_PRIVATE_KEY;
+    if (!privateKey) {
+      return res.status(503).type("text/plain").send("QZ private key is not configured");
+    }
+    const message = typeof req.body === "string" ? req.body : "";
+    if (!message) return res.status(400).type("text/plain").send("Message is required");
+    try {
+      const signer = crypto.createSign("SHA512");
+      signer.update(message);
+      const signature = signer.sign(
+        { key: normalizeQzPem(privateKey), dsaEncoding: "der" },
+        "base64",
+      );
+      res.type("text/plain").send(signature);
+    } catch {
+      res.status(500).type("text/plain").send("QZ signing failed");
+    }
+  });
+
+  app.get("/api/printers/qz/kot/:orderId", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    try {
+      const order = await st.getOrder(req.params.orderId);
+      if (!order) return res.status(404).json({ error: "Order not found" });
+      const allItems = await st.getOrderItems(order.id);
+      const latestBatch = order.kotCount ?? 0;
+      const items = allItems.filter((item) =>
+        latestBatch > 0
+          ? item.kotBatch === latestBatch && item.status !== "non_kot"
+          : item.status === "new",
+      );
+      if (items.length === 0) return res.status(400).json({ error: "No KOT items found" });
+
+      let tableNumber: string | undefined;
+      let floorName: string | undefined;
+      if (order.tableId) {
+        const table = await st.getTable(order.tableId);
+        tableNumber = table?.tableNumber;
+        if (table?.floorId) floorName = (await st.getFloor(table.floorId))?.name;
+      }
+      const { buildKOTEscPos } = await import("./utils/escpos");
+      const sequence = await getDailyKotSequence(st, order);
+      const kotNumber = await getDailyKotInvoiceNumber(st, order);
+      const data = buildKOTEscPos({
+        order,
+        items,
+        tableNumber,
+        floorName,
+        kotNumber,
+        sequence: String(sequence),
+        isUpdated: (order.kotCount ?? 0) > 1,
+      });
+      const printers = (await mongoStorage.getPrinters())
+        .filter((printer) => printer.type === "KOT")
+        .map((printer) => printer.name);
+      res.json({ data: data.toString("base64"), printers, kotNumber });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message || "Failed to prepare KOT" });
+    }
+  });
+
+  app.get("/api/printers/qz/invoice/:id", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    try {
+      const invoice = await st.getInvoice(req.params.id);
+      if (!invoice) return res.status(404).json({ error: "Invoice not found" });
+      const order = await st.getOrder(invoice.orderId);
+      const taxSettings = await getTaxSettings(st);
+      const { buildBillEscPos } = await import("./utils/escpos");
+      const data = buildBillEscPos({
+        invoiceNumber: invoice.invoiceNumber,
+        date: new Date(),
+        tableNumber: invoice.tableNumber,
+        floorName: invoice.floorName,
+        customerName: invoice.customerName,
+        customerPhone: invoice.customerPhone,
+        orderType: order?.orderType,
+        items: JSON.parse(invoice.items || "[]"),
+        subtotal: parseFloat(invoice.subtotal),
+        cgst: parseFloat(invoice.cgst),
+        sgst: parseFloat(invoice.sgst),
+        serviceCharge: parseFloat(invoice.serviceCharge),
+        total: parseFloat(invoice.total),
+        paymentMode: invoice.paymentMode || "cash",
+        gstEnabled: taxSettings.gstEnabled,
+        gstNumber: taxSettings.gstNumber,
+      });
+      const printers = (await mongoStorage.getPrinters())
+        .filter((printer) => printer.type === "Bill" || printer.type === "KOT")
+        .map((printer) => printer.name);
+      res.json({ data: data.toString("base64"), printers, invoiceNumber: invoice.invoiceNumber });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message || "Failed to prepare invoice" });
+    }
+  });
+
   // Print a KOT to one or more printers by ID
   // Returns per-printer results so the frontend knows which ones failed
   app.post(

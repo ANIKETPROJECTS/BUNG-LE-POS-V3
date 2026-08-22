@@ -33,6 +33,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { tryQzPrint } from "@/lib/qz-print";
 import type { Invoice, MenuItem } from "@shared/schema";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -170,8 +171,10 @@ export default function InvoicesPage() {
 
   const reprintInvoiceMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await apiRequest("POST", `/api/invoices/${id}/reprint`);
-      return res;
+      if (await tryQzPrint(`/api/printers/qz/invoice/${id}`)) {
+        return { qz: true };
+      }
+      return apiRequest("POST", `/api/invoices/${id}/reprint`);
     },
     onSuccess: () => {
       toast({

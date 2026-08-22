@@ -17,6 +17,7 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Order, OrderItem, Table, Floor, MenuItem, PrinterDevice } from "@shared/schema";
 import { format } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
+import { tryQzPrint } from "@/lib/qz-print";
 
 // localStorage key for tracking which orders have been auto-printed
 const PRINTED_KEY = "kot_auto_printed_ids";
@@ -667,8 +668,10 @@ export default function KOTPage() {
       // Find table/floor info
       const tableData = (tables as Table[]).find((t: Table) => t.id === order.tableId);
 
-      // Server-side print → browser dialog if all fail
+      // QZ Tray prints on the local POS computer. The server route is the
+      // controlled fallback for installations still using the print agent.
       try {
+        if (await tryQzPrint(`/api/printers/qz/kot/${order.id}`)) return;
         const res = await fetch(`/api/printers/print-kot/${order.id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -827,6 +830,7 @@ export default function KOTPage() {
   }), [allTickets]);
 
   const handlePrint = async (ticket: KOTTicket) => {
+    if (await tryQzPrint(`/api/printers/qz/kot/${ticket.order.id}`)) return;
     // Try ESC/POS KOT printers first
     const kotPrinters = printers.filter(p => p.type === "KOT");
     if (kotPrinters.length > 0) {
