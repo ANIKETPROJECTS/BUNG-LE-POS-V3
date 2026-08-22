@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { checkQzTray, printQzPayload } from "@/lib/qz-print";
+import { checkQzTray, getAvailableQzPrinters, printQzPayload } from "@/lib/qz-print";
 import type { PrintJob, PrinterDevice } from "@shared/schema";
 
 const WORKER_ID_KEY = "bungle_qz_print_worker_id";
@@ -42,12 +42,25 @@ export default function PrintWorker() {
           console.debug("[Print worker] QZ Tray unavailable; waiting", { error: qzStatus.error });
           return;
         }
+        const availablePrinters = await getAvailableQzPrinters();
+        const localPrinterNames = printerNames.filter((configuredName) =>
+          availablePrinters.some((availableName) =>
+            availableName.toLowerCase() === configuredName.trim().toLowerCase(),
+          ),
+        );
+        if (localPrinterNames.length === 0) {
+          console.debug("[Print worker] No configured printer is installed on this PC; waiting", {
+            configured: printerNames,
+            available: availablePrinters,
+          });
+          return;
+        }
 
         const claimResponse = await fetch("/api/print-jobs/claim", {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ workerId: workerIdRef.current, printerNames }),
+          body: JSON.stringify({ workerId: workerIdRef.current, printerNames: localPrinterNames }),
         });
         if (!claimResponse.ok) throw new Error("Could not claim print job");
         const job = (await claimResponse.json()) as PrintJob | null;

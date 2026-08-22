@@ -120,6 +120,14 @@ export async function printQzPayload(payload: QzPrintPayload): Promise<QzPrinter
   }
 }
 
+export async function getAvailableQzPrinters(): Promise<string[]> {
+  const qz = await getQz();
+  const discovered = await qz.printers.find();
+  return (Array.isArray(discovered) ? discovered : [discovered])
+    .filter((name): name is string => typeof name === "string" && name.trim().length > 0)
+    .map((name) => name.trim());
+}
+
 export async function tryQzPrint(endpoint: string): Promise<boolean> {
   return (await qzPrintEndpoint(endpoint)).success;
 }

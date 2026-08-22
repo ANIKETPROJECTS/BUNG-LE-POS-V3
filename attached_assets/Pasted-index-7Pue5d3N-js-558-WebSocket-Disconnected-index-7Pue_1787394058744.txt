@@ -1,0 +1,242 @@
+index-7Pue5d3N.js:558 [WebSocket] Disconnected
+index-7Pue5d3N.js:558 [WebSocket] Reconnecting in 3s...
+index-7Pue5d3N.js:558 [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+index-7Pue5d3N.js:558 [WebSocket] Connected successfully!
+index-7Pue5d3N.js:558 [WebSocket] Message received: order_created Data: {id: '6833754b-93a6-41ec-87fb-0e2d64597209', tableId: '6478e611-77b2-475d-b504-d95a3dd5e379', orderType: 'dine-in', status: 'saved', total: '0', …}
+index-7Pue5d3N.js:558 [WebSocket] Invalidating order queries for order: 6833754b-93a6-41ec-87fb-0e2d64597209
+index-7Pue5d3N.js:558 [WebSocket] Message received: table_updated Data: {_id: '6a4ddc9f9230ce067fff03f8', id: '6478e611-77b2-475d-b504-d95a3dd5e379', tableNumber: 'T1', seats: 4, status: 'occupied', …}
+index-7Pue5d3N.js:558 [WebSocket] Invalidating tables queries
+index-7Pue5d3N.js:558 [WebSocket] Message received: order_item_added Data: {orderId: '6833754b-93a6-41ec-87fb-0e2d64597209', item: {…}}
+index-7Pue5d3N.js:558 [WebSocket] Invalidating order items queries for orderId: 6833754b-93a6-41ec-87fb-0e2d64597209
+index-7Pue5d3N.js:558 [WebSocket] Message received: order_updated Data: {_id: '6a8977c9bcdbfa5fb6e0315a', id: '6833754b-93a6-41ec-87fb-0e2d64597209', tableId: '6478e611-77b2-475d-b504-d95a3dd5e379', orderType: 'dine-in', status: 'sent_to_kitchen', …}
+index-7Pue5d3N.js:558 [WebSocket] Invalidating order queries for order: 6833754b-93a6-41ec-87fb-0e2d64597209
+index-7Pue5d3N.js:833 [Print worker] Claimed print job {jobId: 'ebfa7777-ba43-4273-a0ff-8ae3d29d4f95', orderId: '6833754b-93a6-41ec-87fb-0e2d64597209', document: 'BG26082201', printer: 'kt', attempt: 1}
+index-7Pue5d3N.js:664 [QZ] Local printers discovered {preferred: Array(1), available: Array(4)}
+index-7Pue5d3N.js:664 [QZ] Print job failed {error: 'No local printer found in QZ Tray'}
+oH @ index-7Pue5d3N.js:664
+await in oH
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+await in o
+(anonymous) @ index-7Pue5d3N.js:833
+Dw @ index-7Pue5d3N.js:40
+Qp @ index-7Pue5d3N.js:40
+yT @ index-7Pue5d3N.js:40
+Ld @ index-7Pue5d3N.js:38
+rX @ index-7Pue5d3N.js:40
+hf @ index-7Pue5d3N.js:40
+Z$ @ index-7Pue5d3N.js:40
+_ @ index-7Pue5d3N.js:25
+P @ index-7Pue5d3N.js:25
+postMessage
+M @ index-7Pue5d3N.js:25
+V @ index-7Pue5d3N.js:25
+e.unstable_scheduleCallback @ index-7Pue5d3N.js:25
+a7 @ index-7Pue5d3N.js:40
+cs @ index-7Pue5d3N.js:40
+Ko @ index-7Pue5d3N.js:40
+$Q @ index-7Pue5d3N.js:38
+(anonymous) @ index-7Pue5d3N.js:558
+await in (anonymous)
+(anonymous) @ index-7Pue5d3N.js:558
+Dw @ index-7Pue5d3N.js:40
+Qp @ index-7Pue5d3N.js:40
+yT @ index-7Pue5d3N.js:40
+Ld @ index-7Pue5d3N.js:38
+rX @ index-7Pue5d3N.js:40
+hf @ index-7Pue5d3N.js:40
+Z$ @ index-7Pue5d3N.js:40
+_ @ index-7Pue5d3N.js:25
+P @ index-7Pue5d3N.js:25
+postMessage
+M @ index-7Pue5d3N.js:25
+V @ index-7Pue5d3N.js:25
+e.unstable_scheduleCallback @ index-7Pue5d3N.js:25
+a7 @ index-7Pue5d3N.js:40
+cs @ index-7Pue5d3N.js:40
+Ko @ index-7Pue5d3N.js:40
+$w @ index-7Pue5d3N.js:40
+Bw.render.PP.render @ index-7Pue5d3N.js:40
+(anonymous) @ index-7Pue5d3N.js:833
+index-7Pue5d3N.js:833 [Print worker] Print job failed; it was stopped to prevent duplicate output {jobId: 'ebfa7777-ba43-4273-a0ff-8ae3d29d4f95', error: 'No local printer found in QZ Tray'}
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+setTimeout
+o @ index-7Pue5d3N.js:833
+await in o
+(anonymous) @ index-7Pue5d3N.js:833
+Dw @ index-7Pue5d3N.js:40
+Qp @ index-7Pue5d3N.js:40
+yT @ index-7Pue5d3N.js:40
+Ld @ index-7Pue5d3N.js:38
+rX @ index-7Pue5d3N.js:40
+hf @ index-7Pue5d3N.js:40
+Z$ @ index-7Pue5d3N.js:40
+_ @ index-7Pue5d3N.js:25
+P @ index-7Pue5d3N.js:25
+postMessage
+M @ index-7Pue5d3N.js:25
+V @ index-7Pue5d3N.js:25
+e.unstable_scheduleCallback @ index-7Pue5d3N.js:25
+a7 @ index-7Pue5d3N.js:40
+cs @ index-7Pue5d3N.js:40
+Ko @ index-7Pue5d3N.js:40
+$Q @ index-7Pue5d3N.js:38
+(anonymous) @ index-7Pue5d3N.js:558
+await in (anonymous)
+(anonymous) @ index-7Pue5d3N.js:558
+Dw @ index-7Pue5d3N.js:40
+Qp @ index-7Pue5d3N.js:40
+yT @ index-7Pue5d3N.js:40
+Ld @ index-7Pue5d3N.js:38
+rX @ index-7Pue5d3N.js:40
+hf @ index-7Pue5d3N.js:40
+Z$ @ index-7Pue5d3N.js:40
+_ @ index-7Pue5d3N.js:25
+P @ index-7Pue5d3N.js:25
+postMessage
+M @ index-7Pue5d3N.js:25
+V @ index-7Pue5d3N.js:25
+e.unstable_scheduleCallback @ index-7Pue5d3N.js:25
+a7 @ index-7Pue5d3N.js:40
+cs @ index-7Pue5d3N.js:40
+Ko @ index-7Pue5d3N.js:40
+$w @ index-7Pue5d3N.js:40
+Bw.render.PP.render @ index-7Pue5d3N.js:40
+(anonymous) @ index-7Pue5d3N.js:833
+index-7Pue5d3N.js:833 [Print worker] Claimed print job {jobId: '94c187e3-c0eb-4e0c-842a-00af2f7ccee4', orderId: '6833754b-93a6-41ec-87fb-0e2d64597209', document: 'BG26082201', printer: 'Kitchen Printer', attempt: 1}
+index-7Pue5d3N.js:664 [QZ] Local printers discovered {preferred: Array(1), available: Array(4)}
+index-7Pue5d3N.js:664 [QZ] Print job sent successfully {printer: 'Kitchen Printer'}
+index-7Pue5d3N.js:833 [Print worker] Print job completed {jobId: '94c187e3-c0eb-4e0c-842a-00af2f7ccee4', printer: 'Kitchen Printer'}
