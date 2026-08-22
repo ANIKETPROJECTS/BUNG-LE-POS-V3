@@ -68,21 +68,17 @@ export async function getDailyKotInvoiceNumber(
   st: IStorage,
   order: Order,
 ): Promise<string> {
+  if (order.invoiceNumber) return order.invoiceNumber;
   const [orders, invoices] = await Promise.all([
     st.getOrders(),
     st.getInvoices(),
   ]);
   const invoiceByOrderId = new Map(invoices.map((invoice) => [invoice.orderId, invoice]));
 
-  // Keep one invoice number for an ongoing table order. This also covers a
-  // new order added to a table that already has an invoiced order in progress.
+  // Only an invoice already attached to this exact order may be reused.
+  // A new order on the same table must receive a new invoice number.
   const existingInvoiceOrder = orders
-    .filter((candidate) =>
-      candidate.id === order.id ||
-      (order.tableId &&
-        candidate.tableId === order.tableId &&
-        candidate.status !== "completed")
-    )
+    .filter((candidate) => candidate.id === order.id)
     .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
     .map((candidate) => invoiceByOrderId.get(candidate.id))
     .find((invoice) => invoice);
@@ -100,6 +96,22 @@ export async function getDailyKotInvoiceNumber(
   );
   const yymmdd = dayOf(order).replace(/-/g, "").slice(2);
   return `BG${yymmdd}${String(sequence).padStart(2, "0")}`;
+}
+
+export async function ensureDailyKotInvoiceNumber(
+  st: IStorage,
+  order: Order,
+): Promise<{ order: Order; invoiceNumber: string }> {
+  if (order.invoiceNumber) {
+    return { order, invoiceNumber: order.invoiceNumber };
+  }
+  const generated = await getDailyKotInvoiceNumber(st, order);
+  const persisted = await st.ensureOrderInvoiceNumber(order.id, generated);
+  const resolved = persisted ?? { ...order, invoiceNumber: generated };
+  return {
+    order: resolved,
+    invoiceNumber: resolved.invoiceNumber ?? generated,
+  };
 }
 
 /**
@@ -151,16 +163,13 @@ export async function getDailyKotInvoiceNumbers(
   tickets.sort((a, b) => a.createdAt - b.createdAt || a.key.localeCompare(b.key));
   const result = new Map<string, string>();
   for (const order of targetOrders) {
-    const existingInvoice = orders
-      .filter((candidate) =>
-        candidate.id === order.id ||
-        (order.tableId &&
-          candidate.tableId === order.tableId &&
-          candidate.status !== "completed"),
-      )
-      .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-      .map((candidate) => invoiceByOrderId.get(candidate.id))
-      .find((invoice) => invoice);
+    const existingInvoice = order.invoiceNumber
+      ? { invoiceNumber: order.invoiceNumber }
+      : orders
+          .filter((candidate) => candidate.id === order.id)
+          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+          .map((candidate) => invoiceByOrderId.get(candidate.id))
+          .find((invoice) => invoice);
 
     const sequence = existingInvoice
       ? null

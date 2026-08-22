@@ -38,6 +38,7 @@ import {
   getDailyKotInvoiceNumber,
   getDailyKotInvoiceNumbers,
   getDailyKotSequence,
+  ensureDailyKotInvoiceNumber,
 } from "./utils/billing-sequence";
 import {
   computeBillTotals,
@@ -1341,13 +1342,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (pendingKotItems.length === 0) {
       return res.status(400).json({ error: "There are no KOT items in this order" });
     }
+    const { order: orderWithInvoice, invoiceNumber } =
+      await ensureDailyKotInvoiceNumber(st, order);
     // POS-created items do not always carry a batch until the KOT is sent.
     // Assign the pending items to this KOT before incrementing the count so
     // add-ons get their own ticket just like Digital Menu orders.
     const kotBatch = (order.kotCount ?? 0) + 1;
     await st.assignMissingKotBatch(req.params.id, kotBatch);
     // Track how many times KOT has been sent — used to show "UPDATED" badge
-    const updatedOrder = (await st.incrementKotCount(req.params.id)) ?? order;
+    const updatedOrder = (await st.incrementKotCount(req.params.id)) ?? orderWithInvoice;
     console.log(
       "[Server] Broadcasting order_updated for KOT, orderId:",
       updatedOrder.id,
@@ -1375,13 +1378,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (tbl?.floorId) floorName = (await st.getFloor(tbl.floorId))?.name;
         }
         const kotSequence = await getDailyKotSequence(st, updatedOrder);
-        const kotNumber = await getDailyKotInvoiceNumber(st, updatedOrder);
         const escData = buildKOTEscPos({
           order: updatedOrder,
           items: orderItems,
           tableNumber,
           floorName,
-          kotNumber,
+          kotNumber: invoiceNumber,
           sequence: String(kotSequence),
           isUpdated: (updatedOrder.kotCount ?? 0) > 1,
         });
@@ -1446,7 +1448,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Keep the invoice number anchored to this ongoing table/order.  KOTs
       // already use this lookup; billing must use it too so a later Save/Bill
       // action cannot replace the number with another order's daily sequence.
-      const invoiceNumber = await getDailyKotInvoiceNumber(st, order);
+      const { invoiceNumber } = await ensureDailyKotInvoiceNumber(st, order);
 
       const invoiceItemsData = orderItems.map((item) => ({
         name: item.name,
@@ -1527,7 +1529,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Reuse the number already assigned to this order/table instead of
     // recalculating it from the current daily order sequence.
-    const invoiceNumber = await getDailyKotInvoiceNumber(st, order);
+    const { invoiceNumber } = await ensureDailyKotInvoiceNumber(st, order);
 
     const invoiceItemsData = orderItems.map((item) => ({
       name: item.name,
@@ -1652,7 +1654,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Resolve this before checkout changes the orders to "completed".  The
     // stable lookup can then still see an existing invoice on an active
     // sibling order at the same table.
-    const invoiceNumber = await getDailyKotInvoiceNumber(st, primaryOrder);
+    const { invoiceNumber } = await ensureDailyKotInvoiceNumber(st, primaryOrder);
 
     // Check out every order settled in this bill. The primary order is the
     // first (earliest) of the set; it carries the combined invoice while all
@@ -3504,7 +3506,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const { buildKOTEscPos } = await import("./utils/escpos");
       const sequence = await getDailyKotSequence(st, order);
-      const kotNumber = await getDailyKotInvoiceNumber(st, order);
+       const kotNumber = (await ensureDailyKotInvoiceNumber(st, order)).invoiceNumber;
       const data = buildKOTEscPos({
         order,
         items,
@@ -3621,7 +3623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
 
         const kotSequence = await getDailyKotSequence(st, order);
-        const kotNumber = await getDailyKotInvoiceNumber(st, order);
+         const kotNumber = (await ensureDailyKotInvoiceNumber(st, order)).invoiceNumber;
         const escData = buildKOTEscPos({
           order,
           items: orderItems.filter((item) => item.status === "new"),

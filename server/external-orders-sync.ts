@@ -28,7 +28,7 @@
 import { MongoClient, Db } from "mongodb";
 import type { IStorage } from "./storage";
 import { mongoStorage } from "./mongo-storage";
-import { getDailyKotInvoiceNumber, getDailyKotSequence } from "./utils/billing-sequence";
+import { getDailyKotSequence, ensureDailyKotInvoiceNumber } from "./utils/billing-sequence";
 
 const EXTERNAL_DB_NAME = "Orders";
 const EXTERNAL_COLL    = "orders";
@@ -360,7 +360,8 @@ export class ExternalOrdersSyncService {
 
     const total = Number(doc.total ?? doc.totalAmount ?? doc.grandTotal ?? 0);
     await this.storage.updateOrderTotal(posOrder.id, total.toFixed(2));
-    const updatedOrder = await this.storage.incrementKotCount(posOrder.id) ?? posOrder;
+    const { order: orderWithInvoice } = await ensureDailyKotInvoiceNumber(this.storage, posOrder);
+    const updatedOrder = await this.storage.incrementKotCount(posOrder.id) ?? orderWithInvoice;
     const table = updatedOrder.tableId ? await this.storage.getTable(updatedOrder.tableId) : null;
     const printers = (await mongoStorage.getPrinters()).filter(
       (printer) => printer.type === "KOT" && printer.autoPrint
@@ -371,7 +372,7 @@ export class ExternalOrdersSyncService {
       const floorName = table?.floorId
         ? (await this.storage.getFloor(table.floorId))?.name
         : undefined;
-      const kotNumber = await getDailyKotInvoiceNumber(this.storage, updatedOrder);
+      const kotNumber = (await ensureDailyKotInvoiceNumber(this.storage, updatedOrder)).invoiceNumber;
       const kotSequence = await getDailyKotSequence(this.storage, updatedOrder);
       const escData = buildKOTEscPos({
         order: updatedOrder,
@@ -775,7 +776,8 @@ export class ExternalOrdersSyncService {
     //    Mirrors what POST /api/orders/:id/kot does for manual orders so
     //    external/digital-menu orders print automatically without staff action.
     try {
-      const updatedOrder = await this.storage.incrementKotCount(posOrder.id) ?? posOrder;
+      const { order: orderWithInvoice } = await ensureDailyKotInvoiceNumber(this.storage, posOrder);
+      const updatedOrder = await this.storage.incrementKotCount(posOrder.id) ?? orderWithInvoice;
       const kotPrinters = (await mongoStorage.getPrinters()).filter(
         (p) => p.type === "KOT" && p.autoPrint
       );
@@ -787,7 +789,7 @@ export class ExternalOrdersSyncService {
         if (resolvedTable?.floorId) {
           floorName = (await this.storage.getFloor(resolvedTable.floorId))?.name;
         }
-        const kotNumber = await getDailyKotInvoiceNumber(this.storage, updatedOrder);
+        const kotNumber = (await ensureDailyKotInvoiceNumber(this.storage, updatedOrder)).invoiceNumber;
         const kotSequence = await getDailyKotSequence(this.storage, updatedOrder);
         const escData = buildKOTEscPos({
           order: updatedOrder,

@@ -77,6 +77,7 @@ export interface IStorage {
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
   incrementKotCount(id: string): Promise<Order | undefined>;
+  ensureOrderInvoiceNumber(id: string, invoiceNumber: string): Promise<Order | undefined>;
   updateOrderTotal(id: string, total: string): Promise<Order | undefined>;
   completeOrder(id: string): Promise<Order | undefined>;
   billOrder(id: string): Promise<Order | undefined>;
@@ -509,6 +510,7 @@ export class MemStorage implements IStorage {
       billedAt: null,
       paidAt: null,
       kotCount: 0,
+      invoiceNumber: undefined,
     };
     this.orders.set(id, order);
     return order;
@@ -526,6 +528,17 @@ export class MemStorage implements IStorage {
     const order = this.orders.get(id);
     if (!order) return undefined;
     const updated: Order = { ...order, kotCount: (order.kotCount ?? 0) + 1 };
+    this.orders.set(id, updated);
+    return updated;
+  }
+
+  async ensureOrderInvoiceNumber(id: string, invoiceNumber: string): Promise<Order | undefined> {
+    const order = this.orders.get(id);
+    if (!order) return undefined;
+    const updated: Order = {
+      ...order,
+      invoiceNumber: order.invoiceNumber ?? invoiceNumber,
+    };
     this.orders.set(id, updated);
     return updated;
   }

@@ -334,6 +334,7 @@ export class MongoStorage implements IStorage {
       billedAt: null,
       paidAt: null,
       kotCount: 0,
+      invoiceNumber: undefined,
     };
     await mongodb.getCollection<Order>('orders').insertOne(order as any);
     return order;
@@ -357,6 +358,18 @@ export class MongoStorage implements IStorage {
       { returnDocument: 'after' }
     );
     return result ?? undefined;
+  }
+
+  async ensureOrderInvoiceNumber(id: string, invoiceNumber: string): Promise<Order | undefined> {
+    await this.ensureConnection();
+    const collection = mongodb.getCollection<Order>("orders");
+    const result = await collection.findOneAndUpdate(
+      { id, invoiceNumber: { $exists: false } } as any,
+      { $set: { invoiceNumber } },
+      { returnDocument: "after" },
+    );
+    if (result) return result;
+    return (await collection.findOne({ id } as any)) ?? undefined;
   }
 
   async updateOrderTotal(id: string, total: string): Promise<Order | undefined> {
