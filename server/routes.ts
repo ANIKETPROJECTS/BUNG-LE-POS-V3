@@ -770,13 +770,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/orders/active", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const orders = await st.getActiveOrders();
-    res.json(orders);
+    const ordersWithInvoiceNumbers = await Promise.all(
+      orders.map(async (order) => ({
+        ...order,
+        invoiceNumber: await getDailyKotInvoiceNumber(st, order),
+      })),
+    );
+    res.json(ordersWithInvoiceNumbers);
   });
 
   app.get("/api/orders/completed", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const orders = await st.getCompletedOrders();
-    res.json(orders);
+    const ordersWithInvoiceNumbers = await Promise.all(
+      orders.map(async (order) => ({
+        ...order,
+        invoiceNumber: await getDailyKotInvoiceNumber(st, order),
+      })),
+    );
+    res.json(ordersWithInvoiceNumbers);
   });
 
   app.get("/api/orders/delivery", requireAuth, async (req, res) => {

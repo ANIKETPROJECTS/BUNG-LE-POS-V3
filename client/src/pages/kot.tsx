@@ -26,6 +26,7 @@ interface KOTTicket {
   tableNumber: string;
   floorName: string;
   kotNumber: string;
+  invoiceNumber: string;
 }
 
 /* ─── Status helpers ─────────────────────────────────────────────────────── */
@@ -73,6 +74,7 @@ function KOTViewModal({
   /* Rows: [label, value, valueClass?] */
   const metaRows: [string, React.ReactNode][] = [
     ["KOT No",     <span className="font-bold flex items-center gap-1.5">{ticket.kotNumber}{isUpdated && <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-orange-100 text-orange-700 border border-orange-300 leading-none">UPDATED</span>}</span>],
+    ["Invoice No", <span className="font-semibold">{ticket.invoiceNumber}</span>],
     ["Order Date", format(createdAt, "dd/MM/yyyy, hh:mm a")],
     ["Type",       typeLabel],
     ...(ticket.order.orderType === "dine-in" ? [
@@ -471,6 +473,9 @@ function KOTGridCard({ ticket, onView, onEdit, onDelete, onPrint }: {
             </span>
           )}
         </button>
+        <span className="text-[11px] font-semibold text-gray-500 dark:text-gray-400 truncate ml-2">
+          Invoice: {ticket.invoiceNumber}
+        </span>
         <span className={cn("text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1", st.bg, st.text)}>
           <span className={cn("h-1.5 w-1.5 rounded-full", st.dot)} />
           {st.label}
@@ -492,6 +497,9 @@ function KOTGridCard({ ticket, onView, onEdit, onDelete, onPrint }: {
           <Clock className="h-3 w-3" />
           {format(createdAt, "hh:mm a")}
         </div>
+      </div>
+      <div className="px-4 py-1.5 border-b border-gray-100 dark:border-gray-800 text-[11px] font-semibold text-gray-500 dark:text-gray-400">
+        Invoice No: <span className="text-gray-700 dark:text-gray-300">{ticket.invoiceNumber}</span>
       </div>
 
       {/* Items */}
@@ -569,6 +577,12 @@ function KOTListRow({ ticket, onView, onEdit, onDelete, onPrint }: {
           <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate leading-tight">{ticket.tableNumber}</p>
           {ticket.floorName && <p className="text-xs text-gray-400 truncate">{ticket.floorName}</p>}
         </div>
+      </div>
+
+      {/* Invoice number */}
+      <div className="flex items-center gap-1.5 w-40 flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">
+        <span>Invoice:</span>
+        <span className="font-semibold text-gray-700 dark:text-gray-300 truncate">{ticket.invoiceNumber}</span>
       </div>
 
       {/* Items summary */}
@@ -697,6 +711,7 @@ export default function KOTPage() {
         // Assigned after active and completed orders are merged so numbering
         // is global for the day, regardless of which table or status it has.
         kotNumber: "",
+        invoiceNumber: (order as Order & { invoiceNumber?: string }).invoiceNumber ?? "—",
       }));
     });
 
