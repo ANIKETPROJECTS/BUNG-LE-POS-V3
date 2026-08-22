@@ -658,6 +658,10 @@ export default function KOTPage() {
     if (newOrders.length === 0) return;
 
     newOrders.forEach(async (order) => {
+      console.info("[KOT auto-print] New KOT detected", {
+        orderId: order.id,
+        printers: autoPrintKOTPrinters.map(p => p.name),
+      });
       markPrinted(order.id); // mark immediately to avoid double-print
 
       // Fetch order items for KOT
@@ -673,15 +677,36 @@ export default function KOTPage() {
       // QZ Tray prints on the local POS computer. The server route is the
       // controlled fallback for installations still using the print agent.
       try {
-        if (await tryQzPrint(`/api/printers/qz/kot/${order.id}`)) return;
+        const qzPrinted = await tryQzPrint(`/api/printers/qz/kot/${order.id}`);
+        if (qzPrinted) {
+          console.info("[KOT auto-print] QZ Tray accepted the KOT print job", {
+            orderId: order.id,
+          });
+          return;
+        }
+        console.warn("[KOT auto-print] QZ Tray did not accept the job; trying fallback", {
+          orderId: order.id,
+        });
         const res = await fetch(`/api/printers/print-kot/${order.id}`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ printerIds: autoPrintKOTPrinters.map(p => p.id) }),
         });
         const data = await res.json();
-        if (data.allFailed) await browserPrintFallback(order.id);
+        if (data.allFailed) {
+          console.warn("[KOT auto-print] Server print fallback failed; opening browser fallback", {
+            orderId: order.id,
+          });
+          await browserPrintFallback(order.id);
+        } else {
+          console.info("[KOT auto-print] Server fallback accepted the KOT print job", {
+            orderId: order.id,
+          });
+        }
       } catch {
+        console.error("[KOT auto-print] Print request errored; opening browser fallback", {
+          orderId: order.id,
+        });
         await browserPrintFallback(order.id);
       }
     });
