@@ -1,0 +1,112 @@
+First, close the Bluetooth pairing window by clicking Cancel.
+
+Step 1: Open printer settings
+Click the Windows Start button.
+Open Settings.
+Click Bluetooth & devices.
+Click Printers & scanners.
+Click Add device.
+Windows will search for printers. Wait a few seconds.
+
+Step 2: Choose manual setup
+If your printer does not appear, click:
+
+Add manually
+
+A new window will open.
+
+Select:
+
+Add a printer using an IP address or hostname
+
+Then click Next.
+
+Step 3: Enter the printer IP
+Use these settings:
+
+Device type: TCP/IP Device
+Hostname or IP address: 192.168.0.5
+Port name: IP_192.168.0.5
+
+If your printer report shows a different IP, use that IP instead of 192.168.0.5.
+
+Keep this option enabled if shown:
+
+Query the printer and automatically select the driver to use
+
+Click Next.
+
+Windows may take a few seconds to detect the printer.
+
+Step 4: Install the driver
+When Windows asks for a driver:
+
+Select the printer manufacturer if it is listed.
+If POSiFLOW/KPC307-UEWB is not listed, choose Have Disk only if you have a driver from the printer manufacturer.
+Otherwise choose:
+Generic
+
+and:
+Generic / Text Only
+
+Use a clear printer name:
+
+Kitchen Printer
+
+Then click Next and finish the installation.
+
+Confirm port 9100
+After installation:
+
+Go back to:
+Settings → Bluetooth & devices → Printers & scanners
+
+Click Kitchen Printer.
+Click Printer properties.
+Open the Ports tab.
+Select the port for 192.168.0.5.
+Click Configure Port.
+Check that it shows:
+
+Protocol: RAW
+Port Number: 9100
+
+If it shows a different port number, change it to:
+
+9100
+
+Click Apply, then OK.
+
+Print a Windows test page
+In Printer properties:
+
+Open the General tab.
+Click Print Test Page.
+The printer should print.
+
+If it does not print, QZ Tray will not be able to print yet. The IP connection must work first.
+
+Check the connection if the test page fails
+Open Command Prompt and type:
+
+ping 192.168.0.5
+
+You want to see:
+
+Reply from 192.168.0.5
+
+Then open PowerShell and type:
+
+Test-NetConnection 192.168.0.5 -Port 9100
+
+Look for:
+
+TcpTestSucceeded : True
+
+If it says False, check:
+
+The printer is switched on.
+The POS computer and printer are on the same Wi‑Fi network.
+The IP address is correct.
+The printer is not connected to a different Wi‑Fi network.
+Windows Firewall or the router is not blocking the connection.
