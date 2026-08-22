@@ -68,45 +68,73 @@ export async function getDailyKotInvoiceNumber(
   st: IStorage,
   order: Order,
 ): Promise<string> {
-  if (order.invoiceNumber) return order.invoiceNumber;
   const [orders, invoices] = await Promise.all([
     st.getOrders(),
     st.getInvoices(),
   ]);
   const invoiceByOrderId = new Map(invoices.map((invoice) => [invoice.orderId, invoice]));
-
-  // Only an invoice already attached to this exact order may be reused.
-  // A new order on the same table must receive a new invoice number.
-  const existingInvoiceOrder = orders
-    .filter((candidate) => candidate.id === order.id)
-    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-    .map((candidate) => invoiceByOrderId.get(candidate.id))
-    .find((invoice) => invoice);
-  if (existingInvoiceOrder) {
-    return existingInvoiceOrder.invoiceNumber;
-  }
-
-  // Multiple KOTs can be printed before checkout creates the final invoice.
-  // In that case, keep the invoice number anchored to this order's first KOT.
-  const sequence = await getDailyKotSequence(
-    st,
-    order.kotCount && order.kotCount > 1
-      ? { ...order, kotCount: 1 }
-      : order,
+  const active = orders.filter((candidate) =>
+    dayOf(candidate) === dayOf(order) &&
+    candidate.status !== "completed" &&
+    candidate.status !== "paid",
   );
+  const groupKey = (candidate: Order) =>
+    candidate.tableId ? `table:${candidate.tableId}` : `order:${candidate.id}`;
+  const groups = new Map<string, Order[]>();
+  for (const candidate of active) {
+    const key = groupKey(candidate);
+    groups.set(key, [...(groups.get(key) ?? []), candidate]);
+  }
+  const sortedGroups = [...groups.entries()].sort(([, left], [, right]) =>
+    Math.min(...left.map((item) => new Date(item.createdAt).getTime())) -
+    Math.min(...right.map((item) => new Date(item.createdAt).getTime())),
+  );
+  const groupNumbers = new Map<string, Set<string>>();
+  const numberGroups = new Map<string, Set<string>>();
+  for (const [key, members] of sortedGroups) {
+    const numbers = new Set<string>();
+    for (const member of members) {
+      if (member.invoiceNumber) numbers.add(member.invoiceNumber);
+      const invoice = invoiceByOrderId.get(member.id);
+      if (invoice?.invoiceNumber) numbers.add(invoice.invoiceNumber);
+    }
+    groupNumbers.set(key, numbers);
+    for (const number of numbers) {
+      numberGroups.set(number, new Set([...(numberGroups.get(number) ?? []), key]));
+    }
+  }
   const yymmdd = dayOf(order).replace(/-/g, "").slice(2);
-  return `BG${yymmdd}${String(sequence).padStart(2, "0")}`;
+  const usedNumbers = new Set(
+    invoices
+      .filter((invoice) => new Date(invoice.createdAt).toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) === dayOf(order))
+      .map((invoice) => invoice.invoiceNumber),
+  );
+  const assigned = new Set<string>();
+  let next = 1;
+  for (const [key, members] of sortedGroups) {
+    const uniqueExisting = [...(groupNumbers.get(key) ?? [])]
+      .filter((number) => (numberGroups.get(number)?.size ?? 0) === 1);
+    let number = uniqueExisting[0];
+    if (!number) {
+      do {
+        number = `BG${yymmdd}${String(next++).padStart(2, "0")}`;
+      } while (usedNumbers.has(number) || assigned.has(number));
+    }
+    assigned.add(number);
+    if (members.some((member) => member.id === order.id)) return number;
+  }
+  do {
+    const number = `BG${yymmdd}${String(next++).padStart(2, "0")}`;
+    if (!usedNumbers.has(number)) return number;
+  } while (true);
 }
 
 export async function ensureDailyKotInvoiceNumber(
   st: IStorage,
   order: Order,
 ): Promise<{ order: Order; invoiceNumber: string }> {
-  if (order.invoiceNumber) {
-    return { order, invoiceNumber: order.invoiceNumber };
-  }
   const generated = await getDailyKotInvoiceNumber(st, order);
-  const persisted = await st.ensureOrderInvoiceNumber(order.id, generated);
+  const persisted = await st.setOrderInvoiceNumber(order.id, generated);
   const resolved = persisted ?? { ...order, invoiceNumber: generated };
   return {
     order: resolved,
@@ -163,37 +191,7 @@ export async function getDailyKotInvoiceNumbers(
   tickets.sort((a, b) => a.createdAt - b.createdAt || a.key.localeCompare(b.key));
   const result = new Map<string, string>();
   for (const order of targetOrders) {
-    const existingInvoice = order.invoiceNumber
-      ? { invoiceNumber: order.invoiceNumber }
-      : orders
-          .filter((candidate) => candidate.id === order.id)
-          .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-          .map((candidate) => invoiceByOrderId.get(candidate.id))
-          .find((invoice) => invoice);
-
-    const sequence = existingInvoice
-      ? null
-      : (() => {
-          const firstBatchOrder =
-            order.kotCount && order.kotCount > 1
-              ? { ...order, kotCount: 1 }
-              : order;
-          const currentBatch = Math.max(1, firstBatchOrder.kotCount ?? 1);
-          const currentKey = `${firstBatchOrder.id}:${currentBatch}`;
-          const index = tickets.findIndex(
-            (ticket) =>
-              ticket.day === dayOf(firstBatchOrder) &&
-              ticket.key === currentKey,
-          );
-          return index >= 0 ? index + 1 : tickets.length + 1;
-        })();
-
-    const yymmdd = dayOf(order).replace(/-/g, "").slice(2);
-    result.set(
-      order.id,
-      existingInvoice?.invoiceNumber ??
-        `BG${yymmdd}${String(sequence).padStart(2, "0")}`,
-    );
+    result.set(order.id, await getDailyKotInvoiceNumber(st, order));
   }
   return result;
 }
