@@ -16,7 +16,7 @@ module.exports = {
         SESSION_SECRET: "aDauFfbM3ebs1JusMnBde31dZvn1lx6pT4kf4fSJm1o-RHHUOKZ1a0f0bciP1Dv4",
         QR_SESSION_SECRET: "ZTYj/a2OXy7iabAxcXL+ue17Aw3pQPg7wmyjLWvduDU4t/jS37xQriltz3khKboxGBhjje3+rqc7l7YuNmdOCA==",
         QZ_CERTIFICATE: fs.readFileSync(
-          "/etc/bungle/qz/digital-certificate.txt",
+          "/etc/bungle/qz/qz-rsa-cert.pem",
           "utf8"
         ),
         QZ_PRIVATE_KEY: fs.readFileSync(

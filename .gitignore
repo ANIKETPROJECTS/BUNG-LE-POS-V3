@@ -1,1 +1,4 @@
 dist/
+qz-private-key.pem
+qz-rsa-cert.pem
+qz-certs/
