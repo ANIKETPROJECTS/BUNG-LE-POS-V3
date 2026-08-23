@@ -1444,7 +1444,7 @@ export class MongoStorage implements IStorage {
   async createPrintJob(job: Omit<PrintJob, 'id' | 'createdAt'>): Promise<PrintJob> {
     await this.ensureConnection();
     const dedupeKey = job.orderId !== "test"
-      ? `${job.jobType || "legacy"}:${job.orderId}:${job.kotNumber}:${job.kotBatch ?? ""}:${job.printerName || `${job.printerIp}:${job.printerPort}`}`
+      ? `${job.orderId}:${job.kotNumber}:${job.printerName || `${job.printerIp}:${job.printerPort}`}`
       : undefined;
     if (dedupeKey) {
       const existing = await mongodb.getCollection<PrintJob>('print_jobs').findOne({
@@ -1464,7 +1464,6 @@ export class MongoStorage implements IStorage {
 
   async getPendingPrintJobs(): Promise<PrintJob[]> {
     await this.ensureConnection();
-    await this.expireStaleKotPrintJobs();
     const docs = await mongodb.getCollection<PrintJob>('print_jobs')
       .find({ status: 'pending' } as any)
       .sort({ createdAt: 1 } as any)
@@ -1478,22 +1477,11 @@ export class MongoStorage implements IStorage {
     const leaseUntil = new Date(now.getTime() + 60_000);
     const collection = mongodb.getCollection<PrintJob>('print_jobs');
     if (printerNames.length === 0) return undefined;
-    await this.expireStaleKotPrintJobs(now);
     const result = await collection.findOneAndUpdate(
       {
-        $and: [
-          {
-            $or: [
-              { status: 'pending' },
-            ],
-          },
-          {
-            $or: [
-              { jobType: { $in: ['invoice', 'test'] } },
-              { jobType: { $exists: false }, orderId: { $in: ['bill', 'test'] } },
-              { jobType: 'kot', expiresAt: { $gt: now } },
-            ],
-          },
+        $or: [
+          { status: 'pending' },
+          { status: 'processing', leaseUntil: { $lt: now } },
         ],
         printerName: { $in: printerNames },
       } as any,
@@ -1514,67 +1502,17 @@ export class MongoStorage implements IStorage {
     return job as PrintJob;
   }
 
-  async expireStaleKotPrintJobs(now = new Date()): Promise<void> {
-    await this.ensureConnection();
-    await mongodb.getCollection<PrintJob>('print_jobs').updateMany(
-      {
-        status: { $in: ['pending', 'processing'] },
-        $or: [
-          { jobType: 'kot', expiresAt: { $lte: now } },
-          // Before jobType was added, all non-bill/test jobs were KOT jobs.
-          { jobType: { $exists: false }, orderId: { $nin: ['bill', 'test'] } },
-        ],
-      } as any,
-      {
-        $set: {
-          status: 'cancelled',
-          doneAt: now,
-          lastError: 'KOT print window expired while printer was unavailable',
-        },
-      } as any,
-    );
-  }
-
-  async cancelPrintJobsForOrder(orderId: string, kotBatch?: number): Promise<void> {
-    await this.ensureConnection();
-    const batchFilter = kotBatch === undefined
-      ? {}
-      : {
-          $or: [
-            { kotBatch },
-            // Jobs created before batch metadata was added were KOT jobs.
-            // They are safe to cancel with the item batch during deletion.
-            { kotBatch: { $exists: false }, jobType: { $ne: 'invoice' } },
-          ],
-        };
-    await mongodb.getCollection<PrintJob>('print_jobs').updateMany(
-      {
-        orderId,
-        status: { $in: ['pending', 'processing'] },
-        ...batchFilter,
-      } as any,
-      {
-        $set: {
-          status: 'cancelled',
-          doneAt: new Date(),
-          lastError: 'KOT/order was deleted before printing',
-        },
-        $unset: { leaseUntil: '', workerId: '' },
-      } as any,
-    );
-  }
-
   async markPrintJobDone(id: string, workerId?: string): Promise<void> {
     await this.ensureConnection();
     await mongodb.getCollection('print_jobs').updateOne(
-      { id, status: 'processing', ...(workerId ? { workerId } : {}) } as any,
+      { id, ...(workerId ? { workerId } : {}) } as any,
       { $set: { status: 'done', doneAt: new Date() }, $unset: { leaseUntil: '' } } as any,
     );
   }
 
   async markPrintJobFailed(id: string, workerId?: string, error?: string): Promise<void> {
     await this.ensureConnection();
-    const filter = { id, status: 'processing', ...(workerId ? { workerId } : {}) } as any;
+    const filter = { id, ...(workerId ? { workerId } : {}) } as any;
     const current = await mongodb.getCollection<PrintJob>('print_jobs').findOne(filter);
     await mongodb.getCollection('print_jobs').updateOne(filter, {
       // A QZ error is ambiguous: the printer may have accepted the bytes

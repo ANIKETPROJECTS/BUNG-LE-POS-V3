@@ -426,11 +426,8 @@ export class DigitalMenuSyncService {
           printerIp: printer.ip,
           printerPort: printer.port,
           printerName: printer.name,
-          jobType: "kot",
-          kotBatch: updatedOrder.kotCount,
           escposData,
           status: "pending",
-          expiresAt: new Date(Date.now() + 5 * 60 * 1000),
         });
       }
     }
@@ -582,11 +579,8 @@ export class DigitalMenuSyncService {
             printerIp: printer.ip,
             printerPort: printer.port,
           printerName: printer.name,
-            jobType: "kot",
-            kotBatch: updatedOrder.kotCount,
             escposData: escBase64,
             status: 'pending',
-            expiresAt: new Date(Date.now() + 5 * 60 * 1000),
           });
           console.log(`[PrintJob] Queued ${kotNumber} → ${printer.ip}:${printer.port} (digital menu order)`);
         }

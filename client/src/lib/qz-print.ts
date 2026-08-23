@@ -76,16 +76,7 @@ export async function qzPrintEndpoint(endpoint: string): Promise<QzPrinterResult
     const response = await fetch(endpoint, { credentials: "include" });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || "Could not prepare print");
-    const result = await printQzPayload(payload);
-    if (result.success) {
-      console.log("[PRINT-ACTUAL] QZ accepted bytes for physical printing", {
-        printedAt: new Date().toISOString(),
-        source: "direct-qz-endpoint",
-        endpoint,
-        printer: result.printer ?? null,
-      });
-    }
-    return result;
+    return await printQzPayload(payload);
   } catch (error) {
     const message = error instanceof Error ? error.message : "QZ Tray print failed";
     console.error("[QZ] Print job failed", { endpoint, error: message });

@@ -190,7 +190,6 @@ async function queueBillPrintJobs(opts: {
           printerIp: p.ip,
           printerPort: p.port,
           printerName: p.name,
-           jobType: "invoice",
           escposData: escData.toString("base64"),
           status: "pending",
         }),
@@ -1399,14 +1398,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           await mongoStorage.createPrintJob({
             orderId: updatedOrder.id,
             kotNumber: invoiceNumber,
-            jobType: "kot",
-            kotBatch,
             printerIp: printer.ip,
             printerPort: printer.port,
             printerName: printer.name,
             escposData: escBase64,
             status: "pending",
-            expiresAt: new Date(Date.now() + 5 * 60 * 1000),
           });
           console.log(
             `[PrintJob] Queued ${invoiceNumber} → ${printer.ip}:${printer.port}`,
@@ -1880,7 +1876,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const st = getStorage(req);
     const order = await st.getOrder(req.params.id);
     if (!order) return res.status(404).json({ error: "Order not found" });
-    await mongoStorage.cancelPrintJobsForOrder(req.params.id);
     const items = await st.getOrderItems(req.params.id);
     for (const item of items) await st.deleteOrderItem(item.id);
     if (order.tableId) {
@@ -1931,9 +1926,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Order item not found" });
     }
 
-    if (item.status !== "non_kot") {
-      await mongoStorage.cancelPrintJobsForOrder(item.orderId, item.kotBatch);
-    }
     const success = await st.deleteOrderItem(req.params.id);
     if (!success) {
       return res.status(500).json({ error: "Failed to delete order item" });
@@ -3710,7 +3702,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         printerIp: printer.ip,
         printerPort: printer.port,
         printerName: printer.name,
-        jobType: "test",
         escposData: data.toString("base64"),
         status: "pending",
       });
