@@ -1485,7 +1485,6 @@ export class MongoStorage implements IStorage {
           {
             $or: [
               { status: 'pending' },
-              { status: 'processing', leaseUntil: { $lt: now } },
             ],
           },
           {
