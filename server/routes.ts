@@ -1927,6 +1927,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Order item not found" });
     }
 
+    // Prevent a queued or leased QZ job from printing after its KOT is deleted.
+    // New jobs include the batch in their dedupe key; for legacy jobs without
+    // that key, cancelPrintJobsForOrderBatch safely falls back to the order.
+    await mongoStorage.cancelPrintJobsForOrderBatch(
+      item.orderId,
+      typeof (item as any).kotBatch === "number" ? (item as any).kotBatch : null,
+    );
+
     const success = await st.deleteOrderItem(req.params.id);
     if (!success) {
       return res.status(500).json({ error: "Failed to delete order item" });

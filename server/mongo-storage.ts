@@ -1523,6 +1523,31 @@ export class MongoStorage implements IStorage {
       $unset: { leaseUntil: '', workerId: '' },
     } as any);
   }
+
+  async cancelPrintJobsForOrderBatch(orderId: string, kotBatch?: number | null): Promise<void> {
+    await this.ensureConnection();
+    const filter: any = {
+      orderId,
+      status: { $in: ["pending", "processing"] },
+    };
+    if (typeof kotBatch === "number") {
+      const escapedOrderId = orderId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      filter.dedupeKey = {
+        $regex: `^${escapedOrderId}:.*:${kotBatch}:[^:]+$`,
+      };
+    }
+    await mongodb.getCollection<PrintJob>("print_jobs").updateMany(
+      filter,
+      {
+        $set: {
+          status: "failed",
+          doneAt: new Date(),
+          lastError: "Cancelled because the KOT was deleted",
+        },
+        $unset: { leaseUntil: "", workerId: "" },
+      } as any,
+    );
+  }
 }
 
 export const mongoStorage = new MongoStorage();
