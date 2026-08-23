@@ -1,0 +1,48 @@
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_item_deleted Data: {id: 'b5e5a592-b740-4acc-996a-75024b00fab5', orderId: 'aed29e4d-1a6f-470d-8c5c-a495fa773225'}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order items queries for orderId: aed29e4d-1a6f-470d-8c5c-a495fa773225
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_item_deleted Data: {id: '204c4200-6798-40f0-8266-73389603dd11', orderId: 'aed29e4d-1a6f-470d-8c5c-a495fa773225'}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order items queries for orderId: aed29e4d-1a6f-470d-8c5c-a495fa773225
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_item_deleted Data: {id: 'f569524c-a895-40af-ae30-653e008e3b18', orderId: 'aed29e4d-1a6f-470d-8c5c-a495fa773225'}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order items queries for orderId: aed29e4d-1a6f-470d-8c5c-a495fa773225
+index-CS7pDyD_.js:558 [WebSocket] Message received: table_updated Data: {_id: '6a7c41d1e4d4573609167c65', id: 'b2b1ec36-028c-4fe2-b969-bb82ba0753ab', tableNumber: 'T5', seats: 4, status: 'free', …}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating tables queries
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_updated Data: {id: '865d975c-851c-4b9f-be50-54d285060a70', deleted: true}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order queries for order: 865d975c-851c-4b9f-be50-54d285060a70
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_item_deleted Data: {id: '475c80e8-7022-4a89-a4a7-9b223c4f8335', orderId: '865d975c-851c-4b9f-be50-54d285060a70'}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order items queries for orderId: 865d975c-851c-4b9f-be50-54d285060a70
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_item_deleted Data: {id: '1e54beea-c7e7-44d4-bf56-915e1e924d89', orderId: '1cc2ed11-986e-49ce-a15c-4b3e0150913f'}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order items queries for orderId: 1cc2ed11-986e-49ce-a15c-4b3e0150913f
+index-CS7pDyD_.js:558 [WebSocket] Message received: table_updated Data: {_id: '6a7c4193e4d4573609167c55', id: '2d7803e0-e63b-4e22-b38f-a8d5cb177d85', tableNumber: 'T4', seats: 4, status: 'free', …}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating tables queries
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_updated Data: {id: '1cc2ed11-986e-49ce-a15c-4b3e0150913f', deleted: true}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order queries for order: 1cc2ed11-986e-49ce-a15c-4b3e0150913f
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_item_deleted Data: {id: '1ae8e5d2-12a4-4c85-aeaa-bffd64c98fe6', orderId: '1cc2ed11-986e-49ce-a15c-4b3e0150913f'}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order items queries for orderId: 1cc2ed11-986e-49ce-a15c-4b3e0150913f
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_updated Data: {_id: '6a8b1ca85d56986dbeb1746f', id: '1cc2ed11-986e-49ce-a15c-4b3e0150913f', tableId: '2d7803e0-e63b-4e22-b38f-a8d5cb177d85', orderType: 'dine-in', status: 'sent_to_kitchen', …}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order queries for order: 1cc2ed11-986e-49ce-a15c-4b3e0150913f
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_item_added Data: {orderId: '1cc2ed11-986e-49ce-a15c-4b3e0150913f', item: {…}}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order items queries for orderId: 1cc2ed11-986e-49ce-a15c-4b3e0150913f
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_item_added Data: {orderId: '1cc2ed11-986e-49ce-a15c-4b3e0150913f', item: {…}}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order items queries for orderId: 1cc2ed11-986e-49ce-a15c-4b3e0150913f
+index-CS7pDyD_.js:558 [WebSocket] Message received: kot_created Data: {orderId: '1cc2ed11-986e-49ce-a15c-4b3e0150913f', tableNumber: 'T4', customerName: null, itemCount: 2, isUpdated: true}
+index-CS7pDyD_.js:558 [WebSocket] Message received: external_orders_batch_synced Data: {count: 1}
+index-CS7pDyD_.js:833 [Print worker] Claimed print job {jobId: 'fc6c3602-1d00-4887-9951-3b4543732454', orderId: '1cc2ed11-986e-49ce-a15c-4b3e0150913f', document: 'BG26082302', printer: 'POS80-4', attempt: 1}
+index-CS7pDyD_.js:664 [QZ] Local printers discovered {preferred: Array(1), available: Array(1)}
+index-CS7pDyD_.js:664 [QZ] Print job sent successfully {printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Print job completed {jobId: 'fc6c3602-1d00-4887-9951-3b4543732454', printer: 'POS80-4'}
+index-CS7pDyD_.js:558 [WebSocket] Message received: table_updated Data: {_id: '6a4de20d8b2bc2884b7365e4', id: '57ba88b0-11c0-4886-8ef0-593e71b14f9e', tableNumber: 'T2', seats: 4, status: 'free', …}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating tables queries
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_updated Data: {id: 'aed29e4d-1a6f-470d-8c5c-a495fa773225', deleted: true}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order queries for order: aed29e4d-1a6f-470d-8c5c-a495fa773225
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_item_deleted Data: {id: '7d1483c1-2da1-4100-b03d-eed62312c1cd', orderId: 'aed29e4d-1a6f-470d-8c5c-a495fa773225'}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order items queries for orderId: aed29e4d-1a6f-470d-8c5c-a495fa773225
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_updated Data: {_id: '6a8b1c8f5d56986dbeb1746c', id: 'aed29e4d-1a6f-470d-8c5c-a495fa773225', tableId: '57ba88b0-11c0-4886-8ef0-593e71b14f9e', orderType: 'dine-in', status: 'completed', …}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order queries for order: aed29e4d-1a6f-470d-8c5c-a495fa773225
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_item_added Data: {orderId: 'aed29e4d-1a6f-470d-8c5c-a495fa773225', item: {…}}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order items queries for orderId: aed29e4d-1a6f-470d-8c5c-a495fa773225
+index-CS7pDyD_.js:558 [WebSocket] Message received: kot_created Data: {orderId: 'aed29e4d-1a6f-470d-8c5c-a495fa773225', tableNumber: 'T2', customerName: null, itemCount: 1, isUpdated: true}
+index-CS7pDyD_.js:558 [WebSocket] Message received: external_orders_batch_synced Data: {count: 1}
+index-CS7pDyD_.js:833 [Print worker] Claimed print job {jobId: 'abf491ff-5f31-409d-8c1e-9ec51f2d2401', orderId: 'aed29e4d-1a6f-470d-8c5c-a495fa773225', document: 'BG26082302', printer: 'POS80-4', attempt: 1}
+index-CS7pDyD_.js:664 [QZ] Local printers discovered {preferred: Array(1), available: Array(1)}
+index-CS7pDyD_.js:664 [QZ] Print job sent successfully {printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Print job completed {jobId: 'abf491ff-5f31-409d-8c1e-9ec51f2d2401', printer: 'POS80-4'}
