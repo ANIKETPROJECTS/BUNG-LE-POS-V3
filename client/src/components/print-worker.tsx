@@ -78,6 +78,15 @@ export default function PrintWorker() {
           attempt: job.attempts,
         });
 
+        const activeResponse = await fetch(
+          `/api/print-jobs/${job.id}/active?workerId=${encodeURIComponent(workerIdRef.current ?? "")}`,
+          { credentials: "include" },
+        );
+        if (!activeResponse.ok || !(await activeResponse.json()).active) {
+          console.info("[Print worker] Job was cancelled before printing", { jobId: job.id });
+          return;
+        }
+
         const result = await printQzPayload({
           data: job.escposData,
           printers: job.printerName ? [job.printerName] : [],

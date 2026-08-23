@@ -422,6 +422,8 @@ export class ExternalOrdersSyncService {
           printerIp: printer.ip,
           printerPort: printer.port,
           printerName: printer.name,
+           kotBatch,
+           dedupeKey: `${updatedOrder.id}:${kotNumber}:${kotBatch}:${printer.name}`,
           escposData,
           status: "pending",
         });
@@ -904,6 +906,8 @@ export class ExternalOrdersSyncService {
             printerIp: printer.ip,
             printerPort: printer.port,
             printerName: printer.name,
+            kotBatch: 1,
+            dedupeKey: `${posOrder.id}:${kotNumber}:1:${printer.name}`,
             escposData: escBase64,
             status: "pending",
           });

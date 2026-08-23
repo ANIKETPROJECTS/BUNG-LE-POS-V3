@@ -426,6 +426,8 @@ export class DigitalMenuSyncService {
           printerIp: printer.ip,
           printerPort: printer.port,
           printerName: printer.name,
+           kotBatch: (updatedOrder.kotCount ?? 0),
+           dedupeKey: `${updatedOrder.id}:${kotNumber}:${updatedOrder.kotCount ?? 0}:${printer.name}`,
           escposData,
           status: "pending",
         });
@@ -578,7 +580,9 @@ export class DigitalMenuSyncService {
             kotNumber,
             printerIp: printer.ip,
             printerPort: printer.port,
-          printerName: printer.name,
+           printerName: printer.name,
+           kotBatch: (updatedOrder.kotCount ?? 0),
+           dedupeKey: `${updatedOrder.id}:${kotNumber}:${updatedOrder.kotCount ?? 0}:${printer.name}`,
             escposData: escBase64,
             status: 'pending',
           });

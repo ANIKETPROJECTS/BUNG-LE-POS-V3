@@ -1524,6 +1524,19 @@ export class MongoStorage implements IStorage {
     } as any);
   }
 
+  async isPrintJobActive(id: string, workerId?: string): Promise<boolean> {
+    await this.ensureConnection();
+    const job = await mongodb.getCollection<PrintJob>("print_jobs").findOne(
+      {
+        id,
+        ...(workerId ? { workerId } : {}),
+        status: "processing",
+      } as any,
+      { projection: { _id: 1 } },
+    );
+    return !!job;
+  }
+
   async cancelPrintJobsForOrderBatch(orderId: string, kotBatch?: number | null): Promise<void> {
     await this.ensureConnection();
     const filter: any = {
@@ -1532,9 +1545,10 @@ export class MongoStorage implements IStorage {
     };
     if (typeof kotBatch === "number") {
       const escapedOrderId = orderId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      filter.dedupeKey = {
-        $regex: `^${escapedOrderId}:.*:${kotBatch}:[^:]+$`,
-      };
+      filter.$or = [
+        { kotBatch },
+        { dedupeKey: { $regex: `^${escapedOrderId}:.*:${kotBatch}:[^:]+$` } },
+      ];
     }
     await mongodb.getCollection<PrintJob>("print_jobs").updateMany(
       filter,

@@ -1401,6 +1401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             printerIp: printer.ip,
             printerPort: printer.port,
             printerName: printer.name,
+            kotBatch,
             dedupeKey: `${updatedOrder.id}:${invoiceNumber}:${kotBatch}:${printer.name}`,
             escposData: escBase64,
             status: "pending",
@@ -3777,6 +3778,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const error = typeof req.body?.error === "string" ? req.body.error : undefined;
       await mongoStorage.markPrintJobFailed(req.params.id, workerId, error);
       res.json({ ok: true });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
+  // The worker checks this immediately after claiming and before sending
+  // bytes. A delete can cancel a processing job while it is between those
+  // two operations.
+  app.get("/api/print-jobs/:id/active", requireAuth, async (req, res) => {
+    try {
+      const workerId = typeof req.query.workerId === "string" ? req.query.workerId : undefined;
+      res.json({ active: await mongoStorage.isPrintJobActive(req.params.id, workerId) });
     } catch (e: any) {
       res.status(500).json({ error: e.message });
     }
