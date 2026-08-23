@@ -466,13 +466,16 @@ export interface PrintJob {
   id: string;
   orderId: string;
   kotNumber: string;
+  jobType?: "kot" | "invoice" | "test";
+  kotBatch?: number;
   printerIp: string;
   printerPort: number;
   printerName?: string;
   dedupeKey?: string;
   escposData: string;   // base64-encoded ESC/POS bytes
-  status: "pending" | "processing" | "done" | "failed";
+  status: "pending" | "processing" | "done" | "failed" | "cancelled";
   createdAt: Date;
+  expiresAt?: Date | null;
   doneAt?: Date | null;
   workerId?: string;
   leaseUntil?: Date | null;

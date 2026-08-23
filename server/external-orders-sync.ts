@@ -419,11 +419,14 @@ export class ExternalOrdersSyncService {
         await mongoStorage.createPrintJob({
           orderId: updatedOrder.id,
           kotNumber,
+          jobType: "kot",
+          kotBatch: updatedOrder.kotCount,
           printerIp: printer.ip,
           printerPort: printer.port,
           printerName: printer.name,
           escposData,
           status: "pending",
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000),
         });
       }
     }
@@ -901,11 +904,14 @@ export class ExternalOrdersSyncService {
           await mongoStorage.createPrintJob({
             orderId: updatedOrder.id,
             kotNumber,
+            jobType: "kot",
+            kotBatch: updatedOrder.kotCount,
             printerIp: printer.ip,
             printerPort: printer.port,
             printerName: printer.name,
             escposData: escBase64,
             status: "pending",
+          expiresAt: new Date(Date.now() + 5 * 60 * 1000),
           });
           console.log(`[PrintJob] Queued ${kotNumber} → ${printer.ip}:${printer.port} (external order)`);
         }
