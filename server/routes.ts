@@ -1397,7 +1397,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         for (const printer of kotPrinters) {
           await mongoStorage.createPrintJob({
             orderId: updatedOrder.id,
-            kotNumber,
+            kotNumber: invoiceNumber,
             printerIp: printer.ip,
             printerPort: printer.port,
             printerName: printer.name,
@@ -1405,7 +1405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: "pending",
           });
           console.log(
-            `[PrintJob] Queued ${kotNumber} → ${printer.ip}:${printer.port}`,
+            `[PrintJob] Queued ${invoiceNumber} → ${printer.ip}:${printer.port}`,
           );
         }
         await Promise.all(orderItems.map((item) => st.updateOrderItemStatus(item.id, "sent_to_kitchen")));
