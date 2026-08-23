@@ -67,10 +67,41 @@ export class ExternalOrdersSyncService {
     await this.connect().catch(err =>
       console.warn("⚠️ [ExternalOrders] Initial connect failed (will retry):", err.message)
     );
+    await this.mirrorExistingActivePOSOrders();
     await this.sync();
 
     this.syncInterval = setInterval(() => this.sync(), intervalMs);
     console.log(`✅ [ExternalOrders] Sync running every ${intervalMs / 1000}s`);
+  }
+
+  private async mirrorExistingActivePOSOrders(): Promise<void> {
+    try {
+      await this.connect();
+      const activeStatuses = new Set([
+        "saved",
+        "sent_to_kitchen",
+        "ready_to_bill",
+        "billed",
+      ]);
+      const orders = await this.storage.getOrders();
+      let mirrored = 0;
+      for (const order of orders) {
+        if (!activeStatuses.has(order.status)) continue;
+        const existing = await this.collection().findOne(
+          { posOrderId: order.id },
+          { projection: { source: 1 } },
+        );
+        // Do not rewrite a document that originated in the digital menu.
+        if (existing && existing.source !== "pos") continue;
+        await this.mirrorPOSOrder(order.id);
+        mirrored++;
+      }
+      if (mirrored > 0) {
+        console.log(`🔁 [ExternalOrders] Mirrored ${mirrored} existing active POS order(s)`);
+      }
+    } catch (err) {
+      console.error("[ExternalOrders] Failed to mirror existing active POS orders:", err);
+    }
   }
 
   stop(): void {
@@ -502,6 +533,68 @@ export class ExternalOrdersSyncService {
   }
 
   /**
+   * Publish a POS-created order to the shared Orders database so the digital
+   * menu can display the current order for a table. POS-owned documents are
+   * marked as already synced and carry posOrderId, so this service will never
+   * import its own mirror back into POS as a duplicate order.
+   */
+  async mirrorPOSOrder(posOrderId: string): Promise<void> {
+    try {
+      await this.connect();
+      const order = await this.storage.getOrder(posOrderId);
+      if (!order) return;
+
+      const items = await this.storage.getOrderItems(posOrderId);
+      const table = order.tableId ? await this.storage.getTable(order.tableId) : null;
+      const floor = table?.floorId ? await this.storage.getFloor(table.floorId) : null;
+      const now = new Date();
+      const document = {
+        posOrderId: order.id,
+        source: "pos",
+        customerName: order.customerName ?? null,
+        customerPhone: order.customerPhone ?? null,
+        customerAddress: order.customerAddress ?? null,
+        orderType: order.orderType,
+        ...(table ? {
+          tableNumber: table.tableNumber,
+          tableId: table.tableNumber,
+        } : {}),
+        ...(floor ? {
+          floorName: floor.name,
+          floorId: floor.name,
+        } : {}),
+        items: items.map((item) => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: Number(item.price),
+          notes: item.notes ?? null,
+          isVeg: item.isVeg ?? true,
+        })),
+        total: Number(order.total ?? 0),
+        paymentStatus: order.status === "completed" ? "paid" : "pending",
+        paymentMode: order.paymentMode ?? null,
+        status: order.status,
+        createdAt: order.createdAt ?? now,
+        syncedToPOS: true,
+        syncedAt: now,
+      };
+
+      await this.collection().updateOne(
+        { posOrderId: order.id },
+        {
+          $set: document,
+          $setOnInsert: { createdAt: document.createdAt },
+        },
+        { upsert: true },
+      );
+      console.log(`🔁 [ExternalOrders] Mirrored POS order ${order.id} to Orders.orders`);
+    } catch (err) {
+      // External visibility must never block POS order creation or checkout.
+      console.error(`⚠️  [ExternalOrders] Could not mirror POS order ${posOrderId}:`, err);
+    }
+  }
+
+  /**
    * Delete the external-DB order that corresponds to `posOrderId`.
    * Called when a KOT order is deleted from the POS.
    */
@@ -529,6 +622,10 @@ export class ExternalOrdersSyncService {
     try {
       const doc = await this.findExternalDoc(posOrderId);
       if (!doc) return; // not an external-DB order — nothing to do
+      if (doc.source === "pos") {
+        await this.mirrorPOSOrder(posOrderId);
+        return;
+      }
 
       const items: any[] = doc.items || [];
       const idx = items.findIndex((i: any) =>
@@ -607,7 +704,10 @@ export class ExternalOrdersSyncService {
   ): Promise<void> {
     try {
       const doc = await this.findExternalDoc(posOrderId);
-      if (!doc) return;
+      if (!doc || doc.source === "pos") {
+        await this.mirrorPOSOrder(posOrderId);
+        return;
+      }
 
       const newItem = {
         name:     item.name,

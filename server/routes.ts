@@ -1236,6 +1236,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await st.updateTableStatus(order.tableId, "occupied");
     }
 
+    // Publish POS-created table orders so the digital menu can show the
+    // ongoing order. This is best-effort and never blocks POS order creation.
+    externalOrdersSync.mirrorPOSOrder(order.id).catch(() => {});
     broadcastUpdate("order_created", order);
     res.json(order);
   });
