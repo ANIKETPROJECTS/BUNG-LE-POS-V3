@@ -1752,7 +1752,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     for (const settled of checkedOutOrders) {
       broadcastUpdate("order_paid", settled);
-      externalOrdersSync.mirrorPOSOrder(settled.id).catch(() => {});
+      // Give the shared Orders mirror a short chance to receive the terminal
+      // state before replying, while keeping external MongoDB from blocking
+      // payment completion if it is unavailable.
+      await Promise.race([
+        externalOrdersSync.mirrorPOSOrder(settled.id),
+        new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+      ]).catch(() => {});
     }
     broadcastUpdate("invoice_created", invoice);
     if (result.data.print) {
