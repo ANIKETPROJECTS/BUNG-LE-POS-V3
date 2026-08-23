@@ -1299,6 +1299,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
+    externalOrdersSync.mirrorPOSOrder(order.id).catch(() => {});
     broadcastUpdate("order_updated", order);
     res.json(order);
   });
@@ -1315,6 +1316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await st.updateTableStatus(order.tableId, "free");
     }
 
+    externalOrdersSync.mirrorPOSOrder(order.id).catch(() => {});
     broadcastUpdate("order_completed", order);
     res.json(order);
   });
@@ -1340,6 +1342,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
+    externalOrdersSync.mirrorPOSOrder(order.id).catch(() => {});
     const pendingKotItems = (await st.getOrderItems(req.params.id))
       .filter((item) => item.status === "new");
     if (pendingKotItems.length === 0) {
@@ -1425,6 +1428,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
+    externalOrdersSync.mirrorPOSOrder(order.id).catch(() => {});
 
     let invoice = null;
     if (result.data.print && result.data.printVia !== "qz") {
@@ -1508,6 +1512,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
+    externalOrdersSync.mirrorPOSOrder(order.id).catch(() => {});
 
     const orderItems = await st.getOrderItems(req.params.id);
 
@@ -1747,6 +1752,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     for (const settled of checkedOutOrders) {
       broadcastUpdate("order_paid", settled);
+      externalOrdersSync.mirrorPOSOrder(settled.id).catch(() => {});
     }
     broadcastUpdate("invoice_created", invoice);
     if (result.data.print) {
