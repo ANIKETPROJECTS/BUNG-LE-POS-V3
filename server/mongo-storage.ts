@@ -1444,7 +1444,8 @@ export class MongoStorage implements IStorage {
   async createPrintJob(job: Omit<PrintJob, 'id' | 'createdAt'>): Promise<PrintJob> {
     await this.ensureConnection();
     const dedupeKey = job.orderId !== "test"
-      ? `${job.orderId}:${job.kotNumber}:${job.printerName || `${job.printerIp}:${job.printerPort}`}`
+      ? job.dedupeKey ||
+        `${job.orderId}:${job.kotNumber}:${job.printerName || `${job.printerIp}:${job.printerPort}`}`
       : undefined;
     if (dedupeKey) {
       const existing = await mongodb.getCollection<PrintJob>('print_jobs').findOne({

@@ -1,0 +1,32 @@
+index-CS7pDyD_.js:833 [Print worker] Claimed print job {jobId: 'ef68ea14-8d12-458b-a02a-52dad71105fd', orderId: '53f77fcd-6efe-4396-93d9-3f3863be9ecd', document: 'BG26082301', printer: 'POS80-4', attempt: 1}
+index-CS7pDyD_.js:664 [QZ] Local printers discovered {preferred: Array(1), available: Array(1)}
+index-CS7pDyD_.js:664 [QZ] Print job sent successfully {printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Print job completed {jobId: 'ef68ea14-8d12-458b-a02a-52dad71105fd', printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Claimed print job {jobId: '5dcbcefe-545e-4801-8cc9-669e7907c9ea', orderId: '53f77fcd-6efe-4396-93d9-3f3863be9ecd', document: 'BG26082301', printer: 'POS80-4', attempt: 1}
+index-CS7pDyD_.js:664 [QZ] Local printers discovered {preferred: Array(1), available: Array(1)}
+index-CS7pDyD_.js:664 [QZ] Print job sent successfully {printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Print job completed {jobId: '5dcbcefe-545e-4801-8cc9-669e7907c9ea', printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Claimed print job {jobId: 'd92f0abf-8ec3-4008-80b8-2e54f94e33bf', orderId: 'bill', document: 'BG26082305', printer: 'POS80-4', attempt: 1}
+index-CS7pDyD_.js:664 [QZ] Local printers discovered {preferred: Array(1), available: Array(1)}
+index-CS7pDyD_.js:664 [QZ] Print job sent successfully {printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Print job completed {jobId: 'd92f0abf-8ec3-4008-80b8-2e54f94e33bf', printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Claimed print job {jobId: '2e177a09-fac0-4fe7-bf15-babfb0ce6252', orderId: '53f77fcd-6efe-4396-93d9-3f3863be9ecd', document: 'BG26082301', printer: 'POS80-4', attempt: 1}
+index-CS7pDyD_.js:664 [QZ] Local printers discovered {preferred: Array(1), available: Array(1)}
+index-CS7pDyD_.js:664 [QZ] Print job sent successfully {printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Print job completed {jobId: '2e177a09-fac0-4fe7-bf15-babfb0ce6252', printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Claimed print job {jobId: '3b89f801-d4b2-4881-ac94-d6d65f01b5a1', orderId: '548e8142-15c2-4310-9598-11d730d36122', document: 'BG26082302', printer: 'POS80-4', attempt: 1}
+index-CS7pDyD_.js:664 [QZ] Local printers discovered {preferred: Array(1), available: Array(1)}
+index-CS7pDyD_.js:664 [QZ] Print job sent successfully {printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Print job completed {jobId: '3b89f801-d4b2-4881-ac94-d6d65f01b5a1', printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Claimed print job {jobId: '63b4be9a-aa46-4bd1-adad-323604140b7e', orderId: '548e8142-15c2-4310-9598-11d730d36122', document: 'BG26082302', printer: 'POS80-4', attempt: 1}
+index-CS7pDyD_.js:664 [QZ] Local printers discovered {preferred: Array(1), available: Array(1)}
+index-CS7pDyD_.js:664 [QZ] Print job sent successfully {printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Print job completed {jobId: '63b4be9a-aa46-4bd1-adad-323604140b7e', printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Claimed print job {jobId: '96016fd6-811a-459b-bd85-b450d0ec86d4', orderId: '53f77fcd-6efe-4396-93d9-3f3863be9ecd', document: 'BG26082301', printer: 'POS80-4', attempt: 1}
+index-CS7pDyD_.js:664 [QZ] Local printers discovered {preferred: Array(1), available: Array(1)}
+index-CS7pDyD_.js:664 [QZ] Print job sent successfully {printer: 'POS80-4'}
+index-CS7pDyD_.js:833 [Print worker] Print job completed {jobId: '96016fd6-811a-459b-bd85-b450d0ec86d4', printer: 'POS80-4'}
+index-CS7pDyD_.js:558 [WebSocket] Disconnected
+index-CS7pDyD_.js:558 [WebSocket] Reconnecting in 1s (attempt 2/3)...
+index-CS7pDyD_.js:558 [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+index-CS7pDyD_.js:558 [WebSocket] Connected successfully!

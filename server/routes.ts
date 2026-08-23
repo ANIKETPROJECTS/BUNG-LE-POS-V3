@@ -1401,6 +1401,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             printerIp: printer.ip,
             printerPort: printer.port,
             printerName: printer.name,
+            dedupeKey: `${updatedOrder.id}:${invoiceNumber}:${kotBatch}:${printer.name}`,
             escposData: escBase64,
             status: "pending",
           });
