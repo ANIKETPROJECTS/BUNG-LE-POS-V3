@@ -355,7 +355,15 @@ export class ExternalOrdersSyncService {
   private async syncAddedItems(doc: any): Promise<number> {
     const posOrder = await this.storage.getOrder(String(doc.posOrderId));
     if (!posOrder) return 0;
-    const incoming = (doc.items || doc.orderItems || doc.cart || []) as any[];
+
+    // The sync cycle takes a snapshot of external orders before processing
+    // them. A POS deletion can update/delete the external document while that
+    // snapshot is still waiting in the processing loop. Re-read the document
+    // here so a stale snapshot cannot resurrect deleted items and create a new
+    // KOT after the delete request has completed.
+    const currentDoc = await this.findExternalDoc(String(doc.posOrderId));
+    if (!currentDoc) return 0;
+    const incoming = (currentDoc.items || currentDoc.orderItems || currentDoc.cart || []) as any[];
     const existing = await this.storage.getOrderItems(posOrder.id);
     if (incoming.length <= existing.length) return 0;
 
@@ -437,7 +445,7 @@ export class ExternalOrdersSyncService {
     this.broadcastFn?.("kot_created", {
       orderId: posOrder.id,
       tableNumber: table?.tableNumber ?? null,
-      customerName: doc.customerName || null,
+      customerName: currentDoc.customerName || null,
       itemCount: created.length,
       isUpdated: true,
     });

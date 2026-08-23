@@ -1936,6 +1936,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (deletingLastItem) {
       await externalOrdersSync.deleteExternalOrder(item.orderId);
     }
+    // For non-final items, update the external source before reducing the
+    // local item count. Otherwise the external poller can briefly observe
+    // more items than POS and recreate the item as a fresh KOT.
+    if (!deletingLastItem) {
+      await externalOrdersSync.syncItemDelete(item.orderId, item.name);
+    }
 
     // Prevent a queued or leased QZ job from printing after its KOT is deleted.
     // New jobs include the batch in their dedupe key; for legacy jobs without
@@ -1976,13 +1982,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       id: req.params.id,
       orderId: item.orderId,
     });
-    // Backward-sync: remove this item from the external DB order before this
-    // response completes. The KOT delete UI intentionally waits for each
-    // item-delete request, so the poller cannot observe a stale item list
-    // between batch deletions.
-    if (!deletingLastItem) {
-      await externalOrdersSync.syncItemDelete(item.orderId, item.name);
-    }
     res.json({ success: true });
   });
 
