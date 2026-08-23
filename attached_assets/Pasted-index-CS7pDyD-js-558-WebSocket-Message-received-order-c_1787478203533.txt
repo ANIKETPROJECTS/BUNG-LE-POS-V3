@@ -1,0 +1,16 @@
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_created Data: {id: 'dcdf3b57-4083-49e4-b31e-ea3c46ce97bb', tableId: '2d7803e0-e63b-4e22-b38f-a8d5cb177d85', orderType: 'dine-in', status: 'saved', total: '0', …}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order queries for order: dcdf3b57-4083-49e4-b31e-ea3c46ce97bb
+index-CS7pDyD_.js:558 [WebSocket] Message received: table_updated Data: {_id: '6a7c4193e4d4573609167c55', id: '2d7803e0-e63b-4e22-b38f-a8d5cb177d85', tableNumber: 'T4', seats: 4, status: 'occupied', …}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating tables queries
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_item_added Data: {orderId: 'dcdf3b57-4083-49e4-b31e-ea3c46ce97bb', item: {…}}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order items queries for orderId: dcdf3b57-4083-49e4-b31e-ea3c46ce97bb
+index-CS7pDyD_.js:558 [WebSocket] Message received: table_updated Data: {_id: '6a7c4193e4d4573609167c55', id: '2d7803e0-e63b-4e22-b38f-a8d5cb177d85', tableNumber: 'T4', seats: 4, status: 'occupied', …}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating tables queries
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_item_added Data: {orderId: 'dcdf3b57-4083-49e4-b31e-ea3c46ce97bb', item: {…}}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order items queries for orderId: dcdf3b57-4083-49e4-b31e-ea3c46ce97bb
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_updated Data: {_id: '6a8ac0244ea0af26c50ca088', id: 'dcdf3b57-4083-49e4-b31e-ea3c46ce97bb', tableId: '2d7803e0-e63b-4e22-b38f-a8d5cb177d85', orderType: 'dine-in', status: 'sent_to_kitchen', …}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order queries for order: dcdf3b57-4083-49e4-b31e-ea3c46ce97bb
+index-CS7pDyD_.js:558 [WebSocket] Message received: inventory_updated Data: {orderId: 'dcdf3b57-4083-49e4-b31e-ea3c46ce97bb'}
+index-CS7pDyD_.js:558 [WebSocket] Message received: order_paid Data: {_id: '6a8ac0244ea0af26c50ca088', id: 'dcdf3b57-4083-49e4-b31e-ea3c46ce97bb', tableId: '2d7803e0-e63b-4e22-b38f-a8d5cb177d85', orderType: 'dine-in', status: 'completed', …}
+index-CS7pDyD_.js:558 [WebSocket] Invalidating order queries for order: dcdf3b57-4083-49e4-b31e-ea3c46ce97bb
+index-CS7pDyD_.js:558 [WebSocket] Message received: invoice_created Data: {id: '7c344c24-86f8-4a74-9074-c9f251115941', invoiceNumber: 'BG26082302', orderId: 'dcdf3b57-4083-49e4-b31e-ea3c46ce97bb', tableNumber: 'T4', floorName: 'Ground Floor', …}
