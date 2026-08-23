@@ -396,9 +396,12 @@ function KOTDeleteModal({
     mutationFn: async (kot: KOTTicket) => {
       // A KOT is a batch of items, not the whole POS order. Delete only this
       // batch so later KOTs for the same table/order remain intact.
-      await Promise.all(
-        kot.items.map((item) => apiRequest("DELETE", `/api/order-items/${item.id}`))
-      );
+      // Delete sequentially. Each delete synchronizes the matching external
+      // order; parallel requests can race the external-order poller and make
+      // an old item look like a newly-added item, which triggers a reprint.
+      for (const item of kot.items) {
+        await apiRequest("DELETE", `/api/order-items/${item.id}`);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders/active"] });

@@ -1926,6 +1926,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!item) {
       return res.status(404).json({ error: "Order item not found" });
     }
+    const itemsBeforeDelete = await st.getOrderItems(item.orderId);
+    const deletingLastItem = itemsBeforeDelete.length === 1;
+
+    // Remove the external source before removing the last local item. This
+    // prevents the external poller from seeing the old item list and
+    // resurrecting the just-deleted order/item as a new KOT.
+    if (deletingLastItem) {
+      await externalOrdersSync.deleteExternalOrder(item.orderId);
+    }
 
     // Prevent a queued or leased QZ job from printing after its KOT is deleted.
     // New jobs include the batch in their dedupe key; for legacy jobs without
@@ -1960,15 +1969,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       await st.deleteOrder(item.orderId);
       broadcastUpdate("order_updated", { id: item.orderId, deleted: true });
-      externalOrdersSync.deleteExternalOrder(item.orderId).catch(() => {});
     }
 
     broadcastUpdate("order_item_deleted", {
       id: req.params.id,
       orderId: item.orderId,
     });
-    // Backward-sync: remove this item from the external DB order if applicable
-    externalOrdersSync.syncItemDelete(item.orderId, item.name).catch(() => {});
+    // Backward-sync: remove this item from the external DB order before this
+    // response completes. The KOT delete UI intentionally waits for each
+    // item-delete request, so the poller cannot observe a stale item list
+    // between batch deletions.
+    if (!deletingLastItem) {
+      await externalOrdersSync.syncItemDelete(item.orderId, item.name);
+    }
     res.json({ success: true });
   });
 
