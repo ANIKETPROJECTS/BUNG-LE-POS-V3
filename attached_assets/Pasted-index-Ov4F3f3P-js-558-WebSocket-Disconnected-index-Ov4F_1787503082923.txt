@@ -1,0 +1,92 @@
+index-Ov4F3f3P.js:558 [WebSocket] Disconnected
+index-Ov4F3f3P.js:558 [WebSocket] Reconnecting in 1s (attempt 2/3)...
+index-Ov4F3f3P.js:558 [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+index-Ov4F3f3P.js:558 [WebSocket] Connected successfully!
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_created Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order queries for order: 0cefb681-a6f1-42cb-b975-5d136ab165d5
+index-Ov4F3f3P.js:558 [WebSocket] Message received: table_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating tables queries
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_item_added Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order items queries for orderId: 0cefb681-a6f1-42cb-b975-5d136ab165d5
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order queries for order: 0cefb681-a6f1-42cb-b975-5d136ab165d5
+index-Ov4F3f3P.js:833 [Print worker] Claimed print job Object
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_created Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order queries for order: 7d13f3ad-ec15-4573-91ef-d49f93decc76
+index-Ov4F3f3P.js:664 [QZ] Local printers discovered Object
+index-Ov4F3f3P.js:664 [QZ] Print job sent successfully Object
+index-Ov4F3f3P.js:558 [WebSocket] Message received: table_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating tables queries
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_item_added Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order items queries for orderId: 7d13f3ad-ec15-4573-91ef-d49f93decc76
+index-Ov4F3f3P.js:833 [Print worker] Print job completed Object
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order queries for order: 7d13f3ad-ec15-4573-91ef-d49f93decc76
+index-Ov4F3f3P.js:833 [Print worker] Claimed print job Object
+index-Ov4F3f3P.js:664 [QZ] Local printers discovered Object
+index-Ov4F3f3P.js:664 [QZ] Print job sent successfully Object
+index-Ov4F3f3P.js:833 [Print worker] Print job completed Object
+index-Ov4F3f3P.js:558 [WebSocket] Disconnected
+index-Ov4F3f3P.js:558 [WebSocket] Reconnecting in 1s (attempt 2/3)...
+index-Ov4F3f3P.js:558 [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+index-Ov4F3f3P.js:558 [WebSocket] Connected successfully!
+index-Ov4F3f3P.js:558 [WebSocket] Disconnected
+index-Ov4F3f3P.js:558 [WebSocket] Reconnecting in 1s (attempt 2/3)...
+index-Ov4F3f3P.js:558 [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+index-Ov4F3f3P.js:558 [WebSocket] Connected successfully!
+index-Ov4F3f3P.js:558 [WebSocket] Disconnected
+index-Ov4F3f3P.js:558 [WebSocket] Reconnecting in 1s (attempt 2/3)...
+index-Ov4F3f3P.js:558 [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+index-Ov4F3f3P.js:558 [WebSocket] Connected successfully!
+index-Ov4F3f3P.js:558 [WebSocket] Disconnected
+index-Ov4F3f3P.js:558 [WebSocket] Reconnecting in 1s (attempt 2/3)...
+index-Ov4F3f3P.js:558 [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+index-Ov4F3f3P.js:558 [WebSocket] Connected successfully!
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_created Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order queries for order: f9125a9e-f8c2-4df6-976b-1506fb0ac96e
+index-Ov4F3f3P.js:558 [WebSocket] Message received: table_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating tables queries
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_item_added Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order items queries for orderId: f9125a9e-f8c2-4df6-976b-1506fb0ac96e
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order queries for order: f9125a9e-f8c2-4df6-976b-1506fb0ac96e
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_created Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order queries for order: f23d93a2-7e82-4c9b-b8e0-cd3863f86892
+index-Ov4F3f3P.js:558 [WebSocket] Message received: table_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating tables queries
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_item_added Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order items queries for orderId: f23d93a2-7e82-4c9b-b8e0-cd3863f86892
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order queries for order: f23d93a2-7e82-4c9b-b8e0-cd3863f86892
+index-Ov4F3f3P.js:833 [Print worker] Claimed print job Object
+index-Ov4F3f3P.js:664 [QZ] Local printers discovered Object
+index-Ov4F3f3P.js:664 [QZ] Print job sent successfully Object
+index-Ov4F3f3P.js:833 [Print worker] Print job completed Object
+index-Ov4F3f3P.js:558 [WebSocket] Message received: table_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating tables queries
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order queries for order: f23d93a2-7e82-4c9b-b8e0-cd3863f86892
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_item_deleted Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order items queries for orderId: f23d93a2-7e82-4c9b-b8e0-cd3863f86892
+index-Ov4F3f3P.js:558 [WebSocket] Message received: table_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating tables queries
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order queries for order: f9125a9e-f8c2-4df6-976b-1506fb0ac96e
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_item_deleted Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order items queries for orderId: f9125a9e-f8c2-4df6-976b-1506fb0ac96e
+index-Ov4F3f3P.js:833 [Print worker] Claimed print job Object
+index-Ov4F3f3P.js:664 [QZ] Local printers discovered Object
+index-Ov4F3f3P.js:664 [QZ] Print job sent successfully Object
+index-Ov4F3f3P.js:833 [Print worker] Print job completed Object
+index-Ov4F3f3P.js:558 [WebSocket] Message received: table_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating tables queries
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order queries for order: 7d13f3ad-ec15-4573-91ef-d49f93decc76
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_item_deleted Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order items queries for orderId: 7d13f3ad-ec15-4573-91ef-d49f93decc76
+index-Ov4F3f3P.js:558 [WebSocket] Message received: table_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating tables queries
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_updated Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order queries for order: 0cefb681-a6f1-42cb-b975-5d136ab165d5
+index-Ov4F3f3P.js:558 [WebSocket] Message received: order_item_deleted Data: Object
+index-Ov4F3f3P.js:558 [WebSocket] Invalidating order items queries for orderId: 0cefb681-a6f1-42cb-b975-5d136ab165d5
