@@ -10,6 +10,8 @@ export function useWebSocket() {
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
   const isMountedRef = useRef(true);
+  const failedAttemptsRef = useRef(0);
+  const MAX_FAILED_ATTEMPTS = 3;
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -25,6 +27,7 @@ export function useWebSocket() {
       wsRef.current = ws;
 
       ws.onopen = () => {
+        failedAttemptsRef.current = 0;
         console.log('[WebSocket] Connected successfully!');
       };
 
@@ -125,7 +128,16 @@ export function useWebSocket() {
       ws.onclose = () => {
         console.log('[WebSocket] Disconnected');
         if (isMountedRef.current) {
-          console.log('[WebSocket] Reconnecting in 3s...');
+          failedAttemptsRef.current += 1;
+          if (failedAttemptsRef.current >= MAX_FAILED_ATTEMPTS) {
+            console.warn(
+              `[WebSocket] Stopped reconnecting after ${MAX_FAILED_ATTEMPTS} consecutive failed connection attempts`,
+            );
+            return;
+          }
+          console.log(
+            `[WebSocket] Reconnecting in 1s (attempt ${failedAttemptsRef.current + 1}/${MAX_FAILED_ATTEMPTS})...`,
+          );
           reconnectTimeoutRef.current = setTimeout(connect, 1000);
         }
       };

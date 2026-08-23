@@ -83,6 +83,8 @@ export default function BillingPage() {
   const [taxRate, setTaxRate] = useState(taxSettings.taxRate);
   const [serviceChargeRate, setServiceChargeRate] = useState(taxSettings.serviceCharge);
   const localEditingRef = useRef(false);
+  const tableFetchVersionRef = useRef(0);
+  const orderFetchVersionRef = useRef(0);
 
   useEffect(() => {
     setTaxRate(taxSettings.taxRate);
@@ -118,6 +120,7 @@ export default function BillingPage() {
   }, []);
 
   const fetchTableOrder = async (tableId: string) => {
+    const fetchVersion = ++tableFetchVersionRef.current;
     try {
       // currentOrderId points only to the latest order. A table can have
       // multiple ongoing Digital Menu orders, so load all active orders.
@@ -131,6 +134,9 @@ export default function BillingPage() {
         .sort((a: any, b: any) =>
           new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
         );
+      if (fetchVersion !== tableFetchVersionRef.current || localEditingRef.current) {
+        return;
+      }
       if (tableOrders.length === 0) return;
 
       const itemLists = await Promise.all(
@@ -139,6 +145,9 @@ export default function BillingPage() {
           return response.ok ? response.json() : [];
         })
       );
+      if (fetchVersion !== tableFetchVersionRef.current || localEditingRef.current) {
+        return;
+      }
       const formattedItems = itemLists.flat().map((item: any) => ({
         id: item.id,
         menuItemId: item.menuItemId,
@@ -175,9 +184,13 @@ export default function BillingPage() {
   };
 
   const fetchExistingOrder = async (orderId: string) => {
+    const fetchVersion = ++orderFetchVersionRef.current;
     try {
       const itemsRes = await fetch(`/api/orders/${orderId}/items`);
       const items = await itemsRes.json();
+      if (fetchVersion !== orderFetchVersionRef.current || localEditingRef.current) {
+        return;
+      }
       
       const formattedItems = items.map((item: any) => ({
         id: item.id,
@@ -427,6 +440,7 @@ export default function BillingPage() {
 
   const handleQuickCodeEntry = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key !== 'Enter' || !quickCode.trim()) return;
+    localEditingRef.current = true;
     
     const codes = quickCode.split(',').map(code => code.trim()).filter(code => code.length > 0);
     const notFoundCodes: string[] = [];
@@ -521,16 +535,19 @@ export default function BillingPage() {
     if (!menuItem) return;
     localEditingRef.current = true;
 
-    const existingItem = orderItems.find((item) => item.menuItemId === itemId && !item.isFromDatabase);
-    if (existingItem) {
-      setOrderItems(
-        orderItems.map((item) =>
-          item.id === existingItem.id ? { ...item, quantity: item.quantity + 1 } : item
-        )
+    setOrderItems((currentItems) => {
+      const existingItem = currentItems.find(
+        (item) => item.menuItemId === itemId && !item.isFromDatabase,
       );
-    } else {
-      setOrderItems([
-        ...orderItems,
+      if (existingItem) {
+        return currentItems.map((item) =>
+          item.id === existingItem.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item,
+        );
+      }
+      return [
+        ...currentItems,
         {
           id: Math.random().toString(36).substring(7),
           menuItemId: menuItem.id,
@@ -542,8 +559,8 @@ export default function BillingPage() {
           isVeg: menuItem.isVeg,
           status: menuItem.kotEnabled === false ? "non_kot" : "new",
         },
-      ]);
-    }
+      ];
+    });
   };
 
   const handleUpdateQuantity = (id: string, quantity: number) => {
@@ -682,6 +699,7 @@ export default function BillingPage() {
         return item;
       });
       setOrderItems(updatedItems);
+      localEditingRef.current = false;
       
       if (currentTableId) {
         navigate("/tables");
@@ -737,6 +755,7 @@ export default function BillingPage() {
         return item;
       });
       setOrderItems(updatedItems);
+      localEditingRef.current = false;
       
       if (currentTableId) {
         navigate("/tables");
