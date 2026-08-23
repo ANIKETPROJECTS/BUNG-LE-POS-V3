@@ -581,10 +581,7 @@ export class ExternalOrdersSyncService {
 
       await this.collection().updateOne(
         { posOrderId: order.id },
-        {
-          $set: document,
-          $setOnInsert: { createdAt: document.createdAt },
-        },
+        { $set: document },
         { upsert: true },
       );
       console.log(`🔁 [ExternalOrders] Mirrored POS order ${order.id} to Orders.orders`);
