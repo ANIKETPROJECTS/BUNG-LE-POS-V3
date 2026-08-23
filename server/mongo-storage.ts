@@ -1472,6 +1472,31 @@ export class MongoStorage implements IStorage {
     return docs.map(d => { const { _id, ...rest } = d as any; return rest as PrintJob; });
   }
 
+  async discardPendingPrintJobsForPrinters(printerNames: string[]): Promise<number> {
+    await this.ensureConnection();
+    const names = printerNames
+      .filter((name): name is string => typeof name === "string")
+      .map(name => name.trim())
+      .filter(Boolean);
+    if (names.length === 0) return 0;
+
+    const result = await mongodb.getCollection<PrintJob>("print_jobs").updateMany(
+      {
+        printerName: { $in: names },
+        status: "pending",
+      } as any,
+      {
+        $set: {
+          status: "failed",
+          doneAt: new Date(),
+          lastError: "Discarded when the local printer reconnected",
+        },
+        $unset: { leaseUntil: "", workerId: "" },
+      } as any,
+    );
+    return result.modifiedCount;
+  }
+
   async claimNextPrintJob(workerId: string, printerNames: string[]): Promise<PrintJob | undefined> {
     await this.ensureConnection();
     const now = new Date();

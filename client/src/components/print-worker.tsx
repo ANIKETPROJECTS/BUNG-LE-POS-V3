@@ -21,6 +21,7 @@ export default function PrintWorker() {
   const timerRef = useRef<ReturnType<typeof setTimeout>>();
   const workerIdRef = useRef<string>();
   const nextPollDelayRef = useRef(POLL_MS);
+  const readyPrinterNamesRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     if (!isAuthenticated || isLoading) return;
@@ -41,6 +42,7 @@ export default function PrintWorker() {
 
         const qzStatus = await checkQzTray();
         if (!qzStatus.connected) {
+          readyPrinterNamesRef.current.clear();
           console.debug("[Print worker] QZ Tray unavailable; waiting", { error: qzStatus.error });
           nextPollDelayRef.current = QZ_RETRY_MS;
           return;
@@ -53,10 +55,46 @@ export default function PrintWorker() {
           ),
         );
         if (localPrinterNames.length === 0) {
+          readyPrinterNamesRef.current.clear();
           console.debug("[Print worker] No configured printer is installed on this PC; waiting", {
             configured: printerNames,
             available: availablePrinters,
           });
+          return;
+        }
+
+        const normalisePrinterName = (name: string) => name.trim().toLowerCase();
+        const availableNameKeys = new Set(localPrinterNames.map(normalisePrinterName));
+        // A printer that disappeared is no longer considered ready. If it
+        // returns later, it will get its own recovery boundary.
+        for (const readyName of readyPrinterNamesRef.current) {
+          if (!availableNameKeys.has(readyName)) {
+            readyPrinterNamesRef.current.delete(readyName);
+          }
+        }
+        const recoveredPrinters = localPrinterNames.filter(
+          (name) => !readyPrinterNamesRef.current.has(normalisePrinterName(name)),
+        );
+
+        // Do not drain jobs accumulated while QZ Tray/the printer was
+        // unavailable. The first ready poll is a recovery boundary; newly
+        // created jobs will be handled on the next poll.
+        if (recoveredPrinters.length > 0) {
+          const reconnectResponse = await fetch("/api/print-jobs/discard-on-reconnect", {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ printerNames: recoveredPrinters }),
+          });
+          if (!reconnectResponse.ok) throw new Error("Could not discard stale print jobs");
+          const reconnectResult = await reconnectResponse.json() as { discarded?: number };
+          console.info("[Print worker] Printer recovered; discarded pending jobs", {
+            printers: recoveredPrinters,
+            discarded: reconnectResult.discarded ?? 0,
+          });
+          for (const printerName of recoveredPrinters) {
+            readyPrinterNamesRef.current.add(normalisePrinterName(printerName));
+          }
           return;
         }
 

@@ -3759,6 +3759,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Called when a local printer/QZ Tray transitions from unavailable to
+  // available. Pending jobs were created while the printer was offline and
+  // must not be printed after recovery.
+  app.post("/api/print-jobs/discard-on-reconnect", requireAuth, async (req, res) => {
+    try {
+      const printerNames = Array.isArray(req.body?.printerNames)
+        ? req.body.printerNames.filter((name: unknown): name is string => typeof name === "string")
+        : [];
+      const discarded = await mongoStorage.discardPendingPrintJobsForPrinters(printerNames);
+      res.json({ ok: true, discarded });
+    } catch (e: any) {
+      res.status(500).json({ error: e.message });
+    }
+  });
+
   // Agent calls this after successfully printing a job
   app.post("/api/print-jobs/:id/done", requireAuth, async (req, res) => {
     try {
