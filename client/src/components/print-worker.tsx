@@ -143,6 +143,17 @@ export default function PrintWorker() {
           // (server 502, brief outage), a future reclaim of the same job will
           // be caught by the guard above instead of printing again.
           recordPrinted(job.id);
+          console.log("[PRINT-ACTUAL] QZ accepted bytes for physical printing", {
+            printedAt: new Date().toISOString(),
+            jobId: job.id,
+            jobType: job.jobType ?? "legacy",
+            orderId: job.orderId,
+            kotNumber: job.kotNumber,
+            kotBatch: job.kotBatch ?? null,
+            attempt: job.attempts,
+            printer: result.printer ?? job.printerName ?? null,
+            workerId: workerIdRef.current,
+          });
           const doneRes = await fetch(`/api/print-jobs/${job.id}/done`, {
             method: "POST",
             credentials: "include",
@@ -150,13 +161,17 @@ export default function PrintWorker() {
             body: JSON.stringify({ workerId: workerIdRef.current }),
           });
           if (!doneRes.ok) {
-            console.warn("[Print worker] Server did not acknowledge done (will be caught by local guard on retry)", {
+            console.warn("[PRINT-ACK-MISSING] Printer accepted the job, but the server did not acknowledge done", {
               jobId: job.id,
+              orderId: job.orderId,
+              kotNumber: job.kotNumber,
               status: doneRes.status,
             });
           } else {
-            console.info("[Print worker] Print job completed", {
+            console.info("[PRINT-COMPLETED] Printer accepted and server acknowledged job", {
               jobId: job.id,
+              orderId: job.orderId,
+              kotNumber: job.kotNumber,
               printer: result.printer,
             });
           }
