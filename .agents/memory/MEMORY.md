@@ -2,3 +2,4 @@
 - [Stable table invoice numbers](stable-table-invoice-number.md) — resolve an ongoing table invoice before recalculating any daily sequence.
 - [POS performance](pos-performance.md) — batch derived order data and back off aggressively when QZ is unavailable.
 - [Shared order ownership](pos-orders-database-ownership.md) — mirror POS orders for digital-menu visibility, but mark ownership to prevent circular re-imports.
+- [KOT print identity](kot-print-job-identity.md) — deduplicate KOT jobs by order and batch, never invoice number alone for ongoing tables.
