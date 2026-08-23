@@ -164,6 +164,12 @@ export interface BillItem {
   notes?: string;
 }
 
+export interface SplitPayment {
+  person: number;
+  amount: number;
+  paymentMode: string;
+}
+
 export function buildBillEscPos(opts: {
   restaurantName?: string;
   invoiceNumber: string;
@@ -180,6 +186,7 @@ export function buildBillEscPos(opts: {
   serviceCharge: number;
   total: number;
   paymentMode?: string;
+  splitPayments?: SplitPayment[];
   gstEnabled?: boolean;
   gstNumber?: string;
 }): Buffer {
@@ -199,6 +206,7 @@ export function buildBillEscPos(opts: {
     serviceCharge,
     total,
     paymentMode = "Cash",
+    splitPayments = [],
     gstEnabled = false,
     gstNumber = "",
   } = opts;
@@ -326,7 +334,18 @@ export function buildBillEscPos(opts: {
   parts.push(cmd(ESC, 0x45, 0x00));
 
   parts.push(text(sep2 + "\n"));
-  parts.push(text(`Payment : ${paymentMode.toUpperCase()}\n`));
+  if (splitPayments.length > 0) {
+    parts.push(text("Payment : SPLIT\n"));
+    parts.push(text("Split Payment Details\n"));
+    splitPayments.forEach((split) => {
+      const person = split.person || 0;
+      const mode = String(split.paymentMode || "cash").toUpperCase();
+      const amount = Number(split.amount || 0).toFixed(2);
+      parts.push(text(`Person ${person}: Rs.${amount} (${mode})\n`));
+    });
+  } else {
+    parts.push(text(`Payment : ${paymentMode.toUpperCase()}\n`));
+  }
   parts.push(text(sep + "\n"));
 
   // Footer

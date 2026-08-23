@@ -143,6 +143,7 @@ async function queueBillPrintJobs(opts: {
     serviceCharge: string;
     total: string;
     paymentMode?: string | null;
+    splitPayments?: string | null;
     items: string;
   };
   orderType?: string;
@@ -178,6 +179,9 @@ async function queueBillPrintJobs(opts: {
       serviceCharge: parseFloat(opts.invoice.serviceCharge),
       total: parseFloat(opts.invoice.total),
       paymentMode: opts.invoice.paymentMode || "cash",
+      splitPayments: opts.invoice.splitPayments
+        ? JSON.parse(opts.invoice.splitPayments)
+        : [],
       gstEnabled: opts.taxSettings.gstEnabled,
       gstNumber: opts.taxSettings.gstNumber,
     });
@@ -3613,6 +3617,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         serviceCharge: parseFloat(invoice.serviceCharge),
         total: parseFloat(invoice.total),
         paymentMode: invoice.paymentMode || "cash",
+        splitPayments: invoice.splitPayments
+          ? JSON.parse(invoice.splitPayments)
+          : [],
         gstEnabled: taxSettings.gstEnabled,
         gstNumber: taxSettings.gstNumber,
       });
