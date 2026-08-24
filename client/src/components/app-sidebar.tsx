@@ -205,32 +205,6 @@ export function AppSidebar() {
                   </a>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  asChild
-                  isActive={location === "/help"}
-                  data-testid="nav-help"
-                  className={cn(
-                    "transition-colors text-gray-700 dark:text-gray-300",
-                    location === "/help" && "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 font-medium"
-                  )}
-                >
-                  <a
-                    href="/help"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      handleNavigation("/help");
-                    }}
-                    className="flex items-center gap-2"
-                  >
-                    <FileText className={cn(
-                      "h-4 w-4",
-                      location === "/help" ? "text-red-600 dark:text-red-400" : "text-gray-600 dark:text-gray-400"
-                    )} />
-                    <span>Help & Support</span>
-                  </a>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

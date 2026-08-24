@@ -50,7 +50,6 @@ import MultiLocationPage from "@/pages/multi-location";
 import UserRolesPage from "@/pages/user-roles";
 import AuditLogsPage from "@/pages/audit-logs";
 import NotificationsPage from "@/pages/notifications";
-import HelpPage from "@/pages/help";
 import ProfilePage from "@/pages/profile";
 import BackupPage from "@/pages/backup";
 import QRCodesPage from "@/pages/qr-codes";
@@ -134,7 +133,6 @@ function Router() {
       <Route path="/user-roles">{() => <ProtectedRoute component={UserRolesPage} />}</Route>
       <Route path="/audit-logs">{() => <ProtectedRoute component={AuditLogsPage} />}</Route>
       <Route path="/notifications">{() => <ProtectedRoute component={NotificationsPage} />}</Route>
-      <Route path="/help">{() => <ProtectedRoute component={HelpPage} />}</Route>
       <Route path="/profile">{() => <ProtectedRoute component={ProfilePage} />}</Route>
       <Route path="/backup">{() => <ProtectedRoute component={BackupPage} />}</Route>
       <Route path="/qr-codes">{() => <ProtectedRoute component={QRCodesPage} />}</Route>

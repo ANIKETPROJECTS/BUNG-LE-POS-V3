@@ -91,7 +91,6 @@ export default function SettingsPage() {
             <TabsTrigger value="general" data-testid="tab-general">General</TabsTrigger>
             <TabsTrigger value="tax" data-testid="tab-tax">Tax & Billing</TabsTrigger>
             <TabsTrigger value="printer" data-testid="tab-printer">Printer</TabsTrigger>
-            <TabsTrigger value="notifications" data-testid="tab-notifications">Notifications</TabsTrigger>
           </TabsList>
 
           <TabsContent value="general">
@@ -133,20 +132,6 @@ export default function SettingsPage() {
                     placeholder="Enter restaurant address"
                     data-testid="input-address"
                   />
-                </div>
-                <Separator className="my-6" />
-                <div className="space-y-3">
-                  <h4 className="font-medium">Business Hours</h4>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label>Opening Time</Label>
-                      <Input type="time" defaultValue="09:00" data-testid="input-opening-time" />
-                    </div>
-                    <div>
-                      <Label>Closing Time</Label>
-                      <Input type="time" defaultValue="22:00" data-testid="input-closing-time" />
-                    </div>
-                  </div>
                 </div>
                 <Button className="mt-6" data-testid="button-save-general">Save Changes</Button>
               </div>
@@ -247,42 +232,6 @@ export default function SettingsPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="notifications">
-            <div className="bg-card rounded-lg border border-card-border p-6 max-w-2xl">
-              <h3 className="text-lg font-semibold mb-4">Notification Preferences</h3>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>New Order Alerts</Label>
-                    <p className="text-sm text-muted-foreground">Get notified for new orders</p>
-                  </div>
-                  <Switch defaultChecked data-testid="switch-order-alerts" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Low Stock Alerts</Label>
-                    <p className="text-sm text-muted-foreground">Alert when items are low in stock</p>
-                  </div>
-                  <Switch defaultChecked data-testid="switch-stock-alerts" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>Email Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Receive email updates</p>
-                  </div>
-                  <Switch data-testid="switch-email-notifications" />
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label>SMS Notifications</Label>
-                    <p className="text-sm text-muted-foreground">Receive SMS updates</p>
-                  </div>
-                  <Switch data-testid="switch-sms-notifications" />
-                </div>
-                <Button className="mt-6" data-testid="button-save-notifications">Save Notification Settings</Button>
-              </div>
-            </div>
-          </TabsContent>
         </Tabs>
 
         <Separator className="my-8" />

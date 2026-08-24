@@ -3,3 +3,4 @@
 - [POS performance](pos-performance.md) — batch derived order data and back off aggressively when QZ is unavailable.
 - [Shared order ownership](pos-orders-database-ownership.md) — mirror POS orders for digital-menu visibility, but mark ownership to prevent circular re-imports.
 - [KOT print identity](kot-print-job-identity.md) — deduplicate KOT jobs by order and batch, never invoice number alone for ongoing tables.
+- [POS session persistence](pos-session-persistence.md) — keep the dedicated POS login rolling across browser restarts, with logout as the explicit revocation.

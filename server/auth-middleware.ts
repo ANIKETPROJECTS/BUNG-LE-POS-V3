@@ -40,7 +40,10 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-const REMEMBER_ME_AGE = 30 * 24 * 60 * 60 * 1000;  // 30 days
+// The POS normally runs on a dedicated restaurant computer, so keep the login
+// across browser restarts. `rolling` below refreshes this window whenever the
+// session is used, while an explicit logout still destroys it immediately.
+const SESSION_MAX_AGE = 365 * 24 * 60 * 60 * 1000;  // 1 year
 
 export function setupAuthRoutes(app: any) {
   const mongoUri = process.env.MONGODB_URI;
@@ -50,16 +53,17 @@ export function setupAuthRoutes(app: any) {
     secret: process.env.SESSION_SECRET || (() => { throw new Error('SESSION_SECRET environment variable is required'); })(),
     resave: false,
     saveUninitialized: false,
+    rolling: true,
     store: MongoStore.create({
       mongoUrl: mongoUri,
       dbName: 'restaurant_pos',
       collectionName: 'sessions',
-      ttl: REMEMBER_ME_AGE / 1000,   // max TTL in seconds; per-session cookie handles the client side
+      ttl: SESSION_MAX_AGE / 1000,
     }),
     cookie: {
       secure: false,
       httpOnly: true,
-      // No maxAge here — we set it per-login based on rememberMe
+      maxAge: SESSION_MAX_AGE,
     },
   }));
 
@@ -71,7 +75,6 @@ export function setupAuthRoutes(app: any) {
       }
 
       const { username, password } = result.data;
-      const rememberMe = req.body.rememberMe === true;
       const account = validateCredentials(username, password);
 
       if (!account) {
@@ -96,10 +99,9 @@ export function setupAuthRoutes(app: any) {
       req.session.username = account.username;
       req.session.isAuthenticated = true;
 
-      // Extend cookie lifetime only when "Remember me" is checked
-      if (rememberMe) {
-        req.session.cookie.maxAge = REMEMBER_ME_AGE;
-      }
+      // Keep the POS login persistent regardless of the checkbox. The
+      // session is still removed immediately by the logout endpoint.
+      req.session.cookie.maxAge = SESSION_MAX_AGE;
 
       storageCache.set(account.id, storage);
 
