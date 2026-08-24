@@ -7,10 +7,14 @@ export const DIGITAL_MENU_DB_NAME = 'bungle';
 class MongoDBService {
   private client: MongoClient | null = null;
   private db: Db | null = null;
+  private connectPromise: Promise<void> | null = null;
 
   async connect(): Promise<void> {
     if (this.client && this.db) {
       return;
+    }
+    if (this.connectPromise) {
+      return this.connectPromise;
     }
 
     const uri = process.env.MONGODB_URI;
@@ -18,19 +22,26 @@ class MongoDBService {
       throw new Error('MONGODB_URI environment variable is not set');
     }
 
-    try {
-      this.client = new MongoClient(uri);
-      await this.client.connect();
+    this.connectPromise = (async () => {
+      try {
+        const client = new MongoClient(uri);
+        await client.connect();
 
-      // Always use "POS" as the database name so POS data is isolated
-      // from any other databases (e.g. "Orders") on the same cluster.
-      this.db = this.client.db('POS');
+        // Always use "POS" as the database name so POS data is isolated
+        // from any other databases (e.g. "Orders") on the same cluster.
+        this.client = client;
+        this.db = client.db('POS');
 
-      console.log(`✅ Connected to MongoDB database: POS`);
-    } catch (error) {
-      console.error('❌ MongoDB connection error:', error);
-      throw error;
-    }
+        console.log(`✅ Connected to MongoDB database: POS`);
+      } catch (error) {
+        console.error('❌ MongoDB connection error:', error);
+        throw error;
+      } finally {
+        this.connectPromise = null;
+      }
+    })();
+
+    return this.connectPromise;
   }
 
   getDatabase(): Db {
@@ -59,6 +70,9 @@ class MongoDBService {
   }
 
   async disconnect(): Promise<void> {
+    if (this.connectPromise) {
+      await this.connectPromise.catch(() => undefined);
+    }
     if (this.client) {
       await this.client.close();
       this.client = null;

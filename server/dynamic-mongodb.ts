@@ -8,6 +8,7 @@ interface ConnectionInfo {
 
 class DynamicMongoDBManager {
   private connections: Map<string, ConnectionInfo> = new Map();
+  private connectionPromises: Map<string, Promise<{ client: MongoClient; db: Db }>> = new Map();
   private cleanupInterval: NodeJS.Timeout | null = null;
   private readonly CONNECTION_TTL = 30 * 60 * 1000;
 
@@ -51,28 +52,36 @@ class DynamicMongoDBManager {
       existing.lastUsed = Date.now();
       return { client: existing.client, db: existing.db };
     }
+    const pending = this.connectionPromises.get(restaurantId);
+    if (pending) return pending;
 
-    try {
-      const client = new MongoClient(mongodbUri);
-      await client.connect();
+    const promise = (async () => {
+      try {
+        const client = new MongoClient(mongodbUri);
+        await client.connect();
 
-      // Always use "POS" so per-restaurant settings land in the same
-      // database as the rest of the POS data on the shared cluster.
-      const db = client.db('POS');
+        // Always use "POS" so per-restaurant settings land in the same
+        // database as the rest of the POS data on the shared cluster.
+        const db = client.db('POS');
 
-      console.log(`Connected to MongoDB for restaurant ${restaurantId}: POS`);
-      
-      this.connections.set(restaurantId, {
-        client,
-        db,
-        lastUsed: Date.now(),
-      });
+        console.log(`Connected to MongoDB for restaurant ${restaurantId}: POS`);
 
-      return { client, db };
-    } catch (error) {
-      console.error(`Failed to connect to MongoDB for restaurant ${restaurantId}:`, error);
-      throw error;
-    }
+        this.connections.set(restaurantId, {
+          client,
+          db,
+          lastUsed: Date.now(),
+        });
+
+        return { client, db };
+      } catch (error) {
+        console.error(`Failed to connect to MongoDB for restaurant ${restaurantId}:`, error);
+        throw error;
+      } finally {
+        this.connectionPromises.delete(restaurantId);
+      }
+    })();
+    this.connectionPromises.set(restaurantId, promise);
+    return promise;
   }
 
   getCollection<T extends Document>(restaurantId: string, collectionName: string): Collection<T> | null {
@@ -96,6 +105,7 @@ class DynamicMongoDBManager {
   }
 
   async closeConnection(restaurantId: string): Promise<void> {
+    this.connectionPromises.delete(restaurantId);
     const connection = this.connections.get(restaurantId);
     if (connection) {
       await connection.client.close();
@@ -129,6 +139,7 @@ class DynamicMongoDBManager {
       console.log(`Closed connection for restaurant: ${restaurantId}`);
     }
     this.connections.clear();
+    this.connectionPromises.clear();
   }
 }
 

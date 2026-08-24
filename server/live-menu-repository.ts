@@ -19,6 +19,11 @@ type LiveMenuDocument = Document & {
 };
 
 type LocatedItem = { collection: Collection<LiveMenuDocument>; document: LiveMenuDocument; category: string };
+type MenuCache = { expiresAt: number; items: MenuItem[] };
+
+const MENU_CACHE_TTL = 30_000;
+const menuCache = new WeakMap<Db, MenuCache>();
+const collectionCache = new WeakMap<Db, { expiresAt: number; collections: Collection<LiveMenuDocument>[] }>();
 
 function isSystemCollection(name: string) {
   return name.startsWith("system.");
@@ -51,11 +56,16 @@ function toMenuItem(document: LiveMenuDocument, collectionName: string): MenuIte
 }
 
 async function menuCollections(db: Db) {
+  const cached = collectionCache.get(db);
+  if (cached && cached.expiresAt > Date.now()) return cached.collections;
+
   const collections = await db.listCollections().toArray();
-  return collections
+  const result = collections
     .map((info) => info.name)
     .filter((name) => !isSystemCollection(name))
     .map((name) => db.collection<LiveMenuDocument>(name));
+  collectionCache.set(db, { expiresAt: Date.now() + MENU_CACHE_TTL, collections: result });
+  return result;
 }
 
 async function locateItem(db: Db, id: string): Promise<LocatedItem | undefined> {
@@ -101,15 +111,25 @@ async function assertQuickCodeAvailable(db: Db, quickCode: string | null | undef
 }
 
 export async function getLiveMenuItems(db: Db): Promise<MenuItem[]> {
-  const result: MenuItem[] = [];
-  for (const collection of await menuCollections(db)) {
+  const cached = menuCache.get(db);
+  if (cached && cached.expiresAt > Date.now()) return cached.items;
+
+  const collections = await menuCollections(db);
+  const batches = await Promise.all(collections.map(async (collection) => {
     const documents = await collection.find({}).toArray();
-    result.push(...documents
+    return documents
       .filter(isMenuDocument)
       .map((document) => toMenuItem(document, collection.collectionName))
-      .filter((item) => item.id));
-  }
-  return result;
+      .filter((item) => item.id);
+  }));
+  const items = batches.flat();
+  menuCache.set(db, { expiresAt: Date.now() + MENU_CACHE_TTL, items });
+  return items;
+}
+
+function invalidateMenuCache(db: Db) {
+  menuCache.delete(db);
+  collectionCache.delete(db);
 }
 
 export async function getLiveMenuItem(db: Db, id: string) {
@@ -137,6 +157,7 @@ export async function createLiveMenuItem(db: Db, item: InsertMenuItem) {
   };
   const result = await collection.insertOne(document);
   document._id = result.insertedId;
+  invalidateMenuCache(db);
   return toMenuItem(document, collection.collectionName);
 }
 
@@ -153,6 +174,7 @@ export async function updateLiveMenuItem(db: Db, id: string, item: Partial<Inser
     const inserted = await db.collection<LiveMenuDocument>(nextCategory).insertOne(replacement);
     await located.collection.deleteOne({ _id: located.document._id });
     replacement._id = inserted.insertedId;
+    invalidateMenuCache(db);
     return toMenuItem(replacement, nextCategory);
   }
   const updated = await located.collection.findOneAndUpdate(
@@ -160,6 +182,7 @@ export async function updateLiveMenuItem(db: Db, id: string, item: Partial<Inser
     { $set: update },
     { returnDocument: "after" },
   );
+  if (updated) invalidateMenuCache(db);
   return updated ? toMenuItem(updated, located.collection.collectionName) : undefined;
 }
 
@@ -167,5 +190,6 @@ export async function deleteLiveMenuItem(db: Db, id: string) {
   const located = await locateItem(db, id);
   if (!located) return false;
   const result = await located.collection.deleteOne({ _id: located.document._id });
+  if (result.deletedCount > 0) invalidateMenuCache(db);
   return result.deletedCount > 0;
 }
