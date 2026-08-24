@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Eye, MoreVertical, Database, RefreshCw, ArrowUpDown, Search, Filter, X } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, MoreVertical, ArrowUpDown, Search, Filter, X } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import AppHeader from "@/components/AppHeader";
 import CategorySidebar from "@/components/CategorySidebar";
@@ -52,8 +52,6 @@ export default function MenuPage() {
   const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const [isMongoURIDialogOpen, setIsMongoURIDialogOpen] = useState(false);
-  const [isSyncDialogOpen, setIsSyncDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -66,53 +64,12 @@ export default function MenuPage() {
     queryKey: ["/api/menu"],
   });
 
-  const { data: mongoSettings } = useQuery<{ uri: string | null; hasUri: boolean }>({
-    queryKey: ["/api/settings/mongodb-uri"],
-  });
-
   const { data: categoriesData } = useQuery<{ categories: string[] }>({
     queryKey: ["/api/menu/categories"],
   });
 
   const { data: inventoryItems = [] } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
-  });
-
-  const saveMongoURIMutation = useMutation({
-    mutationFn: async (uri: string) => {
-      const res = await apiRequest("POST", "/api/settings/mongodb-uri", { uri });
-      return await res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/settings/mongodb-uri"] });
-      setIsMongoURIDialogOpen(false);
-      toast({
-        title: "Success",
-        description: "MongoDB URI saved successfully",
-      });
-    },
-  });
-
-  const syncFromMongoDBMutation = useMutation({
-    mutationFn: async (databaseName?: string) => {
-      const res = await apiRequest("POST", "/api/menu/sync-from-mongodb", { databaseName });
-      return await res.json();
-    },
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/menu/categories"] });
-      toast({
-        title: "Success",
-        description: `Synced ${data.itemsImported} items from MongoDB`,
-      });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to sync from MongoDB",
-        variant: "destructive",
-      });
-    },
   });
 
   const createMenuItemMutation = useMutation({
@@ -316,21 +273,6 @@ export default function MenuPage() {
         variant: "destructive",
       });
     }
-  };
-
-  const handleMongoURISubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const uri = formData.get("uri") as string;
-    await saveMongoURIMutation.mutateAsync(uri);
-  };
-
-  const handleSyncSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-    const databaseName = formData.get("databaseName") as string;
-    await syncFromMongoDBMutation.mutateAsync(databaseName || undefined);
-    setIsSyncDialogOpen(false);
   };
 
   const toggleAvailability = async (id: string, available: boolean) => {
@@ -745,17 +687,6 @@ export default function MenuPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsMongoURIDialogOpen(true)} data-testid="menu-database-uri">
-                  <Database className="h-4 w-4 mr-2" />
-                  Database URI
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => setIsSyncDialogOpen(true)}
-                  data-testid="menu-refresh-database"
-                >
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Refresh Database
-                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
               </div>
@@ -946,70 +877,6 @@ export default function MenuPage() {
         </div>
       </div>
     </div>
-
-      <Dialog open={isMongoURIDialogOpen} onOpenChange={setIsMongoURIDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Configure MongoDB URI</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleMongoURISubmit} className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="uri">MongoDB Connection URI</Label>
-              <Input 
-                id="uri"
-                name="uri"
-                type="text"
-                placeholder="mongodb+srv://..."
-                defaultValue={mongoSettings?.uri || ""}
-                required
-                data-testid="input-mongodb-uri" 
-              />
-              <p className="text-xs text-muted-foreground">
-                Enter your MongoDB connection string. Database name will be extracted from appName parameter or URI path.
-              </p>
-            </div>
-            <Button 
-              type="submit"
-              className="w-full"
-              disabled={saveMongoURIMutation.isPending}
-              data-testid="button-save-uri"
-            >
-              {saveMongoURIMutation.isPending ? "Saving..." : "Save URI"}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isSyncDialogOpen} onOpenChange={setIsSyncDialogOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Sync from MongoDB</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSyncSubmit} className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="databaseName">Database Name (Optional)</Label>
-              <Input 
-                id="databaseName"
-                name="databaseName"
-                type="text"
-                placeholder="Leave empty to auto-detect"
-                data-testid="input-database-name" 
-              />
-              <p className="text-xs text-muted-foreground">
-                Specify database name if auto-detection fails. Defaults to appName from URI or "test".
-              </p>
-            </div>
-            <Button 
-              type="submit"
-              className="w-full"
-              disabled={syncFromMongoDBMutation.isPending}
-              data-testid="button-sync-database"
-            >
-              {syncFromMongoDBMutation.isPending ? "Syncing..." : "Sync Database"}
-            </Button>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={resetEditDialog}>
         <DialogContent className="max-w-2xl max-h-[90vh]">

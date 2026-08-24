@@ -84,6 +84,13 @@ class DynamicMongoDBManager {
     return connection.db.collection<T>(collectionName);
   }
 
+  getDatabase(restaurantId: string, databaseName: string): Db | null {
+    const connection = this.connections.get(restaurantId);
+    if (!connection) return null;
+    connection.lastUsed = Date.now();
+    return connection.client.db(databaseName);
+  }
+
   hasConnection(restaurantId: string): boolean {
     return this.connections.has(restaurantId);
   }

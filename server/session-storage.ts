@@ -1,4 +1,5 @@
 import { dynamicMongoDB } from './dynamic-mongodb';
+import { DIGITAL_MENU_DB_NAME } from './mongodb';
 import { Collection, Document, ObjectId } from 'mongodb';
 import { mongodb } from './mongodb';
 import {
@@ -46,6 +47,13 @@ import {
 import { IStorage } from './storage';
 import { mongoStorage } from './mongo-storage';
 import { randomUUID } from 'crypto';
+import {
+  getLiveMenuItems,
+  getLiveMenuItem,
+  createLiveMenuItem,
+  updateLiveMenuItem,
+  deleteLiveMenuItem,
+} from './live-menu-repository';
 
 export class SessionStorage implements IStorage {
   private restaurantId: string;
@@ -208,50 +216,37 @@ export class SessionStorage implements IStorage {
 
   async getMenuItems(): Promise<MenuItem[]> {
     await this.ensureConnection();
-    const items = await this.getCollection<MenuItem>('menuItems').find().toArray();
-    return items;
+    const db = dynamicMongoDB.getDatabase(this.restaurantId, DIGITAL_MENU_DB_NAME);
+    if (!db) throw new Error(`Not connected to live menu database for restaurant ${this.restaurantId}`);
+    return getLiveMenuItems(db);
   }
 
   async getMenuItem(id: string): Promise<MenuItem | undefined> {
     await this.ensureConnection();
-    const item = await this.getCollection<MenuItem>('menuItems').findOne({ id } as any);
-    return item ?? undefined;
+    const db = dynamicMongoDB.getDatabase(this.restaurantId, DIGITAL_MENU_DB_NAME);
+    if (!db) throw new Error(`Not connected to live menu database for restaurant ${this.restaurantId}`);
+    return getLiveMenuItem(db, id);
   }
 
   async createMenuItem(insertItem: InsertMenuItem): Promise<MenuItem> {
     await this.ensureConnection();
-    const id = randomUUID();
-    const item: MenuItem = {
-      id,
-      name: insertItem.name,
-      category: insertItem.category,
-      price: insertItem.price,
-      cost: insertItem.cost,
-      available: insertItem.available ?? true,
-      isVeg: insertItem.isVeg ?? true,
-      variants: insertItem.variants ?? null,
-      image: insertItem.image ?? null,
-      description: insertItem.description ?? null,
-      quickCode: insertItem.quickCode ?? null,
-    };
-    await this.getCollection<MenuItem>('menuItems').insertOne(item as any);
-    return item;
+    const db = dynamicMongoDB.getDatabase(this.restaurantId, DIGITAL_MENU_DB_NAME);
+    if (!db) throw new Error(`Not connected to live menu database for restaurant ${this.restaurantId}`);
+    return createLiveMenuItem(db, insertItem);
   }
 
   async updateMenuItem(id: string, itemData: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
     await this.ensureConnection();
-    const result = await this.getCollection<MenuItem>('menuItems').findOneAndUpdate(
-      { id } as any,
-      { $set: itemData },
-      { returnDocument: 'after' }
-    );
-    return result ?? undefined;
+    const db = dynamicMongoDB.getDatabase(this.restaurantId, DIGITAL_MENU_DB_NAME);
+    if (!db) throw new Error(`Not connected to live menu database for restaurant ${this.restaurantId}`);
+    return updateLiveMenuItem(db, id, itemData);
   }
 
   async deleteMenuItem(id: string): Promise<boolean> {
     await this.ensureConnection();
-    const result = await this.getCollection<MenuItem>('menuItems').deleteOne({ id } as any);
-    return result.deletedCount > 0;
+    const db = dynamicMongoDB.getDatabase(this.restaurantId, DIGITAL_MENU_DB_NAME);
+    if (!db) throw new Error(`Not connected to live menu database for restaurant ${this.restaurantId}`);
+    return deleteLiveMenuItem(db, id);
   }
 
   async getOrders(): Promise<Order[]> {

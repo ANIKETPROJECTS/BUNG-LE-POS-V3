@@ -27,7 +27,6 @@ import {
   type OrderItem,
 } from "@shared/schema";
 import { z } from "zod";
-import { fetchMenuItemsFromMongoDB } from "./mongodbService";
 import { generateInvoicePDF } from "./utils/invoiceGenerator";
 import { generateKOTPDF } from "./utils/kotGenerator";
 import { DigitalMenuSyncService } from "./digital-menu-sync";
@@ -480,8 +479,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/menu/categories", requireAuth, async (req, res) => {
     const st = getStorage(req);
-    const categoriesJson = await st.getSetting("menu_categories");
-    const categories = categoriesJson ? JSON.parse(categoriesJson) : [];
+    const items = await st.getMenuItems();
+    const categories = Array.from(new Set(items.map((item) => item.category).filter(Boolean))).sort();
     res.json({ categories });
   });
 
@@ -2485,38 +2484,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/menu/sync-from-mongodb", requireAuth, async (req, res) => {
     const st = getStorage(req);
     try {
-      const mongoUri = await st.getSetting("mongodb_uri");
-      if (!mongoUri) {
-        return res
-          .status(400)
-          .json({ error: "MongoDB URI not configured. Please set it first." });
-      }
-
-      const { databaseName } = req.body;
-      const { items, categories } = await fetchMenuItemsFromMongoDB(
-        mongoUri,
-        databaseName,
-      );
-
-      const existingItems = await st.getMenuItems();
-      for (const existing of existingItems) {
-        await st.deleteMenuItem(existing.id);
-      }
-
-      const createdItems = [];
-      for (const item of items) {
-        const created = await st.createMenuItem(item);
-        createdItems.push(created);
-      }
-
-      await st.setSetting("menu_categories", JSON.stringify(categories));
-
-      broadcastUpdate("menu_synced", { count: createdItems.length });
+      // Kept as a compatibility endpoint for older POS clients. Menu data is
+      // now read directly from the live digital-menu database; this endpoint
+      // must never copy documents into POS.menuItems.
+      const items = await st.getMenuItems();
+      const categories = Array.from(new Set(items.map((item) => item.category).filter(Boolean))).sort();
+      broadcastUpdate("menu_synced", { count: items.length, source: "bungle" });
 
       res.json({
         success: true,
-        itemsImported: createdItems.length,
-        items: createdItems,
+        sourceDatabase: "bungle",
+        itemsImported: 0,
+        items,
+        categories,
       });
     } catch (error) {
       console.error("Error syncing from MongoDB:", error);

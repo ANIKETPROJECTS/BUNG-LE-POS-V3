@@ -1,4 +1,11 @@
-import { mongodb } from './mongodb';
+import { mongodb, DIGITAL_MENU_DB_NAME } from './mongodb';
+import {
+  getLiveMenuItems,
+  getLiveMenuItem,
+  createLiveMenuItem,
+  updateLiveMenuItem,
+  deleteLiveMenuItem,
+} from './live-menu-repository';
 import { ObjectId } from 'mongodb';
 import {
   type User,
@@ -193,82 +200,27 @@ export class MongoStorage implements IStorage {
 
   async getMenuItems(): Promise<MenuItem[]> {
     await this.ensureConnection();
-    const items = await mongodb.getCollection<MenuItem>('menuItems').find().toArray();
-    return items;
+    return getLiveMenuItems(mongodb.getDatabaseByName(DIGITAL_MENU_DB_NAME));
   }
 
   async getMenuItem(id: string): Promise<MenuItem | undefined> {
     await this.ensureConnection();
-    const item = await mongodb.getCollection<MenuItem>('menuItems').findOne({ id } as any);
-    return item ?? undefined;
+    return getLiveMenuItem(mongodb.getDatabaseByName(DIGITAL_MENU_DB_NAME), id);
   }
 
   async createMenuItem(item: InsertMenuItem): Promise<MenuItem> {
     await this.ensureConnection();
-    
-    const normalizedQuickCode = item.quickCode ? item.quickCode.trim().toLowerCase() : null;
-    
-    if (normalizedQuickCode) {
-      const existingItems = await mongodb.getCollection<MenuItem>('menuItems').find().toArray();
-      const duplicate = existingItems.find(existing => 
-        existing.quickCode && existing.quickCode.toLowerCase() === normalizedQuickCode
-      );
-      if (duplicate) {
-        throw new Error(`Quick code "${item.quickCode}" is already assigned to another item`);
-      }
-    }
-    
-    const id = randomUUID();
-    const menuItem: MenuItem = {
-      id,
-      name: item.name,
-      category: item.category,
-      price: item.price,
-      cost: item.cost,
-      available: item.available ?? true,
-      isVeg: item.isVeg ?? true,
-      kotBatch: item.kotBatch,
-      variants: item.variants ?? null,
-      image: item.image ?? null,
-      description: item.description ?? null,
-      quickCode: normalizedQuickCode,
-    };
-    await mongodb.getCollection<MenuItem>('menuItems').insertOne(menuItem as any);
-    return menuItem;
+    return createLiveMenuItem(mongodb.getDatabaseByName(DIGITAL_MENU_DB_NAME), item);
   }
 
   async updateMenuItem(id: string, item: Partial<InsertMenuItem>): Promise<MenuItem | undefined> {
     await this.ensureConnection();
-    
-    const normalizedQuickCode = item.quickCode ? item.quickCode.trim().toLowerCase() : null;
-    const updateData = { ...item };
-    
-    if (item.quickCode !== undefined) {
-      updateData.quickCode = normalizedQuickCode;
-    }
-    
-    if (normalizedQuickCode) {
-      const existingItems = await mongodb.getCollection<MenuItem>('menuItems').find().toArray();
-      const duplicate = existingItems.find(existing => 
-        existing.id !== id && existing.quickCode && existing.quickCode.toLowerCase() === normalizedQuickCode
-      );
-      if (duplicate) {
-        throw new Error(`Quick code "${item.quickCode}" is already assigned to another item`);
-      }
-    }
-    
-    const result = await mongodb.getCollection<MenuItem>('menuItems').findOneAndUpdate(
-      { id } as any,
-      { $set: updateData },
-      { returnDocument: 'after' }
-    );
-    return result ?? undefined;
+    return updateLiveMenuItem(mongodb.getDatabaseByName(DIGITAL_MENU_DB_NAME), id, item);
   }
 
   async deleteMenuItem(id: string): Promise<boolean> {
     await this.ensureConnection();
-    const result = await mongodb.getCollection<MenuItem>('menuItems').deleteOne({ id } as any);
-    return result.deletedCount > 0;
+    return deleteLiveMenuItem(mongodb.getDatabaseByName(DIGITAL_MENU_DB_NAME), id);
   }
 
   async getOrders(): Promise<Order[]> {

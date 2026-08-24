@@ -2,6 +2,7 @@ import { MongoClient, Db, Collection, Document } from 'mongodb';
 
 // Name of the shared customers database on the same cluster
 const CUSTOMERS_DB_NAME = 'customersdb';
+export const DIGITAL_MENU_DB_NAME = 'bungle';
 
 class MongoDBService {
   private client: MongoClient | null = null;
@@ -41,6 +42,11 @@ class MongoDBService {
 
   getCollection<T extends Document = Document>(name: string): Collection<T> {
     return this.getDatabase().collection<T>(name);
+  }
+
+  getDatabaseByName(name: string): Db {
+    if (!this.client) throw new Error('Database not connected. Call connect() first.');
+    return this.client.db(name);
   }
 
   /**
