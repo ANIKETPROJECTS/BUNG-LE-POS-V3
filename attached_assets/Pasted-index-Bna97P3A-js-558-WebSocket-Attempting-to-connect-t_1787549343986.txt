@@ -1,0 +1,41 @@
+index-Bna97P3A.js:558 [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+index-Bna97P3A.js:558 [WebSocket] Connected successfully!
+qz-tray.js:63 Established connection with QZ Tray on wss://localhost:8181
+index-Bna97P3A.js:833 [Print worker] Printer recovered; discarded pending jobs Object
+index-Bna97P3A.js:558 [WebSocket] Disconnected
+index-Bna97P3A.js:558 [WebSocket] Reconnecting in 1s (attempt 2/3)...
+index-Bna97P3A.js:558 [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+index-Bna97P3A.js:558 [WebSocket] Connected successfully!
+index-Bna97P3A.js:558 [WebSocket] Message received: order_created Data: Object
+index-Bna97P3A.js:558 [WebSocket] Invalidating order queries for order: 0558e27a-59c0-4b71-8453-d47d4f2cba20
+index-Bna97P3A.js:558 [WebSocket] Message received: table_updated Data: Object
+index-Bna97P3A.js:558 [WebSocket] Invalidating tables queries
+index-Bna97P3A.js:558 [WebSocket] Message received: order_item_added Data: Object
+index-Bna97P3A.js:558 [WebSocket] Invalidating order items queries for orderId: 0558e27a-59c0-4b71-8453-d47d4f2cba20
+index-Bna97P3A.js:558 [WebSocket] Message received: order_item_added Data: Object
+index-Bna97P3A.js:558 [WebSocket] Invalidating order items queries for orderId: 0558e27a-59c0-4b71-8453-d47d4f2cba20
+index-Bna97P3A.js:558 [WebSocket] Message received: order_updated Data: Object
+index-Bna97P3A.js:558 [WebSocket] Invalidating order queries for order: 0558e27a-59c0-4b71-8453-d47d4f2cba20
+index-Bna97P3A.js:558 [WebSocket] Message received: kot_created Data: Object
+index-Bna97P3A.js:558 [WebSocket] Message received: external_order_synced Data: Object
+index-Bna97P3A.js:833 [Print worker] Claimed print job Object
+index-Bna97P3A.js:558 [WebSocket] Message received: external_orders_batch_synced Data: Object
+index-Bna97P3A.js:664 [QZ] Local printers discovered Object
+index-Bna97P3A.js:664 [QZ] Print job sent successfully Object
+index-Bna97P3A.js:833 [Print worker] Print job completed Object
+index-Bna97P3A.js:833 [Print worker] Claimed print job Object
+index-Bna97P3A.js:664 [QZ] Local printers discovered Object
+index-Bna97P3A.js:664 [QZ] Print job sent successfully Object
+index-Bna97P3A.js:833 [Print worker] Print job completed Object
+index-Bna97P3A.js:558 [WebSocket] Disconnected
+index-Bna97P3A.js:558 [WebSocket] Reconnecting in 1s (attempt 2/3)...
+index-Bna97P3A.js:558 [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+index-Bna97P3A.js:558 [WebSocket] Connected successfully!
+index-Bna97P3A.js:558 [WebSocket] Disconnected
+index-Bna97P3A.js:558 [WebSocket] Reconnecting in 1s (attempt 2/3)...
+index-Bna97P3A.js:558 [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+index-Bna97P3A.js:558 [WebSocket] Connected successfully!
+index-Bna97P3A.js:558 [WebSocket] Disconnected
+index-Bna97P3A.js:558 [WebSocket] Reconnecting in 1s (attempt 2/3)...
+index-Bna97P3A.js:558 [WebSocket] Attempting to connect to: wss://atsmartpos.airavatatechnologies.com/api/ws
+index-Bna97P3A.js:558 [WebSocket] Connected successfully!
