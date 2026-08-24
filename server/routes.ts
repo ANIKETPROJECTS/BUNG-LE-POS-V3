@@ -2310,23 +2310,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Customer not found" });
     }
 
-    const orders = await st.getOrders();
-    const customerOrders = orders.filter(
-      (o) => o.customerPhone === customer.phone,
-    );
-    const totalOrders = customerOrders.length;
-
     const invoices = await st.getInvoices();
+    const normalisePhone = (value: string | null | undefined) =>
+      (value || "").replace(/\D/g, "");
+    const customerPhone = normalisePhone(customer.phone);
+    const customerName = customer.name.trim().toLowerCase();
+
+    // Invoice customer details are captured at checkout and are the source
+    // of truth for customer spending. Do not require the linked order to
+    // repeat the phone number; external and older orders may not contain it.
     const customerInvoices = invoices.filter((inv) => {
-      const order = customerOrders.find((o) => o.id === inv.orderId);
-      return !!order;
+      const invoicePhone = normalisePhone(inv.customerPhone);
+      const invoiceName = (inv.customerName || "").trim().toLowerCase();
+      return (customerPhone && invoicePhone === customerPhone) ||
+        (!invoicePhone && invoiceName === customerName);
     });
+    const totalOrders = customerInvoices.length;
     const actualTotalSpent = customerInvoices.reduce(
       (sum, inv) => sum + parseFloat(inv.total || "0"),
       0,
     );
 
-    const lastOrder = customerOrders.sort(
+    const lastInvoice = customerInvoices.sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     )[0];
@@ -2334,7 +2339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({
       totalOrders,
       totalSpent: actualTotalSpent,
-      lastVisit: lastOrder ? lastOrder.createdAt : customer.createdAt,
+      lastVisit: lastInvoice ? lastInvoice.createdAt : customer.createdAt,
     });
   });
 
