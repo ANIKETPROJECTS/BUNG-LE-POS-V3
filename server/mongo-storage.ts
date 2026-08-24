@@ -1472,7 +1472,10 @@ export class MongoStorage implements IStorage {
     return docs.map(d => { const { _id, ...rest } = d as any; return rest as PrintJob; });
   }
 
-  async discardPendingPrintJobsForPrinters(printerNames: string[]): Promise<number> {
+  async discardPendingPrintJobsForPrinters(
+    printerNames: string[],
+    createdBefore?: Date,
+  ): Promise<number> {
     await this.ensureConnection();
     const names = printerNames
       .filter((name): name is string => typeof name === "string")
@@ -1480,11 +1483,18 @@ export class MongoStorage implements IStorage {
       .filter(Boolean);
     if (names.length === 0) return 0;
 
+    const filter: any = {
+      printerName: { $in: names },
+      status: "pending",
+    };
+    // A reconnect cleanup must not delete jobs that arrived in the same
+    // moment as the recovery poll. Only discard work that was already queued
+    // before the worker observed the printer becoming available.
+    if (createdBefore && !Number.isNaN(createdBefore.getTime())) {
+      filter.createdAt = { $lt: createdBefore };
+    }
     const result = await mongodb.getCollection<PrintJob>("print_jobs").updateMany(
-      {
-        printerName: { $in: names },
-        status: "pending",
-      } as any,
+      filter,
       {
         $set: {
           status: "failed",

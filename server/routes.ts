@@ -3774,7 +3774,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const printerNames = Array.isArray(req.body?.printerNames)
         ? req.body.printerNames.filter((name: unknown): name is string => typeof name === "string")
         : [];
-      const discarded = await mongoStorage.discardPendingPrintJobsForPrinters(printerNames);
+      const recoveryAt = typeof req.body?.recoveryAt === "string"
+        ? new Date(req.body.recoveryAt)
+        : undefined;
+      const discarded = await mongoStorage.discardPendingPrintJobsForPrinters(
+        printerNames,
+        recoveryAt,
+      );
       res.json({ ok: true, discarded });
     } catch (e: any) {
       res.status(500).json({ error: e.message });

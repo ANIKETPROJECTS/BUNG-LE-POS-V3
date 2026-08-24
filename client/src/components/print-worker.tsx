@@ -4,6 +4,8 @@ import { checkQzTray, getAvailableQzPrinters, printQzPayload } from "@/lib/qz-pr
 import type { PrintJob, PrinterDevice } from "@shared/schema";
 
 const WORKER_ID_KEY = "bungle_qz_print_worker_id";
+const PRINTER_LOCK_KEY = "bungle_qz_print_lock";
+const PRINTER_LOCK_MS = 90_000;
 const POLL_MS = 2500;
 const QZ_RETRY_MS = 15000;
 
@@ -13,6 +15,38 @@ function getWorkerId() {
   const id = crypto.randomUUID();
   localStorage.setItem(WORKER_ID_KEY, id);
   return id;
+}
+
+function acquirePrinterLock(workerId: string): boolean {
+  const now = Date.now();
+  try {
+    const current = localStorage.getItem(PRINTER_LOCK_KEY);
+    if (current) {
+      const lock = JSON.parse(current) as { workerId?: string; expiresAt?: number };
+      if (lock.workerId !== workerId && typeof lock.expiresAt === "number" && lock.expiresAt > now) {
+        return false;
+      }
+    }
+    localStorage.setItem(PRINTER_LOCK_KEY, JSON.stringify({
+      workerId,
+      expiresAt: now + PRINTER_LOCK_MS,
+    }));
+    const written = JSON.parse(localStorage.getItem(PRINTER_LOCK_KEY) || "{}") as { workerId?: string };
+    return written.workerId === workerId;
+  } catch {
+    // Printing should remain available if localStorage is blocked. The
+    // server-side claim still prevents the same job being claimed twice.
+    return true;
+  }
+}
+
+function releasePrinterLock(workerId: string) {
+  try {
+    const current = JSON.parse(localStorage.getItem(PRINTER_LOCK_KEY) || "{}") as { workerId?: string };
+    if (current.workerId === workerId) localStorage.removeItem(PRINTER_LOCK_KEY);
+  } catch {
+    // Nothing to release when localStorage is unavailable.
+  }
 }
 
 export default function PrintWorker() {
@@ -80,11 +114,12 @@ export default function PrintWorker() {
         // unavailable. The first ready poll is a recovery boundary; newly
         // created jobs will be handled on the next poll.
         if (recoveredPrinters.length > 0) {
+          const recoveryAt = new Date().toISOString();
           const reconnectResponse = await fetch("/api/print-jobs/discard-on-reconnect", {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ printerNames: recoveredPrinters }),
+            body: JSON.stringify({ printerNames: recoveredPrinters, recoveryAt }),
           });
           if (!reconnectResponse.ok) throw new Error("Could not discard stale print jobs");
           const reconnectResult = await reconnectResponse.json() as { discarded?: number };
@@ -98,11 +133,17 @@ export default function PrintWorker() {
           return;
         }
 
+        // QZ Tray is local to this browser computer. Serialize printing
+        // across multiple POS tabs/accounts so two raw ESC/POS payloads are
+        // never sent to the same printer at once.
+        const workerId = workerIdRef.current;
+        if (!workerId || !acquirePrinterLock(workerId)) return;
+
         const claimResponse = await fetch("/api/print-jobs/claim", {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ workerId: workerIdRef.current, printerNames: localPrinterNames }),
+          body: JSON.stringify({ workerId, printerNames: localPrinterNames }),
         });
         if (!claimResponse.ok) throw new Error("Could not claim print job");
         const job = (await claimResponse.json()) as PrintJob | null;
@@ -117,7 +158,7 @@ export default function PrintWorker() {
         });
 
         const activeResponse = await fetch(
-          `/api/print-jobs/${job.id}/active?workerId=${encodeURIComponent(workerIdRef.current ?? "")}`,
+          `/api/print-jobs/${job.id}/active?workerId=${encodeURIComponent(workerId)}`,
           { credentials: "include" },
         );
         if (!activeResponse.ok || !(await activeResponse.json()).active) {
@@ -134,7 +175,7 @@ export default function PrintWorker() {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ workerId: workerIdRef.current }),
+            body: JSON.stringify({ workerId }),
           });
           console.info("[Print worker] Print job completed", {
             jobId: job.id,
@@ -145,7 +186,7 @@ export default function PrintWorker() {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ workerId: workerIdRef.current, error: result.error }),
+            body: JSON.stringify({ workerId, error: result.error }),
           });
           console.error("[Print worker] Print job failed; it was stopped to prevent duplicate output", {
             jobId: job.id,
@@ -157,6 +198,7 @@ export default function PrintWorker() {
           error: error instanceof Error ? error.message : String(error),
         });
       } finally {
+        if (workerIdRef.current) releasePrinterLock(workerIdRef.current);
         runningRef.current = false;
         if (!stopped) timerRef.current = setTimeout(poll, nextPollDelayRef.current);
       }
