@@ -9,6 +9,15 @@ import {
 } from "recharts";
 
 const COLORS = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#EC4899', '#06B6D4', '#84CC16'];
+const dashboardTooltipStyle = {
+  backgroundColor: "#ffffff",
+  border: "1px solid #d1d5db",
+  borderRadius: "8px",
+  color: "#111827",
+  boxShadow: "0 4px 12px rgba(15, 23, 42, 0.16)",
+};
+const dashboardTooltipLabelStyle = { color: "#374151", fontWeight: 600 };
+const dashboardTooltipItemStyle = { color: "#111827" };
 
 // Shape of the data returned by GET /api/dashboard/stats
 interface DashboardStats {
@@ -31,7 +40,7 @@ interface DashboardStats {
     totalTables: number;
     avgPrepTime: number;
   };
-  recentOrders: { id: string; table: string; createdAt: string; status: string; total: number }[];
+  recentOrders: { invoiceNumber: string; table: string; createdAt: string; status: string; total: number }[];
 }
 
 // Browser's UTC offset in minutes east of UTC (positive east). The server uses
@@ -62,7 +71,6 @@ export default function DashboardPage() {
   const topItems = stats?.topItems ?? [];
   const recentOrders = (stats?.recentOrders ?? []).map((o) => ({
     ...o,
-    id: `#${o.id.slice(0, 8)}`,
     time: getTimeAgo(o.createdAt),
     table: o.table,
   }));
@@ -220,8 +228,9 @@ export default function DashboardPage() {
                   <YAxis yAxisId="left" stroke="#3B82F6" fontSize={12} />
                   <YAxis yAxisId="right" orientation="right" stroke="#10B981" fontSize={12} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff' }}
-                    labelStyle={{ color: '#9CA3AF' }}
+                    contentStyle={dashboardTooltipStyle}
+                    labelStyle={dashboardTooltipLabelStyle}
+                    itemStyle={dashboardTooltipItemStyle}
                     formatter={(value: number, name: string) =>
                       name === 'Revenue (₹)' ? [`₹${value.toLocaleString()}`, name] : [value, name]
                     }
@@ -292,7 +301,9 @@ export default function DashboardPage() {
                   <XAxis dataKey="day" stroke="#6B7280" fontSize={12} />
                   <YAxis stroke="#6B7280" fontSize={12} />
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff' }}
+                    contentStyle={dashboardTooltipStyle}
+                    labelStyle={dashboardTooltipLabelStyle}
+                    itemStyle={dashboardTooltipItemStyle}
                     formatter={(value: number) => [`₹${Math.round(value).toLocaleString()}`, 'Sales']}
                   />
                   <Bar dataKey="sales" fill="url(#barGradient)" radius={[4, 4, 0, 0]} />
@@ -333,7 +344,9 @@ export default function DashboardPage() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff' }}
+                    contentStyle={dashboardTooltipStyle}
+                    labelStyle={dashboardTooltipLabelStyle}
+                    itemStyle={dashboardTooltipItemStyle}
                     formatter={(value: number) => [`₹${Math.round(value).toLocaleString()}`, 'Sales']}
                   />
                   <Legend 
@@ -375,7 +388,9 @@ export default function DashboardPage() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    contentStyle={{ backgroundColor: '#1F2937', border: 'none', borderRadius: '8px', color: '#fff' }}
+                    contentStyle={dashboardTooltipStyle}
+                    labelStyle={dashboardTooltipLabelStyle}
+                    itemStyle={dashboardTooltipItemStyle}
                     formatter={(value: number) => [`₹${Math.round(value).toLocaleString()}`, 'Sales']}
                   />
                   <Legend 
@@ -444,7 +459,7 @@ export default function DashboardPage() {
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="text-left py-2 px-3 font-medium text-muted-foreground text-sm">Order</th>
+                      <th className="text-left py-2 px-3 font-medium text-muted-foreground text-sm">Invoice</th>
                       <th className="text-left py-2 px-3 font-medium text-muted-foreground text-sm">Table</th>
                       <th className="text-left py-2 px-3 font-medium text-muted-foreground text-sm">Time</th>
                       <th className="text-left py-2 px-3 font-medium text-muted-foreground text-sm">Status</th>
@@ -453,8 +468,8 @@ export default function DashboardPage() {
                   </thead>
                   <tbody>
                     {recentOrders.map((order) => (
-                      <tr key={order.id} className="border-b last:border-0">
-                        <td className="py-2 px-3 font-medium">{order.id}</td>
+                      <tr key={order.invoiceNumber} className="border-b last:border-0">
+                        <td className="py-2 px-3 font-medium">{order.invoiceNumber}</td>
                         <td className="py-2 px-3">{order.table}</td>
                         <td className="py-2 px-3 text-muted-foreground text-sm">{order.time}</td>
                         <td className="py-2 px-3">{getStatusBadge(order.status)}</td>

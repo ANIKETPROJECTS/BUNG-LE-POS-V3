@@ -984,6 +984,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ).length;
       const tableToNumber = new Map(tables.map((t) => [t.id, t.tableNumber]));
       const occupiedTables = tables.filter((t) => t.status === "occupied" || !!t.currentOrderId).length;
+      const orderById = new Map(orders.map((o) => [o.id, o]));
       const prepTimes = todaysOrders
         .filter((o) => o.completedAt || o.paidAt)
         .map((o) => {
@@ -1003,8 +1004,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ))
         .slice(0, 5)
         .map((o) => ({
-          id: o.id,
-          table: tableToNumber.get(o.tableId || "") || "—",
+          // Recent orders are invoice-backed records. Show the human-facing
+          // invoice number instead of the internal invoice UUID, and resolve
+          // the table through the source order relationship.
+          invoiceNumber: o.invoiceNumber,
+          table: o.tableNumber || tableToNumber.get(orderById.get(o.orderId)?.tableId || "") || "—",
           createdAt: o.createdAt,
           status: o.status,
           total: toMoney(o.total),
