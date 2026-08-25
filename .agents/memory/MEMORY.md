@@ -6,3 +6,4 @@
 - [POS session persistence](pos-session-persistence.md) — keep the dedicated POS login rolling across browser restarts, with logout as the explicit revocation.
 - [Live menu database ownership](live-menu-database-ownership.md) — the POS must read and write the digital menu’s bungle database directly, never a copied POS menu collection.
 - [Mongo connection single-flight](mongo-connection-single-flight.md) — concurrent first requests must share one MongoDB connection attempt.
+- [Stale session connection recovery](stale-session-connection-recovery.md) — cached authenticated storage must reconnect after idle Mongo cleanup.
