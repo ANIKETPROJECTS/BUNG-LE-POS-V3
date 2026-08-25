@@ -66,7 +66,11 @@ export class SessionStorage implements IStorage {
   }
 
   private async ensureConnection() {
-    if (!this.connected) {
+    // The dynamic connection manager can close idle connections while this
+    // storage instance remains cached for the authenticated session. Check
+    // the manager as well as the local flag so the next request reconnects
+    // automatically instead of using a stale session storage object.
+    if (!this.connected || !dynamicMongoDB.hasConnection(this.restaurantId)) {
       await dynamicMongoDB.getConnection(this.restaurantId, this.mongodbUri);
       this.connected = true;
     }
