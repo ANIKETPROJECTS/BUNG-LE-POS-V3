@@ -20,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTaxSettings } from "@/hooks/use-tax-settings";
-import { computeBillTotals } from "@shared/tax";
+import { computeBillTotals, type DiscountType } from "@shared/tax";
 
 interface OrderItem {
   id: string;
@@ -60,6 +60,10 @@ interface OrderCartProps {
   paymentMethod?: "cash" | "upi" | "card";
   onTaxRateChange?: (rate: number) => void;
   onServiceChargeChange?: (rate: number) => void;
+  discountType?: DiscountType;
+  discountValue?: number;
+  onDiscountTypeChange?: (type: DiscountType) => void;
+  onDiscountValueChange?: (value: string) => void;
 }
 
 export default function OrderCart({
@@ -90,6 +94,10 @@ export default function OrderCart({
   paymentMethod: externalPaymentMethod = "cash",
   onTaxRateChange,
   onServiceChargeChange,
+  discountType = "percentage",
+  discountValue = 0,
+  onDiscountTypeChange,
+  onDiscountValueChange,
 }: OrderCartProps) {
   const [notesDialogItem, setNotesDialogItem] = useState<OrderItem | null>(null);
   const [tempNotes, setTempNotes] = useState("");
@@ -117,7 +125,15 @@ export default function OrderCart({
   ];
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, taxRate, serviceChargeRate);
+  const { tax, cgst, sgst, serviceCharge, discount, total } = computeBillTotals(
+    subtotal,
+    taxRate,
+    serviceChargeRate,
+    discountType,
+    discountValue,
+  );
+  const grossTotal = subtotal + tax + serviceCharge;
+  const discountLimit = discountType === "percentage" ? 100 : grossTotal;
 
   const handleTaxRateChange = (value: string) => {
     const rate = value === "" ? 0 : parseFloat(value);
@@ -380,6 +396,49 @@ export default function OrderCart({
             </span>
             <span className="text-gray-900 font-semibold" data-testid="text-service-charge">₹{serviceCharge.toFixed(2)}</span>
           </div>
+          <div className="flex justify-between items-center text-sm">
+            <span className="text-gray-600">Extra Discount</span>
+            <div className="flex items-center gap-1">
+              <div className="flex rounded-md border border-primary/30 overflow-hidden">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={discountType === "percentage" ? "default" : "ghost"}
+                  className="h-7 rounded-none px-2 text-xs"
+                  onClick={() => onDiscountTypeChange?.("percentage")}
+                  data-testid="button-discount-percentage"
+                >
+                  %
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={discountType === "fixed" ? "default" : "ghost"}
+                  className="h-7 rounded-none px-2 text-xs"
+                  onClick={() => onDiscountTypeChange?.("fixed")}
+                  data-testid="button-discount-fixed"
+                >
+                  ₹
+                </Button>
+              </div>
+              <Input
+                type="number"
+                min={0}
+                max={discountLimit}
+                step={discountType === "percentage" ? "0.1" : "0.01"}
+                value={discountValue > 0 ? discountValue : ""}
+                onChange={(e) => onDiscountValueChange?.(e.target.value)}
+                className="h-7 w-20 px-2 py-0 text-xs"
+                data-testid="input-discount-value"
+              />
+            </div>
+          </div>
+          {discount > 0 && (
+            <div className="flex justify-between text-sm text-emerald-700">
+              <span>Discount applied</span>
+              <span data-testid="text-discount">-₹{discount.toFixed(2)}</span>
+            </div>
+          )}
           <Separator />
           <div className="flex justify-between font-bold text-base pt-1">
             <span className="text-gray-900">Total</span>

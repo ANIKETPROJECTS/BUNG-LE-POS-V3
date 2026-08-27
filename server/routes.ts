@@ -111,6 +111,20 @@ async function getTaxSettings(st: IStorage): Promise<TaxSettings> {
   };
 }
 
+function discountInputError(
+  discountType: "percentage" | "fixed",
+  discountValue: number,
+  billBeforeDiscount: number,
+) {
+  if (discountType === "percentage" && discountValue > 100) {
+    return "Discount percentage cannot be more than 100%";
+  }
+  if (discountType === "fixed" && discountValue > billBeforeDiscount + 0.01) {
+    return "Discount cannot be more than the total bill";
+  }
+  return null;
+}
+
 /**
  * Upsert an invoice for an order — updates the existing one if present so that
  * Save → Bill → Checkout never creates duplicate invoices for the same order,
@@ -144,6 +158,7 @@ async function queueBillPrintJobs(opts: {
     cgst: string;
     sgst: string;
     serviceCharge: string;
+     discount: string;
     total: string;
     paymentMode?: string | null;
     splitPayments?: string | null;
@@ -180,6 +195,7 @@ async function queueBillPrintJobs(opts: {
       cgst: parseFloat(opts.invoice.cgst),
       sgst: parseFloat(opts.invoice.sgst),
       serviceCharge: parseFloat(opts.invoice.serviceCharge),
+       discount: parseFloat(opts.invoice.discount),
       total: parseFloat(opts.invoice.total),
       paymentMode: opts.invoice.paymentMode || "cash",
       splitPayments: opts.invoice.splitPayments
@@ -1454,11 +1470,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
       const effectiveServiceCharge =
         result.data.serviceCharge ?? taxSettings.serviceCharge;
-      const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(
+       const billTotals = computeBillTotals(
         subtotal,
         effectiveTaxRate,
         effectiveServiceCharge,
+         result.data.discountType,
+         result.data.discountValue,
       );
+       const discountError = discountInputError(
+         result.data.discountType,
+         result.data.discountValue,
+         subtotal + billTotals.tax + billTotals.serviceCharge,
+       );
+       if (discountError) return res.status(400).json({ error: discountError });
+       const { tax, cgst, sgst, serviceCharge, discount, total } = billTotals;
 
       let tableInfo = null;
       if (order.tableId) {
@@ -1492,7 +1517,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cgst: cgst.toFixed(2),
         sgst: sgst.toFixed(2),
         serviceCharge: serviceCharge.toFixed(2),
-        discount: "0",
+         discount: discount.toFixed(2),
         total: total.toFixed(2),
         paymentMode: order.paymentMode || "cash",
         splitPayments: null,
@@ -1537,11 +1562,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
     const effectiveServiceCharge =
       result.data.serviceCharge ?? taxSettings.serviceCharge;
-    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(
+    const billTotals = computeBillTotals(
       subtotal,
       effectiveTaxRate,
       effectiveServiceCharge,
+      result.data.discountType,
+      result.data.discountValue,
     );
+    const discountError = discountInputError(
+      result.data.discountType,
+      result.data.discountValue,
+      subtotal + billTotals.tax + billTotals.serviceCharge,
+    );
+    if (discountError) return res.status(400).json({ error: discountError });
+    const { tax, cgst, sgst, serviceCharge, discount, total } = billTotals;
 
     let tableInfo = null;
     if (order.tableId) {
@@ -1574,7 +1608,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       cgst: cgst.toFixed(2),
       sgst: sgst.toFixed(2),
       serviceCharge: serviceCharge.toFixed(2),
-      discount: "0",
+       discount: discount.toFixed(2),
       total: total.toFixed(2),
       paymentMode: order.paymentMode || "cash",
       splitPayments: null,
@@ -1642,11 +1676,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const effectiveTaxRate = result.data.taxRate ?? taxSettings.taxRate;
     const effectiveServiceCharge =
       result.data.serviceCharge ?? taxSettings.serviceCharge;
-    const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(
+    const billTotals = computeBillTotals(
       subtotal,
       effectiveTaxRate,
       effectiveServiceCharge,
+      result.data.discountType,
+      result.data.discountValue,
     );
+    const discountError = discountInputError(
+      result.data.discountType,
+      result.data.discountValue,
+      subtotal + billTotals.tax + billTotals.serviceCharge,
+    );
+    if (discountError) return res.status(400).json({ error: discountError });
+    const { tax, cgst, sgst, serviceCharge, discount, total } = billTotals;
 
     if (result.data.splitPayments && result.data.splitPayments.length > 0) {
       const splitSum = result.data.splitPayments.reduce(
@@ -1742,7 +1785,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       cgst: cgst.toFixed(2),
       sgst: sgst.toFixed(2),
       serviceCharge: serviceCharge.toFixed(2),
-      discount: "0",
+       discount: discount.toFixed(2),
       total: total.toFixed(2),
       paymentMode: result.data.paymentMode || "cash",
       splitPayments: result.data.splitPayments
@@ -3608,6 +3651,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         cgst: parseFloat(invoice.cgst),
         sgst: parseFloat(invoice.sgst),
         serviceCharge: parseFloat(invoice.serviceCharge),
+         discount: parseFloat(invoice.discount),
         total: parseFloat(invoice.total),
         paymentMode: invoice.paymentMode || "cash",
         splitPayments: invoice.splitPayments

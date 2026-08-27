@@ -184,6 +184,7 @@ export function buildBillEscPos(opts: {
   cgst: number;
   sgst: number;
   serviceCharge: number;
+  discount?: number;
   total: number;
   paymentMode?: string;
   splitPayments?: SplitPayment[];
@@ -204,6 +205,7 @@ export function buildBillEscPos(opts: {
     cgst,
     sgst,
     serviceCharge,
+    discount = 0,
     total,
     paymentMode = "Cash",
     splitPayments = [],
@@ -318,6 +320,9 @@ export function buildBillEscPos(opts: {
   }
   if (serviceCharge > 0) {
     row("Service Charge", `Rs.${serviceCharge.toFixed(2)}`);
+  }
+  if (discount > 0) {
+    row("Discount", `-Rs.${discount.toFixed(2)}`);
   }
 
   parts.push(text(sep2 + "\n"));

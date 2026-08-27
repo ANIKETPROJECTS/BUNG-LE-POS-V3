@@ -826,7 +826,7 @@ export default function BillingPage() {
 
   const handleConfirmPayment = async () => {
     const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const { total } = computeBillTotals(subtotal, taxRate, serviceChargeRate);
+    const { total } = computeBillTotals(subtotal, taxRate, serviceChargeRate, discountType, discountValue);
 
     try {
       let orderId = currentOrderId;
@@ -852,12 +852,17 @@ export default function BillingPage() {
         paymentMode: paymentMethod,
         taxRate,
         serviceCharge: serviceChargeRate,
+        discountType,
+        discountValue,
         splitPayments: undefined,
         print: shouldPrint 
       });
 
       if (pendingKotAction !== "none") {
-        await billMutation.mutateAsync({ orderId: orderId!, print: false });
+        await billMutation.mutateAsync({
+          orderId: orderId!,
+          print: false,
+        });
         
         await kotMutation.mutateAsync({ orderId: orderId!, print: false });
         
@@ -876,6 +881,8 @@ export default function BillingPage() {
       setTableNumber("");
       setFloorName("");
       setSelectedCustomer(null);
+      setDiscountType("percentage");
+      setDiscountValue(0);
       
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
@@ -957,7 +964,7 @@ export default function BillingPage() {
 
   const handleConfirmCheckout = async () => {
     const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-    const { total } = computeBillTotals(subtotal, taxRate, serviceChargeRate);
+    const { total } = computeBillTotals(subtotal, taxRate, serviceChargeRate, discountType, discountValue);
 
     try {
       let orderId = currentOrderId;
@@ -991,12 +998,17 @@ export default function BillingPage() {
         paymentMode: paymentMethod,
         taxRate,
         serviceCharge: serviceChargeRate,
+        discountType,
+        discountValue,
         splitPayments: splitPaymentsData,
         print: shouldPrint 
       });
 
       if (pendingKotAction !== "none") {
-        await billMutation.mutateAsync({ orderId: orderId!, print: false });
+        await billMutation.mutateAsync({
+          orderId: orderId!,
+          print: false,
+        });
         
         await kotMutation.mutateAsync({ orderId: orderId!, print: false });
         
@@ -1019,6 +1031,8 @@ export default function BillingPage() {
       setSplitAmounts([]);
       setSplitPaymentModes([]);
       setPendingKotAction("none");
+      setDiscountType("percentage");
+      setDiscountValue(0);
 
       if (currentTableId) {
         navigate("/tables");
@@ -1053,7 +1067,36 @@ export default function BillingPage() {
   };
 
   const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const { tax, cgst, sgst, serviceCharge, total } = computeBillTotals(subtotal, taxRate, serviceChargeRate);
+  const { tax, cgst, sgst, serviceCharge, discount, total } = computeBillTotals(
+    subtotal,
+    taxRate,
+    serviceChargeRate,
+    discountType,
+    discountValue,
+  );
+  const grossTotal = subtotal + tax + serviceCharge;
+  const maxDiscount = discountType === "percentage" ? 100 : grossTotal;
+
+  const handleDiscountValueChange = (value: string) => {
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) {
+      setDiscountValue(0);
+      return;
+    }
+    setDiscountValue(Math.min(Math.max(0, parsed), maxDiscount));
+  };
+
+  const handleDiscountTypeChange = (type: DiscountType) => {
+    setDiscountType(type);
+    const nextLimit = type === "percentage" ? 100 : grossTotal;
+    setDiscountValue((current) => Math.min(current, nextLimit));
+  };
+
+  useEffect(() => {
+    if (discountType === "fixed" && discountValue > grossTotal) {
+      setDiscountValue(grossTotal);
+    }
+  }, [discountType, discountValue, grossTotal]);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-50">
@@ -1185,6 +1228,10 @@ export default function BillingPage() {
             paymentMethod={paymentMethod}
             onTaxRateChange={setTaxRate}
             onServiceChargeChange={setServiceChargeRate}
+            discountType={discountType}
+            discountValue={discountValue}
+            onDiscountTypeChange={handleDiscountTypeChange}
+            onDiscountValueChange={handleDiscountValueChange}
           />
         </div>
       </div>
@@ -1243,6 +1290,10 @@ export default function BillingPage() {
               paymentMethod={paymentMethod}
               onTaxRateChange={setTaxRate}
               onServiceChargeChange={setServiceChargeRate}
+              discountType={discountType}
+              discountValue={discountValue}
+              onDiscountTypeChange={handleDiscountTypeChange}
+              onDiscountValueChange={handleDiscountValueChange}
             />
           </div>
         </SheetContent>
@@ -1308,6 +1359,12 @@ export default function BillingPage() {
                 <div className="flex justify-between text-sm">
                   <span>Service Charge ({serviceChargeRate}%):</span>
                   <span>₹{serviceCharge.toFixed(2)}</span>
+                </div>
+              )}
+              {discount > 0 && (
+                <div className="flex justify-between text-sm text-emerald-700">
+                  <span>Discount{discountType === "percentage" ? ` (${discountValue}%)` : ""}:</span>
+                  <span>-₹{discount.toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between font-bold text-lg border-t pt-2">

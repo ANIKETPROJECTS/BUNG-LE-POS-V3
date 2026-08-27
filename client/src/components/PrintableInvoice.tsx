@@ -17,6 +17,7 @@ export default function PrintableInvoice({ invoice, order, orderItems, onPrintCo
   const cgst = parseFloat(invoice.cgst || "0");
   const sgst = parseFloat(invoice.sgst || "0");
   const serviceCharge = parseFloat(invoice.serviceCharge || "0");
+  const discount = parseFloat(invoice.discount || "0");
   const total = parseFloat(invoice.total);
   const taxRatePercent = subtotal > 0 ? (tax / subtotal) * 100 : 0;
 
@@ -152,6 +153,12 @@ export default function PrintableInvoice({ invoice, order, orderItems, onPrintCo
           <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0' }}>
             <span>Service Charge:</span>
             <span>₹{serviceCharge.toFixed(2)}</span>
+          </div>
+        )}
+        {discount > 0 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', color: '#047857' }}>
+            <span>Discount:</span>
+            <span>-₹{discount.toFixed(2)}</span>
           </div>
         )}
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '5px 0', fontWeight: 'bold', fontSize: '13px', borderTop: '1px solid #000', marginTop: '5px' }}>
