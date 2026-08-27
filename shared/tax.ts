@@ -21,23 +21,36 @@ export interface BillTotals {
   cgst: number;
   sgst: number;
   serviceCharge: number;
+  discount: number;
   total: number;
 }
+
+export type DiscountType = "percentage" | "fixed";
 
 export function computeBillTotals(
   subtotal: number,
   taxRatePercent: number,
-  serviceChargePercent: number
+  serviceChargePercent: number,
+  discountType: DiscountType = "percentage",
+  discountValue: number = 0,
 ): BillTotals {
   const safeSubtotal = Number.isFinite(subtotal) ? subtotal : 0;
   const safeTaxRate = Number.isFinite(taxRatePercent) ? taxRatePercent : 0;
   const safeServiceChargeRate = Number.isFinite(serviceChargePercent) ? serviceChargePercent : 0;
+  const safeDiscountValue = Math.max(
+    0,
+    Number.isFinite(discountValue) ? discountValue : 0,
+  );
 
   const tax = (safeSubtotal * safeTaxRate) / 100;
   const cgst = tax / 2;
   const sgst = tax / 2;
   const serviceCharge = (safeSubtotal * safeServiceChargeRate) / 100;
-  const total = safeSubtotal + tax + serviceCharge;
+  const beforeDiscount = safeSubtotal + tax + serviceCharge;
+  const discount = discountType === "fixed"
+    ? Math.min(safeDiscountValue, beforeDiscount)
+    : Math.min((beforeDiscount * Math.min(safeDiscountValue, 100)) / 100, beforeDiscount);
+  const total = Math.max(0, beforeDiscount - discount);
 
-  return { subtotal: safeSubtotal, tax, cgst, sgst, serviceCharge, total };
+  return { subtotal: safeSubtotal, tax, cgst, sgst, serviceCharge, discount, total };
 }

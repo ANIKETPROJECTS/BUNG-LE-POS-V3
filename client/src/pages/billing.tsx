@@ -35,7 +35,7 @@ import { useToast } from "@/hooks/use-toast";
 import { tryQzPrint } from "@/lib/qz-print";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { MenuItem, Customer, Invoice, Order, OrderItem as SchemaOrderItem } from "@shared/schema";
-import { computeBillTotals } from "@shared/tax";
+import { computeBillTotals, type DiscountType } from "@shared/tax";
 import { useTaxSettings } from "@/hooks/use-tax-settings";
 
 interface OrderItem {
@@ -82,6 +82,8 @@ export default function BillingPage() {
   const { data: taxSettings } = useTaxSettings();
   const [taxRate, setTaxRate] = useState(taxSettings.taxRate);
   const [serviceChargeRate, setServiceChargeRate] = useState(taxSettings.serviceCharge);
+  const [discountType, setDiscountType] = useState<DiscountType>("percentage");
+  const [discountValue, setDiscountValue] = useState(0);
   const localEditingRef = useRef(false);
   const tableFetchVersionRef = useRef(0);
   const orderFetchVersionRef = useRef(0);
@@ -325,7 +327,14 @@ export default function BillingPage() {
 
   const saveMutation = useMutation({
     mutationFn: async ({ orderId, print }: { orderId: string; print: boolean }) => {
-      const res = await apiRequest("POST", `/api/orders/${orderId}/save`, { print, printVia: "qz", taxRate, serviceCharge: serviceChargeRate });
+      const res = await apiRequest("POST", `/api/orders/${orderId}/save`, {
+        print,
+        printVia: "qz",
+        taxRate,
+        serviceCharge: serviceChargeRate,
+        discountType,
+        discountValue,
+      });
       const saveData = await res.json();
       
       if (print && saveData.invoice) {
@@ -374,7 +383,14 @@ export default function BillingPage() {
 
   const billMutation = useMutation({
     mutationFn: async ({ orderId, print }: { orderId: string; print: boolean }) => {
-      const res = await apiRequest("POST", `/api/orders/${orderId}/bill`, { print, printVia: "qz", taxRate, serviceCharge: serviceChargeRate });
+      const res = await apiRequest("POST", `/api/orders/${orderId}/bill`, {
+        print,
+        printVia: "qz",
+        taxRate,
+        serviceCharge: serviceChargeRate,
+        discountType,
+        discountValue,
+      });
       const billData = await res.json();
       
       if (print && billData.invoice) {
@@ -391,18 +407,29 @@ export default function BillingPage() {
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: async ({ orderId, paymentMode, splitPayments, print, taxRate, serviceCharge }: { 
+    mutationFn: async ({ orderId, paymentMode, splitPayments, print, taxRate, serviceCharge, discountType, discountValue }: { 
       orderId: string; 
       paymentMode: string; 
       splitPayments?: Array<{ person: number; amount: number; paymentMode: string }>; 
       print: boolean;
       taxRate?: number;
       serviceCharge?: number;
+      discountType?: DiscountType;
+      discountValue?: number;
     }) => {
       // Checkout invoices must always go through the shared server queue.
       // QZ Tray runs only on the designated printer computer, not the
       // browser/device accepting payment.
-      const res = await apiRequest("POST", `/api/orders/${orderId}/checkout`, { paymentMode, splitPayments, print, printVia: "agent", taxRate, serviceCharge });
+      const res = await apiRequest("POST", `/api/orders/${orderId}/checkout`, {
+        paymentMode,
+        splitPayments,
+        print,
+        printVia: "agent",
+        taxRate,
+        serviceCharge,
+        discountType,
+        discountValue,
+      });
       const checkoutData = await res.json();
       return checkoutData;
     },

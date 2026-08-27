@@ -50,6 +50,8 @@ const orderActionSchema = z.object({
   printVia: z.enum(["qz", "agent"]).optional().default("qz"),
   taxRate: z.number().min(0).max(100).optional(),
   serviceCharge: z.number().min(0).max(100).optional(),
+  discountType: z.enum(["percentage", "fixed"]).optional().default("percentage"),
+  discountValue: z.number().finite().min(0).optional().default(0),
 });
 
 const checkoutSchema = z.object({
@@ -58,6 +60,8 @@ const checkoutSchema = z.object({
   printVia: z.enum(["qz", "agent"]).optional().default("agent"),
   taxRate: z.number().min(0).max(100).optional(),
   serviceCharge: z.number().min(0).max(100).optional(),
+  discountType: z.enum(["percentage", "fixed"]).optional().default("percentage"),
+  discountValue: z.number().finite().min(0).optional().default(0),
   splitPayments: z
     .array(
       z.object({
