@@ -149,10 +149,8 @@ function applyTotalOverride(
   totalOverride: number | undefined,
 ) {
   if (totalOverride === undefined) return totals;
-  const billBeforeDiscount = totals.subtotal + totals.tax + totals.serviceCharge;
   return {
     ...totals,
-    discount: Math.max(0, billBeforeDiscount - totalOverride),
     total: totalOverride,
   };
 }
