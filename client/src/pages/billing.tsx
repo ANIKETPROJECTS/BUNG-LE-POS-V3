@@ -84,6 +84,7 @@ export default function BillingPage() {
   const [serviceChargeRate, setServiceChargeRate] = useState(taxSettings.serviceCharge);
   const [discountType, setDiscountType] = useState<DiscountType>("percentage");
   const [discountValue, setDiscountValue] = useState(0);
+  const [totalOverride, setTotalOverride] = useState<number | null>(null);
   const localEditingRef = useRef(false);
   const tableFetchVersionRef = useRef(0);
   const orderFetchVersionRef = useRef(0);
@@ -334,6 +335,7 @@ export default function BillingPage() {
         serviceCharge: serviceChargeRate,
         discountType,
         discountValue,
+        totalOverride: totalOverride ?? undefined,
       });
       const saveData = await res.json();
       
@@ -390,6 +392,7 @@ export default function BillingPage() {
         serviceCharge: serviceChargeRate,
         discountType,
         discountValue,
+        totalOverride: totalOverride ?? undefined,
       });
       const billData = await res.json();
       
@@ -407,7 +410,7 @@ export default function BillingPage() {
   });
 
   const checkoutMutation = useMutation({
-    mutationFn: async ({ orderId, paymentMode, splitPayments, print, taxRate, serviceCharge, discountType, discountValue }: { 
+    mutationFn: async ({ orderId, paymentMode, splitPayments, print, taxRate, serviceCharge, discountType, discountValue, totalOverride }: { 
       orderId: string; 
       paymentMode: string; 
       splitPayments?: Array<{ person: number; amount: number; paymentMode: string }>; 
@@ -416,6 +419,7 @@ export default function BillingPage() {
       serviceCharge?: number;
       discountType?: DiscountType;
       discountValue?: number;
+      totalOverride?: number;
     }) => {
       // Checkout invoices must always go through the shared server queue.
       // QZ Tray runs only on the designated printer computer, not the
@@ -429,6 +433,7 @@ export default function BillingPage() {
         serviceCharge,
         discountType,
         discountValue,
+        totalOverride,
       });
       const checkoutData = await res.json();
       return checkoutData;
@@ -827,6 +832,7 @@ export default function BillingPage() {
   const handleConfirmPayment = async () => {
     const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const { total } = computeBillTotals(subtotal, taxRate, serviceChargeRate, discountType, discountValue);
+    const effectiveTotal = totalOverride ?? total;
 
     try {
       let orderId = currentOrderId;
@@ -854,6 +860,7 @@ export default function BillingPage() {
         serviceCharge: serviceChargeRate,
         discountType,
         discountValue,
+        totalOverride: totalOverride ?? undefined,
         splitPayments: undefined,
         print: shouldPrint 
       });
@@ -883,6 +890,7 @@ export default function BillingPage() {
       setSelectedCustomer(null);
       setDiscountType("percentage");
       setDiscountValue(0);
+      setTotalOverride(null);
       
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
@@ -965,6 +973,7 @@ export default function BillingPage() {
   const handleConfirmCheckout = async () => {
     const subtotal = orderItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const { total } = computeBillTotals(subtotal, taxRate, serviceChargeRate, discountType, discountValue);
+    const effectiveTotal = totalOverride ?? total;
 
     try {
       let orderId = currentOrderId;
@@ -1000,6 +1009,7 @@ export default function BillingPage() {
         serviceCharge: serviceChargeRate,
         discountType,
         discountValue,
+        totalOverride: totalOverride ?? undefined,
         splitPayments: splitPaymentsData,
         print: shouldPrint 
       });
@@ -1033,6 +1043,7 @@ export default function BillingPage() {
       setPendingKotAction("none");
       setDiscountType("percentage");
       setDiscountValue(0);
+      setTotalOverride(null);
 
       if (currentTableId) {
         navigate("/tables");
