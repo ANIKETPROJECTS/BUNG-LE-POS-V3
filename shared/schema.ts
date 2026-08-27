@@ -99,6 +99,9 @@ export interface Order {
   billedAt: Date | null;
   paidAt: Date | null;
   kotCount: number;
+  discountType?: "percentage" | "fixed";
+  discountValue?: number;
+  totalOverride?: number | null;
   invoiceNumber?: string;
   invoiceNumberSource?: "pos";
 }
@@ -115,6 +118,9 @@ export const insertOrderSchema = z.object({
   waiterId: z.string().nullable().optional(),
   deliveryPersonId: z.string().nullable().optional(),
   expectedPickupTime: z.coerce.date().nullable().optional(),
+  discountType: z.enum(["percentage", "fixed"]).optional(),
+  discountValue: z.number().finite().min(0).optional(),
+  totalOverride: z.number().finite().min(0).nullable().optional(),
 });
 
 export type InsertOrder = z.infer<typeof insertOrderSchema>;

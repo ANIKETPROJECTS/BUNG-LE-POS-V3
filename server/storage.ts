@@ -80,6 +80,11 @@ export interface IStorage {
   ensureOrderInvoiceNumber(id: string, invoiceNumber: string): Promise<Order | undefined>;
   setOrderInvoiceNumber(id: string, invoiceNumber: string): Promise<Order | undefined>;
   updateOrderTotal(id: string, total: string): Promise<Order | undefined>;
+  updateOrderBilling(id: string, data: {
+    discountType?: "percentage" | "fixed";
+    discountValue?: number;
+    totalOverride?: number | null;
+  }): Promise<Order | undefined>;
   completeOrder(id: string): Promise<Order | undefined>;
   billOrder(id: string): Promise<Order | undefined>;
   checkoutOrder(id: string, paymentMode?: string): Promise<Order | undefined>;
@@ -511,6 +516,9 @@ export class MemStorage implements IStorage {
       billedAt: null,
       paidAt: null,
       kotCount: 0,
+      discountType: insertOrder.discountType ?? "percentage",
+      discountValue: insertOrder.discountValue ?? 0,
+      totalOverride: insertOrder.totalOverride ?? null,
       invoiceNumber: undefined,
     };
     this.orders.set(id, order);
@@ -557,6 +565,18 @@ export class MemStorage implements IStorage {
     const order = this.orders.get(id);
     if (!order) return undefined;
     const updated: Order = { ...order, total };
+    this.orders.set(id, updated);
+    return updated;
+  }
+
+  async updateOrderBilling(id: string, data: {
+    discountType?: "percentage" | "fixed";
+    discountValue?: number;
+    totalOverride?: number | null;
+  }): Promise<Order | undefined> {
+    const order = this.orders.get(id);
+    if (!order) return undefined;
+    const updated: Order = { ...order, ...data };
     this.orders.set(id, updated);
     return updated;
   }

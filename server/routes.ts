@@ -75,6 +75,12 @@ const checkoutSchema = z.object({
     .optional(),
 });
 
+const orderBillingSchema = z.object({
+  discountType: z.enum(["percentage", "fixed"]).default("percentage"),
+  discountValue: z.number().finite().min(0).default(0),
+  totalOverride: z.number().finite().min(0).nullable().optional(),
+});
+
 function normalizeQzPem(raw: string): string {
   const value = raw.replace(/\\n/g, "\n").trim();
   const match = value.match(/-----BEGIN (.+?)-----/);
@@ -1267,6 +1273,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Order not found" });
     }
     res.json(order);
+  });
+
+  app.patch("/api/orders/:id/billing", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    const result = orderBillingSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    const order = await st.getOrder(req.params.id);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    const orderTypeError = totalOverrideOrderTypeError(
+      order.orderType,
+      result.data.totalOverride ?? undefined,
+    );
+    if (orderTypeError) return res.status(400).json({ error: orderTypeError });
+
+    const updatedOrder = await st.updateOrderBilling(req.params.id, result.data);
+    if (!updatedOrder) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    broadcastUpdate("order_updated", updatedOrder);
+    res.json(updatedOrder);
   });
 
   app.get("/api/orders/:id/items", requireAuth, async (req, res) => {

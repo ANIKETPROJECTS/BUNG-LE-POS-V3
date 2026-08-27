@@ -286,6 +286,9 @@ export class MongoStorage implements IStorage {
       billedAt: null,
       paidAt: null,
       kotCount: 0,
+      discountType: insertOrder.discountType ?? "percentage",
+      discountValue: insertOrder.discountValue ?? 0,
+      totalOverride: insertOrder.totalOverride ?? null,
       invoiceNumber: undefined,
     };
     await mongodb.getCollection<Order>('orders').insertOne(order as any);
@@ -339,6 +342,20 @@ export class MongoStorage implements IStorage {
     const result = await mongodb.getCollection<Order>('orders').findOneAndUpdate(
       { id } as any,
       { $set: { total } },
+      { returnDocument: 'after' }
+    );
+    return result ?? undefined;
+  }
+
+  async updateOrderBilling(id: string, data: {
+    discountType?: "percentage" | "fixed";
+    discountValue?: number;
+    totalOverride?: number | null;
+  }): Promise<Order | undefined> {
+    await this.ensureConnection();
+    const result = await mongodb.getCollection<Order>('orders').findOneAndUpdate(
+      { id } as any,
+      { $set: data },
       { returnDocument: 'after' }
     );
     return result ?? undefined;

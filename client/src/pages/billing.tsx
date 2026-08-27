@@ -122,6 +122,20 @@ export default function BillingPage() {
     }
   }, []);
 
+  const restoreBillingDraft = (order: any) => {
+    setDiscountType(order?.discountType === "fixed" ? "fixed" : "percentage");
+    setDiscountValue(
+      typeof order?.discountValue === "number" && Number.isFinite(order.discountValue)
+        ? order.discountValue
+        : 0,
+    );
+    setTotalOverride(
+      typeof order?.totalOverride === "number" && Number.isFinite(order.totalOverride)
+        ? order.totalOverride
+        : null,
+    );
+  };
+
   const fetchTableOrder = async (tableId: string) => {
     const fetchVersion = ++tableFetchVersionRef.current;
     try {
@@ -168,6 +182,7 @@ export default function BillingPage() {
       const latestOrder = tableOrders[tableOrders.length - 1];
       setCurrentOrderId(latestOrder.id);
       setOrderItems(formattedItems);
+      restoreBillingDraft(latestOrder);
 
       // Repair the table pointer without deleting or merging older orders.
       if (table?.currentOrderId !== latestOrder.id) {
@@ -189,7 +204,11 @@ export default function BillingPage() {
   const fetchExistingOrder = async (orderId: string) => {
     const fetchVersion = ++orderFetchVersionRef.current;
     try {
-      const itemsRes = await fetch(`/api/orders/${orderId}/items`);
+      const [orderRes, itemsRes] = await Promise.all([
+        fetch(`/api/orders/${orderId}`),
+        fetch(`/api/orders/${orderId}/items`),
+      ]);
+      const order = orderRes.ok ? await orderRes.json() : null;
       const items = await itemsRes.json();
       if (fetchVersion !== orderFetchVersionRef.current || localEditingRef.current) {
         return;
@@ -208,6 +227,7 @@ export default function BillingPage() {
       }));
       
       setOrderItems(formattedItems);
+      restoreBillingDraft(order);
     } catch (error) {
       console.error("Failed to fetch existing order:", error);
       toast({
@@ -276,6 +296,14 @@ export default function BillingPage() {
       setCurrentOrderId(order.id);
     },
   });
+
+  const persistBillingDraft = async (orderId: string) => {
+    await apiRequest("PATCH", `/api/orders/${orderId}/billing`, {
+      discountType,
+      discountValue,
+      totalOverride: totalOverride ?? null,
+    });
+  };
 
   const addOrderItemMutation = useMutation({
     mutationFn: async (data: { orderId: string; item: any }) => {
@@ -678,6 +706,8 @@ export default function BillingPage() {
         });
       }
     }
+
+    await persistBillingDraft(orderId!);
     
     return orderId;
   };
