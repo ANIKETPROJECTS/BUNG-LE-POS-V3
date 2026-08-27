@@ -422,20 +422,25 @@ export default function InvoicesPage() {
 
     const finalY = (doc as any).lastAutoTable.finalY || 95;
     
+    const discount = parseFloat(invoice.discount || "0") || 0;
+    const totalY = finalY + (discount > 0 ? 34 : 26);
     doc.text(`Subtotal: ₹${parseFloat(invoice.subtotal).toFixed(2)}`, 140, finalY + 10);
     doc.text(`Tax (5%): ₹${parseFloat(invoice.tax).toFixed(2)}`, 140, finalY + 18);
+    if (discount > 0) {
+      doc.text(`Discount: -₹${discount.toFixed(2)}`, 140, finalY + 26);
+    }
     doc.setFont("helvetica", "bold");
-    doc.text(`Total: ₹${parseFloat(invoice.total).toFixed(2)}`, 140, finalY + 26);
+    doc.text(`Total: ₹${parseFloat(invoice.total).toFixed(2)}`, 140, totalY);
     
     doc.setFont("helvetica", "normal");
-    doc.text(`Payment Mode: ${invoice.paymentMode.toUpperCase()}`, 20, finalY + 26);
-    doc.text(`Status: ${invoice.status}`, 20, finalY + 34);
+    doc.text(`Payment Mode: ${invoice.paymentMode.toUpperCase()}`, 20, totalY);
+    doc.text(`Status: ${invoice.status}`, 20, totalY + 8);
 
     if (invoice.splitPayments) {
       const splitPayments = JSON.parse(invoice.splitPayments);
-      doc.text(`Split Payment (${splitPayments.length} people):`, 20, finalY + 42);
+      doc.text(`Split Payment (${splitPayments.length} people):`, 20, totalY + 16);
       splitPayments.forEach((split: any, index: number) => {
-        doc.text(`  Person ${split.person}: ₹${split.amount.toFixed(2)} (${split.paymentMode.toUpperCase()})`, 20, finalY + 50 + (index * 8));
+        doc.text(`  Person ${split.person}: ₹${split.amount.toFixed(2)} (${split.paymentMode.toUpperCase()})`, 20, totalY + 24 + (index * 8));
       });
     }
     
