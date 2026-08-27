@@ -65,6 +65,7 @@ interface OrderCartProps {
   onDiscountTypeChange?: (type: DiscountType) => void;
   onDiscountValueChange?: (value: string) => void;
   totalOverride?: number | null;
+  totalOverrideInput?: string | null;
   onTotalOverrideChange?: (value: string) => void;
 }
 
@@ -101,6 +102,7 @@ export default function OrderCart({
   onDiscountTypeChange,
   onDiscountValueChange,
   totalOverride = null,
+  totalOverrideInput = null,
   onTotalOverrideChange,
 }: OrderCartProps) {
   const [notesDialogItem, setNotesDialogItem] = useState<OrderItem | null>(null);
@@ -454,7 +456,7 @@ export default function OrderCart({
                 min={0}
                 max={grossTotal}
                 step="0.01"
-                value={displayedTotal}
+                value={totalOverrideInput ?? displayedTotal}
                 onChange={(e) => onTotalOverrideChange?.(e.target.value)}
                 className="h-8 w-28 px-2 py-0 text-right text-base font-bold text-primary"
                 data-testid="input-editable-total"

@@ -8,3 +8,4 @@
 - [Mongo connection single-flight](mongo-connection-single-flight.md) — concurrent first requests must share one MongoDB connection attempt.
 - [Stale session connection recovery](stale-session-connection-recovery.md) — cached authenticated storage must reconnect after idle Mongo cleanup.
 - [Discount validation rule](discount-validation-rule.md) — percentage discounts cap at 100%, rupee discounts cap at the calculated bill total.
+- [Billing draft polling](billing-draft-polling.md) — live order refresh must not overwrite unsaved billing fields while a cashier is editing.

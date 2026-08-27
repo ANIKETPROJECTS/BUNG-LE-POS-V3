@@ -85,6 +85,9 @@ export default function BillingPage() {
   const [discountType, setDiscountType] = useState<DiscountType>("percentage");
   const [discountValue, setDiscountValue] = useState(0);
   const [totalOverride, setTotalOverride] = useState<number | null>(null);
+  // Keep the raw input separate from the committed numeric override. This
+  // allows the cashier to clear the field before entering a replacement total.
+  const [totalOverrideInput, setTotalOverrideInput] = useState<string | null>(null);
   const localEditingRef = useRef(false);
   const tableFetchVersionRef = useRef(0);
   const orderFetchVersionRef = useRef(0);
@@ -129,11 +132,19 @@ export default function BillingPage() {
         ? order.discountValue
         : 0,
     );
-    setTotalOverride(
+    const restoredTotalOverride =
       typeof order?.totalOverride === "number" && Number.isFinite(order.totalOverride)
         ? order.totalOverride
-        : null,
+        : null;
+    setTotalOverride(restoredTotalOverride);
+    setTotalOverrideInput(
+      restoredTotalOverride === null ? null : restoredTotalOverride.toFixed(2),
     );
+  };
+
+  const clearTotalOverride = () => {
+    setTotalOverride(null);
+    setTotalOverrideInput(null);
   };
 
   const fetchTableOrder = async (tableId: string) => {
@@ -920,7 +931,7 @@ export default function BillingPage() {
       setSelectedCustomer(null);
       setDiscountType("percentage");
       setDiscountValue(0);
-      setTotalOverride(null);
+      clearTotalOverride();
       
       queryClient.invalidateQueries({ queryKey: ["/api/orders"] });
       queryClient.invalidateQueries({ queryKey: ["/api/tables"] });
@@ -1073,7 +1084,7 @@ export default function BillingPage() {
       setPendingKotAction("none");
       setDiscountType("percentage");
       setDiscountValue(0);
-      setTotalOverride(null);
+      clearTotalOverride();
 
       if (currentTableId) {
         navigate("/tables");
@@ -1120,48 +1131,60 @@ export default function BillingPage() {
   const effectiveTotal = totalOverride ?? total;
 
   const handleDiscountValueChange = (value: string) => {
+    localEditingRef.current = true;
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) {
       setDiscountValue(0);
-      setTotalOverride(null);
+      clearTotalOverride();
       return;
     }
-    setTotalOverride(null);
+    clearTotalOverride();
     setDiscountValue(Math.min(Math.max(0, parsed), maxDiscount));
   };
 
   const handleDiscountTypeChange = (type: DiscountType) => {
+    localEditingRef.current = true;
     setDiscountType(type);
-    setTotalOverride(null);
+    clearTotalOverride();
     const nextLimit = type === "percentage" ? 100 : grossTotal;
     setDiscountValue((current) => Math.min(current, nextLimit));
   };
 
   const handleTaxRateChange = (rate: number) => {
+    localEditingRef.current = true;
     setTaxRate(rate);
-    setTotalOverride(null);
+    clearTotalOverride();
   };
 
   const handleServiceChargeChange = (rate: number) => {
+    localEditingRef.current = true;
     setServiceChargeRate(rate);
-    setTotalOverride(null);
+    clearTotalOverride();
   };
 
   const handleServiceTypeChange = (type: "dine-in" | "delivery" | "pickup") => {
+    localEditingRef.current = true;
     setServiceType(type);
     if (type === "dine-in") {
-      setTotalOverride(null);
+      clearTotalOverride();
     }
   };
 
   const handleTotalOverrideChange = (value: string) => {
+    localEditingRef.current = true;
+    setTotalOverrideInput(value);
     if (value.trim() === "") {
       setTotalOverride(null);
       return;
     }
     const parsed = Number(value);
-    if (!Number.isFinite(parsed)) return;
-    setTotalOverride(Math.min(Math.max(0, parsed), grossTotal));
+    if (!Number.isFinite(parsed)) {
+      setTotalOverride(null);
+      return;
+    }
+    const nextTotal = Math.min(Math.max(0, parsed), grossTotal);
+    setTotalOverride(nextTotal);
+    setTotalOverrideInput(nextTotal === parsed ? value : nextTotal.toFixed(2));
   };
 
   useEffect(() => {
@@ -1170,6 +1193,7 @@ export default function BillingPage() {
     }
     if (totalOverride !== null && totalOverride > grossTotal) {
       setTotalOverride(grossTotal);
+      setTotalOverrideInput(grossTotal.toFixed(2));
     }
   }, [discountType, discountValue, grossTotal, totalOverride]);
 
@@ -1308,6 +1332,7 @@ export default function BillingPage() {
             onDiscountTypeChange={handleDiscountTypeChange}
             onDiscountValueChange={handleDiscountValueChange}
             totalOverride={totalOverride}
+            totalOverrideInput={totalOverrideInput}
             onTotalOverrideChange={handleTotalOverrideChange}
           />
         </div>
@@ -1372,6 +1397,7 @@ export default function BillingPage() {
               onDiscountTypeChange={handleDiscountTypeChange}
               onDiscountValueChange={handleDiscountValueChange}
               totalOverride={totalOverride}
+              totalOverrideInput={totalOverrideInput}
               onTotalOverrideChange={handleTotalOverrideChange}
             />
           </div>
