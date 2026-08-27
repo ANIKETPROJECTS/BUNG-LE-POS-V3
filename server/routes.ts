@@ -52,6 +52,7 @@ const orderActionSchema = z.object({
   serviceCharge: z.number().min(0).max(100).optional(),
   discountType: z.enum(["percentage", "fixed"]).optional().default("percentage"),
   discountValue: z.number().finite().min(0).optional().default(0),
+  totalOverride: z.number().finite().min(0).optional(),
 });
 
 const checkoutSchema = z.object({
@@ -62,6 +63,7 @@ const checkoutSchema = z.object({
   serviceCharge: z.number().min(0).max(100).optional(),
   discountType: z.enum(["percentage", "fixed"]).optional().default("percentage"),
   discountValue: z.number().finite().min(0).optional().default(0),
+  totalOverride: z.number().finite().min(0).optional(),
   splitPayments: z
     .array(
       z.object({
@@ -123,6 +125,37 @@ function discountInputError(
     return "Discount cannot be more than the total bill";
   }
   return null;
+}
+
+function totalOverrideError(totalOverride: number | undefined, billBeforeDiscount: number) {
+  if (totalOverride !== undefined && totalOverride > billBeforeDiscount + 0.01) {
+    return "Edited total cannot be more than the total bill";
+  }
+  return null;
+}
+
+function totalOverrideOrderTypeError(orderType: string, totalOverride: number | undefined) {
+  if (
+    totalOverride !== undefined &&
+    orderType !== "delivery" &&
+    orderType !== "pickup"
+  ) {
+    return "Edited totals are available only for delivery and pickup orders";
+  }
+  return null;
+}
+
+function applyTotalOverride(
+  totals: ReturnType<typeof computeBillTotals>,
+  totalOverride: number | undefined,
+) {
+  if (totalOverride === undefined) return totals;
+  const billBeforeDiscount = totals.subtotal + totals.tax + totals.serviceCharge;
+  return {
+    ...totals,
+    discount: Math.max(0, billBeforeDiscount - totalOverride),
+    total: totalOverride,
+  };
 }
 
 /**
@@ -1457,6 +1490,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
+    const orderTypeError = totalOverrideOrderTypeError(
+      order.orderType,
+      result.data.totalOverride,
+    );
+    if (orderTypeError) return res.status(400).json({ error: orderTypeError });
     externalOrdersSync.mirrorPOSOrder(order.id).catch(() => {});
 
     let invoice = null;
@@ -1483,7 +1521,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
          subtotal + billTotals.tax + billTotals.serviceCharge,
        );
        if (discountError) return res.status(400).json({ error: discountError });
-       const { tax, cgst, sgst, serviceCharge, discount, total } = billTotals;
+       const overrideError = totalOverrideError(
+         result.data.totalOverride,
+         subtotal + billTotals.tax + billTotals.serviceCharge,
+       );
+       if (overrideError) return res.status(400).json({ error: overrideError });
+       const finalBillTotals = applyTotalOverride(billTotals, result.data.totalOverride);
+       const { tax, cgst, sgst, serviceCharge, discount, total } = finalBillTotals;
 
       let tableInfo = null;
       if (order.tableId) {
@@ -1550,6 +1594,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
+    const orderTypeError = totalOverrideOrderTypeError(
+      order.orderType,
+      result.data.totalOverride,
+    );
+    if (orderTypeError) return res.status(400).json({ error: orderTypeError });
     externalOrdersSync.mirrorPOSOrder(order.id).catch(() => {});
 
     const orderItems = await st.getOrderItems(req.params.id);
@@ -1575,7 +1624,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       subtotal + billTotals.tax + billTotals.serviceCharge,
     );
     if (discountError) return res.status(400).json({ error: discountError });
-    const { tax, cgst, sgst, serviceCharge, discount, total } = billTotals;
+    const overrideError = totalOverrideError(
+      result.data.totalOverride,
+      subtotal + billTotals.tax + billTotals.serviceCharge,
+    );
+    if (overrideError) return res.status(400).json({ error: overrideError });
+    const finalBillTotals = applyTotalOverride(billTotals, result.data.totalOverride);
+    const { tax, cgst, sgst, serviceCharge, discount, total } = finalBillTotals;
 
     let tableInfo = null;
     if (order.tableId) {
@@ -1640,6 +1695,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!order) {
       return res.status(404).json({ error: "Order not found" });
     }
+    const orderTypeError = totalOverrideOrderTypeError(
+      order.orderType,
+      result.data.totalOverride,
+    );
+    if (orderTypeError) return res.status(400).json({ error: orderTypeError });
 
     // A table can hold several active orders at once (each person's Digital
     // Menu order becomes its own POS order so they keep separate KOTs). On
@@ -1689,7 +1749,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       subtotal + billTotals.tax + billTotals.serviceCharge,
     );
     if (discountError) return res.status(400).json({ error: discountError });
-    const { tax, cgst, sgst, serviceCharge, discount, total } = billTotals;
+    const overrideError = totalOverrideError(
+      result.data.totalOverride,
+      subtotal + billTotals.tax + billTotals.serviceCharge,
+    );
+    if (overrideError) return res.status(400).json({ error: overrideError });
+    const finalBillTotals = applyTotalOverride(billTotals, result.data.totalOverride);
+    const { tax, cgst, sgst, serviceCharge, discount, total } = finalBillTotals;
 
     if (result.data.splitPayments && result.data.splitPayments.length > 0) {
       const splitSum = result.data.splitPayments.reduce(

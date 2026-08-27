@@ -64,6 +64,8 @@ interface OrderCartProps {
   discountValue?: number;
   onDiscountTypeChange?: (type: DiscountType) => void;
   onDiscountValueChange?: (value: string) => void;
+  totalOverride?: number | null;
+  onTotalOverrideChange?: (value: string) => void;
 }
 
 export default function OrderCart({
@@ -98,6 +100,8 @@ export default function OrderCart({
   discountValue = 0,
   onDiscountTypeChange,
   onDiscountValueChange,
+  totalOverride = null,
+  onTotalOverrideChange,
 }: OrderCartProps) {
   const [notesDialogItem, setNotesDialogItem] = useState<OrderItem | null>(null);
   const [tempNotes, setTempNotes] = useState("");
@@ -134,6 +138,8 @@ export default function OrderCart({
   );
   const grossTotal = subtotal + tax + serviceCharge;
   const discountLimit = discountType === "percentage" ? 100 : grossTotal;
+  const canEditTotal = serviceType === "delivery" || serviceType === "pickup";
+  const displayedTotal = totalOverride ?? total;
 
   const handleTaxRateChange = (value: string) => {
     const rate = value === "" ? 0 : parseFloat(value);
@@ -442,7 +448,20 @@ export default function OrderCart({
           <Separator />
           <div className="flex justify-between font-bold text-base pt-1">
             <span className="text-gray-900">Total</span>
-            <span className="text-primary" data-testid="text-total">₹{total.toFixed(2)}</span>
+            {canEditTotal ? (
+              <Input
+                type="number"
+                min={0}
+                max={grossTotal}
+                step="0.01"
+                value={displayedTotal}
+                onChange={(e) => onTotalOverrideChange?.(e.target.value)}
+                className="h-8 w-28 px-2 py-0 text-right text-base font-bold text-primary"
+                data-testid="input-editable-total"
+              />
+            ) : (
+              <span className="text-primary" data-testid="text-total">₹{displayedTotal.toFixed(2)}</span>
+            )}
           </div>
         </div>
         

@@ -897,7 +897,7 @@ export default function BillingPage() {
       
       toast({
         title: "Payment successful",
-        description: `Payment of ₹${total.toFixed(2)} via ${paymentMethod.toUpperCase()} completed`,
+        description: `Payment of ₹${effectiveTotal.toFixed(2)} via ${paymentMethod.toUpperCase()} completed`,
       });
       
       navigate("/tables");
@@ -922,7 +922,7 @@ export default function BillingPage() {
     }
     setSplitMode("equal");
     setSplitCount(2);
-    const equalAmount = total / 2;
+    const equalAmount = effectiveTotal / 2;
 
     setSplitAmounts([equalAmount, equalAmount]);
     setSplitPaymentModes(["cash", "cash"]);
@@ -932,10 +932,10 @@ export default function BillingPage() {
   const handleSplitCountChange = (count: number) => {
     setSplitCount(count);
     if (splitMode === "equal") {
-      const equalAmount = total / count;
+      const equalAmount = effectiveTotal / count;
       setSplitAmounts(Array(count).fill(equalAmount));
     } else {
-      const remaining = total - splitAmounts.reduce((sum, amt, idx) => idx < count - 1 ? sum + amt : sum, 0);
+      const remaining = effectiveTotal - splitAmounts.reduce((sum, amt, idx) => idx < count - 1 ? sum + amt : sum, 0);
       const newAmounts = [...splitAmounts.slice(0, count - 1), remaining];
       while (newAmounts.length < count) {
         newAmounts.push(0);
@@ -953,7 +953,7 @@ export default function BillingPage() {
   const handleSplitModeChange = (mode: "equal" | "custom") => {
     setSplitMode(mode);
     if (mode === "equal") {
-      const equalAmount = total / splitCount;
+      const equalAmount = effectiveTotal / splitCount;
       setSplitAmounts(Array(splitCount).fill(equalAmount));
     }
   };
@@ -1030,8 +1030,8 @@ export default function BillingPage() {
         toast({
           title: "Order completed!",
           description: splitPaymentsData 
-            ? `Total: ₹${total.toFixed(2)} - Split ${splitCount} ways`
-            : `Total: ₹${total.toFixed(2)} - Payment: ${paymentMethod.toUpperCase()}`,
+            ? `Total: ₹${effectiveTotal.toFixed(2)} - Split ${splitCount} ways`
+            : `Total: ₹${effectiveTotal.toFixed(2)} - Payment: ${paymentMethod.toUpperCase()}`,
         });
       }
 
@@ -1087,27 +1087,61 @@ export default function BillingPage() {
   );
   const grossTotal = subtotal + tax + serviceCharge;
   const maxDiscount = discountType === "percentage" ? 100 : grossTotal;
+  const effectiveTotal = totalOverride ?? total;
 
   const handleDiscountValueChange = (value: string) => {
     const parsed = Number(value);
     if (!Number.isFinite(parsed)) {
       setDiscountValue(0);
+      setTotalOverride(null);
       return;
     }
+    setTotalOverride(null);
     setDiscountValue(Math.min(Math.max(0, parsed), maxDiscount));
   };
 
   const handleDiscountTypeChange = (type: DiscountType) => {
     setDiscountType(type);
+    setTotalOverride(null);
     const nextLimit = type === "percentage" ? 100 : grossTotal;
     setDiscountValue((current) => Math.min(current, nextLimit));
+  };
+
+  const handleTaxRateChange = (rate: number) => {
+    setTaxRate(rate);
+    setTotalOverride(null);
+  };
+
+  const handleServiceChargeChange = (rate: number) => {
+    setServiceChargeRate(rate);
+    setTotalOverride(null);
+  };
+
+  const handleServiceTypeChange = (type: "dine-in" | "delivery" | "pickup") => {
+    setServiceType(type);
+    if (type === "dine-in") {
+      setTotalOverride(null);
+    }
+  };
+
+  const handleTotalOverrideChange = (value: string) => {
+    if (value.trim() === "") {
+      setTotalOverride(null);
+      return;
+    }
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return;
+    setTotalOverride(Math.min(Math.max(0, parsed), grossTotal));
   };
 
   useEffect(() => {
     if (discountType === "fixed" && discountValue > grossTotal) {
       setDiscountValue(grossTotal);
     }
-  }, [discountType, discountValue, grossTotal]);
+    if (totalOverride !== null && totalOverride > grossTotal) {
+      setTotalOverride(grossTotal);
+    }
+  }, [discountType, discountValue, grossTotal, totalOverride]);
 
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-gray-50">
@@ -1214,7 +1248,7 @@ export default function BillingPage() {
           <OrderCart
             items={orderItems}
             serviceType={serviceType}
-            onServiceTypeChange={setServiceType}
+            onServiceTypeChange={handleServiceTypeChange}
             onUpdateQuantity={handleUpdateQuantity}
             onRemoveItem={handleRemoveItem}
             onUpdateNotes={handleUpdateNotes}
@@ -1237,12 +1271,14 @@ export default function BillingPage() {
             onPaymentMethodSelect={handlePaymentMethodSelect}
             onConfirmPayment={handleConfirmPayment}
             paymentMethod={paymentMethod}
-            onTaxRateChange={setTaxRate}
-            onServiceChargeChange={setServiceChargeRate}
+            onTaxRateChange={handleTaxRateChange}
+            onServiceChargeChange={handleServiceChargeChange}
             discountType={discountType}
             discountValue={discountValue}
             onDiscountTypeChange={handleDiscountTypeChange}
             onDiscountValueChange={handleDiscountValueChange}
+            totalOverride={totalOverride}
+            onTotalOverrideChange={handleTotalOverrideChange}
           />
         </div>
       </div>
@@ -1253,7 +1289,7 @@ export default function BillingPage() {
             <div className="text-sm text-gray-600">
               {orderItems.length} {orderItems.length === 1 ? 'item' : 'items'}
             </div>
-            <div className="text-lg font-bold">₹{total.toFixed(2)}</div>
+            <div className="text-lg font-bold">₹{effectiveTotal.toFixed(2)}</div>
           </div>
           <Button 
             onClick={() => setShowMobileCart(true)}
@@ -1276,7 +1312,7 @@ export default function BillingPage() {
             <OrderCart
               items={orderItems}
               serviceType={serviceType}
-              onServiceTypeChange={setServiceType}
+              onServiceTypeChange={handleServiceTypeChange}
               onUpdateQuantity={handleUpdateQuantity}
               onRemoveItem={handleRemoveItem}
               onUpdateNotes={handleUpdateNotes}
@@ -1299,12 +1335,14 @@ export default function BillingPage() {
               onPaymentMethodSelect={handlePaymentMethodSelect}
               onConfirmPayment={handleConfirmPayment}
               paymentMethod={paymentMethod}
-              onTaxRateChange={setTaxRate}
-              onServiceChargeChange={setServiceChargeRate}
+              onTaxRateChange={handleTaxRateChange}
+              onServiceChargeChange={handleServiceChargeChange}
               discountType={discountType}
               discountValue={discountValue}
               onDiscountTypeChange={handleDiscountTypeChange}
               onDiscountValueChange={handleDiscountValueChange}
+              totalOverride={totalOverride}
+              onTotalOverrideChange={handleTotalOverrideChange}
             />
           </div>
         </SheetContent>
@@ -1380,7 +1418,7 @@ export default function BillingPage() {
               )}
               <div className="flex justify-between font-bold text-lg border-t pt-2">
                 <span>Total:</span>
-                <span className="text-primary">₹{total.toFixed(2)}</span>
+                <span className="text-primary">₹{effectiveTotal.toFixed(2)}</span>
               </div>
             </div>
             <div className="flex gap-2">
@@ -1453,7 +1491,7 @@ export default function BillingPage() {
             <div className="bg-muted p-4 rounded-lg space-y-3">
               <div className="flex justify-between text-sm font-medium border-b pb-2">
                 <span>Total Bill:</span>
-                <span className="text-primary">₹{total.toFixed(2)}</span>
+                <span className="text-primary">₹{effectiveTotal.toFixed(2)}</span>
               </div>
                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                {splitAmounts.map((amount, index) => (
@@ -1513,7 +1551,7 @@ export default function BillingPage() {
               </Button>
               <Button
                 onClick={() => {
-                  if (splitMode === "custom" && Math.abs(splitAmounts.reduce((sum, amt) => sum + amt, 0) - total) > 0.01) {
+                  if (splitMode === "custom" && Math.abs(splitAmounts.reduce((sum, amt) => sum + amt, 0) - effectiveTotal) > 0.01) {
                     toast({
                       title: "Invalid split",
                       description: "Split amounts must equal the total bill",
