@@ -454,7 +454,6 @@ export default function OrderCart({
               <Input
                 type="number"
                 min={0}
-                max={grossTotal}
                 step="0.01"
                 value={totalOverrideInput ?? displayedTotal}
                 onChange={(e) => onTotalOverrideChange?.(e.target.value)}

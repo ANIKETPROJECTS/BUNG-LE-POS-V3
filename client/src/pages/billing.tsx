@@ -1182,7 +1182,7 @@ export default function BillingPage() {
       setTotalOverride(null);
       return;
     }
-    const nextTotal = Math.min(Math.max(0, parsed), grossTotal);
+    const nextTotal = Math.max(0, parsed);
     setTotalOverride(nextTotal);
     setTotalOverrideInput(nextTotal === parsed ? value : nextTotal.toFixed(2));
   };
@@ -1190,10 +1190,6 @@ export default function BillingPage() {
   useEffect(() => {
     if (discountType === "fixed" && discountValue > grossTotal) {
       setDiscountValue(grossTotal);
-    }
-    if (totalOverride !== null && totalOverride > grossTotal) {
-      setTotalOverride(grossTotal);
-      setTotalOverrideInput(grossTotal.toFixed(2));
     }
   }, [discountType, discountValue, grossTotal, totalOverride]);
 

@@ -133,13 +133,6 @@ function discountInputError(
   return null;
 }
 
-function totalOverrideError(totalOverride: number | undefined, billBeforeDiscount: number) {
-  if (totalOverride !== undefined && totalOverride > billBeforeDiscount + 0.01) {
-    return "Edited total cannot be more than the total bill";
-  }
-  return null;
-}
-
 function totalOverrideOrderTypeError(orderType: string, totalOverride: number | undefined) {
   if (
     totalOverride !== undefined &&
@@ -1552,11 +1545,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
          subtotal + billTotals.tax + billTotals.serviceCharge,
        );
        if (discountError) return res.status(400).json({ error: discountError });
-       const overrideError = totalOverrideError(
-         result.data.totalOverride,
-         subtotal + billTotals.tax + billTotals.serviceCharge,
-       );
-       if (overrideError) return res.status(400).json({ error: overrideError });
        const finalBillTotals = applyTotalOverride(billTotals, result.data.totalOverride);
        const { tax, cgst, sgst, serviceCharge, discount, total } = finalBillTotals;
 
@@ -1655,11 +1643,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       subtotal + billTotals.tax + billTotals.serviceCharge,
     );
     if (discountError) return res.status(400).json({ error: discountError });
-    const overrideError = totalOverrideError(
-      result.data.totalOverride,
-      subtotal + billTotals.tax + billTotals.serviceCharge,
-    );
-    if (overrideError) return res.status(400).json({ error: overrideError });
     const finalBillTotals = applyTotalOverride(billTotals, result.data.totalOverride);
     const { tax, cgst, sgst, serviceCharge, discount, total } = finalBillTotals;
 
@@ -1780,11 +1763,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       subtotal + billTotals.tax + billTotals.serviceCharge,
     );
     if (discountError) return res.status(400).json({ error: discountError });
-    const overrideError = totalOverrideError(
-      result.data.totalOverride,
-      subtotal + billTotals.tax + billTotals.serviceCharge,
-    );
-    if (overrideError) return res.status(400).json({ error: overrideError });
     const finalBillTotals = applyTotalOverride(billTotals, result.data.totalOverride);
     const { tax, cgst, sgst, serviceCharge, discount, total } = finalBillTotals;
 
