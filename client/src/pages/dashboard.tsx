@@ -50,9 +50,18 @@ const tzOffset = -new Date().getTimezoneOffset();
 export default function DashboardPage() {
   const { data: stats } = useQuery<DashboardStats>({
     queryKey: ['/api/dashboard/stats', tzOffset],
-    queryFn: () =>
-      fetch(`/api/dashboard/stats?tzOffset=${tzOffset}`).then((r) => r.json()),
-    refreshInterval: 30000,
+    queryFn: async ({ signal }) => {
+      const response = await fetch(`/api/dashboard/stats?tzOffset=${tzOffset}`, {
+        credentials: "include",
+        signal,
+      });
+      if (!response.ok) {
+        throw new Error(`Could not load dashboard stats (${response.status})`);
+      }
+      return response.json();
+    },
+    refetchInterval: 30_000,
+    staleTime: 30_000,
   });
 
   const todaysSales = stats?.todaySales ?? 0;

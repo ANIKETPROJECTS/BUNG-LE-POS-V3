@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { MongoClient, Db, Collection, Document } from 'mongodb';
-import { mongodb } from './mongodb';
+import { MONGO_CONNECTION_TIMEOUT_OPTIONS, mongodb } from './mongodb';
 
 interface ConnectionInfo {
   client: MongoClient;
@@ -12,6 +12,7 @@ interface ConnectionInfo {
 }
 
 const TENANT_POOL_OPTIONS = {
+  ...MONGO_CONNECTION_TIMEOUT_OPTIONS,
   maxPoolSize: 5,
   minPoolSize: 0,
   maxConnecting: 1,

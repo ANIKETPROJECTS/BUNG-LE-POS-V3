@@ -88,69 +88,85 @@ function ProtectedRoute({ component: Component }: { component: React.ComponentTy
     return null;
   }
 
-  return <Component />;
+  return <RouteContent component={Component} />;
+}
+
+function RouteContent({ component: Component }: { component: React.ComponentType }) {
+  return (
+    <Suspense
+      fallback={
+        <div
+          className="flex min-h-0 flex-1 items-center justify-center"
+          role="status"
+          aria-label="Loading section"
+        >
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <Component />
+    </Suspense>
+  );
 }
 
 function Router() {
   return (
-    <Suspense fallback={<div className="flex h-full items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}>
-      <Switch>
-        <Route path="/login" component={LoginPage} />
-        <Route path="/db-error" component={DbErrorPage} />
-        <Route path="/">{() => <ProtectedRoute component={DashboardPage} />}</Route>
-        <Route path="/billing">{() => <ProtectedRoute component={BillingPage} />}</Route>
-        <Route path="/tables">{() => <ProtectedRoute component={TablesPage} />}</Route>
-        <Route path="/table-management">{() => <ProtectedRoute component={TableManagementPage} />}</Route>
-        <Route path="/kitchen">{() => <ProtectedRoute component={KitchenPage} />}</Route>
-        <Route path="/menu">{() => <ProtectedRoute component={MenuPage} />}</Route>
-        <Route path="/reports">{() => <ProtectedRoute component={ReportsPage} />}</Route>
-        <Route path="/settings">{() => <ProtectedRoute component={SettingsPage} />}</Route>
-        <Route path="/delivery">{() => <ProtectedRoute component={DeliveryPage} />}</Route>
-        <Route path="/online-orders">{() => <ProtectedRoute component={OnlineOrdersPage} />}</Route>
-        <Route path="/customers">{() => <ProtectedRoute component={CustomersPage} />}</Route>
-        <Route path="/loyalty">{() => <ProtectedRoute component={LoyaltyPage} />}</Route>
-        <Route path="/inventory">{() => <ProtectedRoute component={InventoryPage} />}</Route>
-        <Route path="/inventory-history">{() => <ProtectedRoute component={InventoryHistoryPage} />}</Route>
-        <Route path="/purchase-orders">{() => <ProtectedRoute component={PurchaseOrdersPage} />}</Route>
-        <Route path="/suppliers">{() => <ProtectedRoute component={SuppliersPage} />}</Route>
-        <Route path="/staff">{() => <ProtectedRoute component={StaffPage} />}</Route>
-        <Route path="/attendance">{() => <ProtectedRoute component={AttendancePage} />}</Route>
-        <Route path="/reservations">{() => <ProtectedRoute component={ReservationsPage} />}</Route>
-        <Route path="/expenses">{() => <ProtectedRoute component={ExpensesPage} />}</Route>
-        <Route path="/payment-settlement">{() => <ProtectedRoute component={PaymentSettlementPage} />}</Route>
-        <Route path="/accounting">{() => <ProtectedRoute component={AccountingPage} />}</Route>
-        <Route path="/tax-reports">{() => <ProtectedRoute component={TaxReportsPage} />}</Route>
-        <Route path="/invoices">{() => <ProtectedRoute component={InvoicesPage} />}</Route>
-        <Route path="/day-end-settlement">{() => <ProtectedRoute component={DayEndSettlementPage} />}</Route>
-        <Route path="/offers">{() => <ProtectedRoute component={OffersPage} />}</Route>
-        <Route path="/coupons">{() => <ProtectedRoute component={CouponsPage} />}</Route>
-        <Route path="/feedback">{() => <ProtectedRoute component={FeedbackPage} />}</Route>
-        <Route path="/analytics">{() => <ProtectedRoute component={AnalyticsPage} />}</Route>
-        <Route path="/sales-detailed">{() => <ProtectedRoute component={SalesDetailedPage} />}</Route>
-        <Route path="/item-performance">{() => <ProtectedRoute component={ItemPerformancePage} />}</Route>
-        <Route path="/kitchen-performance">{() => <ProtectedRoute component={KitchenPerformancePage} />}</Route>
-        <Route path="/wastage">{() => <ProtectedRoute component={WastagePage} />}</Route>
-        <Route path="/multi-location">{() => <ProtectedRoute component={MultiLocationPage} />}</Route>
-        <Route path="/user-roles">{() => <ProtectedRoute component={UserRolesPage} />}</Route>
-        <Route path="/audit-logs">{() => <ProtectedRoute component={AuditLogsPage} />}</Route>
-        <Route path="/notifications">{() => <ProtectedRoute component={NotificationsPage} />}</Route>
-        <Route path="/profile">{() => <ProtectedRoute component={ProfilePage} />}</Route>
-        <Route path="/backup">{() => <ProtectedRoute component={BackupPage} />}</Route>
-        <Route path="/qr-codes">{() => <ProtectedRoute component={QRCodesPage} />}</Route>
-        <Route path="/waiting-list">{() => <ProtectedRoute component={WaitingListPage} />}</Route>
-        <Route path="/events">{() => <ProtectedRoute component={EventsPage} />}</Route>
-        <Route path="/gift-cards">{() => <ProtectedRoute component={GiftCardsPage} />}</Route>
-        <Route path="/commission">{() => <ProtectedRoute component={CommissionPage} />}</Route>
-        <Route path="/printer-config">{() => <ProtectedRoute component={PrinterConfigPage} />}</Route>
-        <Route path="/email-templates">{() => <ProtectedRoute component={EmailTemplatesPage} />}</Route>
-        <Route path="/marketing">{() => <ProtectedRoute component={MarketingPage} />}</Route>
-        <Route path="/integrations">{() => <ProtectedRoute component={IntegrationsPage} />}</Route>
-        <Route path="/database">{() => <ProtectedRoute component={DatabasePage} />}</Route>
-        <Route path="/digital-menu-orders">{() => <ProtectedRoute component={DigitalMenuOrdersPage} />}</Route>
-        <Route path="/kot">{() => <ProtectedRoute component={KOTPage} />}</Route>
-        <Route component={NotFound} />
-      </Switch>
-    </Suspense>
+    <Switch>
+      <Route path="/login" component={LoginPage} />
+      <Route path="/db-error">{() => <RouteContent component={DbErrorPage} />}</Route>
+      <Route path="/">{() => <ProtectedRoute component={DashboardPage} />}</Route>
+      <Route path="/billing">{() => <ProtectedRoute component={BillingPage} />}</Route>
+      <Route path="/tables">{() => <ProtectedRoute component={TablesPage} />}</Route>
+      <Route path="/table-management">{() => <ProtectedRoute component={TableManagementPage} />}</Route>
+      <Route path="/kitchen">{() => <ProtectedRoute component={KitchenPage} />}</Route>
+      <Route path="/menu">{() => <ProtectedRoute component={MenuPage} />}</Route>
+      <Route path="/reports">{() => <ProtectedRoute component={ReportsPage} />}</Route>
+      <Route path="/settings">{() => <ProtectedRoute component={SettingsPage} />}</Route>
+      <Route path="/delivery">{() => <ProtectedRoute component={DeliveryPage} />}</Route>
+      <Route path="/online-orders">{() => <ProtectedRoute component={OnlineOrdersPage} />}</Route>
+      <Route path="/customers">{() => <ProtectedRoute component={CustomersPage} />}</Route>
+      <Route path="/loyalty">{() => <ProtectedRoute component={LoyaltyPage} />}</Route>
+      <Route path="/inventory">{() => <ProtectedRoute component={InventoryPage} />}</Route>
+      <Route path="/inventory-history">{() => <ProtectedRoute component={InventoryHistoryPage} />}</Route>
+      <Route path="/purchase-orders">{() => <ProtectedRoute component={PurchaseOrdersPage} />}</Route>
+      <Route path="/suppliers">{() => <ProtectedRoute component={SuppliersPage} />}</Route>
+      <Route path="/staff">{() => <ProtectedRoute component={StaffPage} />}</Route>
+      <Route path="/attendance">{() => <ProtectedRoute component={AttendancePage} />}</Route>
+      <Route path="/reservations">{() => <ProtectedRoute component={ReservationsPage} />}</Route>
+      <Route path="/expenses">{() => <ProtectedRoute component={ExpensesPage} />}</Route>
+      <Route path="/payment-settlement">{() => <ProtectedRoute component={PaymentSettlementPage} />}</Route>
+      <Route path="/accounting">{() => <ProtectedRoute component={AccountingPage} />}</Route>
+      <Route path="/tax-reports">{() => <ProtectedRoute component={TaxReportsPage} />}</Route>
+      <Route path="/invoices">{() => <ProtectedRoute component={InvoicesPage} />}</Route>
+      <Route path="/day-end-settlement">{() => <ProtectedRoute component={DayEndSettlementPage} />}</Route>
+      <Route path="/offers">{() => <ProtectedRoute component={OffersPage} />}</Route>
+      <Route path="/coupons">{() => <ProtectedRoute component={CouponsPage} />}</Route>
+      <Route path="/feedback">{() => <ProtectedRoute component={FeedbackPage} />}</Route>
+      <Route path="/analytics">{() => <ProtectedRoute component={AnalyticsPage} />}</Route>
+      <Route path="/sales-detailed">{() => <ProtectedRoute component={SalesDetailedPage} />}</Route>
+      <Route path="/item-performance">{() => <ProtectedRoute component={ItemPerformancePage} />}</Route>
+      <Route path="/kitchen-performance">{() => <ProtectedRoute component={KitchenPerformancePage} />}</Route>
+      <Route path="/wastage">{() => <ProtectedRoute component={WastagePage} />}</Route>
+      <Route path="/multi-location">{() => <ProtectedRoute component={MultiLocationPage} />}</Route>
+      <Route path="/user-roles">{() => <ProtectedRoute component={UserRolesPage} />}</Route>
+      <Route path="/audit-logs">{() => <ProtectedRoute component={AuditLogsPage} />}</Route>
+      <Route path="/notifications">{() => <ProtectedRoute component={NotificationsPage} />}</Route>
+      <Route path="/profile">{() => <ProtectedRoute component={ProfilePage} />}</Route>
+      <Route path="/backup">{() => <ProtectedRoute component={BackupPage} />}</Route>
+      <Route path="/qr-codes">{() => <ProtectedRoute component={QRCodesPage} />}</Route>
+      <Route path="/waiting-list">{() => <ProtectedRoute component={WaitingListPage} />}</Route>
+      <Route path="/events">{() => <ProtectedRoute component={EventsPage} />}</Route>
+      <Route path="/gift-cards">{() => <ProtectedRoute component={GiftCardsPage} />}</Route>
+      <Route path="/commission">{() => <ProtectedRoute component={CommissionPage} />}</Route>
+      <Route path="/printer-config">{() => <ProtectedRoute component={PrinterConfigPage} />}</Route>
+      <Route path="/email-templates">{() => <ProtectedRoute component={EmailTemplatesPage} />}</Route>
+      <Route path="/marketing">{() => <ProtectedRoute component={MarketingPage} />}</Route>
+      <Route path="/integrations">{() => <ProtectedRoute component={IntegrationsPage} />}</Route>
+      <Route path="/database">{() => <ProtectedRoute component={DatabasePage} />}</Route>
+      <Route path="/digital-menu-orders">{() => <ProtectedRoute component={DigitalMenuOrdersPage} />}</Route>
+      <Route path="/kot">{() => <ProtectedRoute component={KOTPage} />}</Route>
+      <Route>{() => <RouteContent component={NotFound} />}</Route>
+    </Switch>
   );
 }
 

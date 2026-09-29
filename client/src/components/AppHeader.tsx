@@ -1,3 +1,4 @@
+import { startTransition } from "react";
 import { 
   Search, 
   Menu,
@@ -97,7 +98,7 @@ export default function AppHeader({
 
             {/* Logo/Title */}
             <button 
-              onClick={() => setLocation("/")}
+              onClick={() => startTransition(() => setLocation("/"))}
               className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer"
               data-testid="button-logo"
             >
@@ -143,7 +144,7 @@ export default function AppHeader({
                     return (
                       <DropdownMenuItem
                         key={button.path}
-                        onClick={() => setLocation(button.path)}
+                        onClick={() => startTransition(() => setLocation(button.path))}
                         data-testid={`menu-${button.label.toLowerCase().replace(/\s+/g, "-").replace(/\//g, "")}`}
                       >
                         <Icon className={cn("h-4 w-4 mr-2", button.color)} />
@@ -166,7 +167,7 @@ export default function AppHeader({
                   <Button
                     key={button.path}
                     variant="ghost"
-                    onClick={() => setLocation(button.path)}
+                    onClick={() => startTransition(() => setLocation(button.path))}
                     className={cn(
                       "flex items-center gap-2 px-3 py-2 rounded-lg transition-all",
                       isActive 

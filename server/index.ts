@@ -1,4 +1,5 @@
 import "./silent-console";
+import "express-async-errors";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
@@ -46,12 +47,29 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+    if (res.headersSent) {
+      return next(err);
+    }
+
+    const mongoAvailabilityErrors = new Set([
+      "MongoServerSelectionError",
+      "MongoNetworkError",
+      "MongoNetworkTimeoutError",
+      "MongoNotConnectedError",
+      "MongoTopologyClosedError",
+      "MongoWaitQueueTimeoutError",
+    ]);
+    const isMongoUnavailable = mongoAvailabilityErrors.has(err?.name);
+    const rawStatus = Number(err?.status ?? err?.statusCode);
+    const status = isMongoUnavailable ? 503 : Number.isInteger(rawStatus) ? rawStatus : 500;
+    const message = isMongoUnavailable
+      ? "Database temporarily unavailable. Please try again."
+      : status < 500
+        ? err?.message || "Request failed"
+        : "Internal Server Error";
 
     res.status(status).json({ message });
-    throw err;
   });
 
   // importantly only setup vite in development and after

@@ -1,6 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import AppHeader from "@/components/AppHeader";
 import TableCard from "@/components/TableCard";
 import ReservationDialog from "@/components/ReservationDialog";
@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Table, Order, Floor, Reservation } from "@shared/schema";
+import type { Table, Floor } from "@shared/schema";
 
 interface TableWithOrder extends Table {}
 
@@ -65,28 +65,9 @@ export default function TablesPage() {
     queryKey: ["/api/floors"],
   });
 
-  const { data: orders = [] } = useQuery<Order[]>({
-    queryKey: ["/api/orders"],
-  });
-
-  const { data: reservations = [] } = useQuery<Reservation[]>({
-    queryKey: ["/api/reservations"],
-  });
-
   const isLoading = tablesLoading || floorsLoading;
 
-  const tablesWithOrders = useMemo(() => {
-    if (!tables.length) {
-      return [];
-    }
-    
-    return tables.map((table) => {
-      const tableOrder = orders.find((order) => order.id === table.currentOrderId);
-      return {
-        ...table,
-      };
-    });
-  }, [tables, orders]);
+  const tablesWithOrders = tables;
 
 
   const createFloorMutation = useMutation({

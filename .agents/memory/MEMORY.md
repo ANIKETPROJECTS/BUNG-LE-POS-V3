@@ -9,3 +9,4 @@
 - [Stale session connection recovery](stale-session-connection-recovery.md) — cached authenticated storage must reconnect after idle Mongo cleanup.
 - [Discount validation rule](discount-validation-rule.md) — percentage discounts cap at 100%, rupee discounts cap at the calculated bill total.
 - [Billing draft polling](billing-draft-polling.md) — live order refresh must not overwrite unsaved billing fields while a cashier is editing.
+- [Vite runtime overlay HMR](vite-runtime-overlay-hmr.md) — `hmr: false` and removing the client tag may not strip the overlay’s inline HMR import; verify transformed HTML.

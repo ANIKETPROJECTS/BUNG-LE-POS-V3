@@ -28,9 +28,10 @@ export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
+  async ({ queryKey, signal }) => {
     const res = await fetch(queryKey.join("/") as string, {
       credentials: "include",
+      signal,
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
@@ -45,9 +46,9 @@ export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       queryFn: getQueryFn({ on401: "throw" }),
-      refetchInterval: 15_000,
+      refetchInterval: 30_000,
       refetchOnWindowFocus: true,
-      staleTime: 5_000,
+      staleTime: 15_000,
       retry: false,
     },
     mutations: {

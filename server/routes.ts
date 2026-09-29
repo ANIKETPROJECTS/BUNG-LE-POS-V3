@@ -255,12 +255,39 @@ async function queueBillPrintJobs(opts: {
 
 let wss: WebSocketServer;
 
+const DASHBOARD_STATS_CACHE_TTL_MS = 45_000;
+const dashboardStatsCache = new Map<string, { expiresAt: number; value: unknown }>();
+const dashboardStatsInvalidatingEvents = new Set([
+  "order_created",
+  "order_updated",
+  "order_completed",
+  "order_paid",
+  "order_item_added",
+  "order_item_updated",
+  "order_item_deleted",
+  "invoice_created",
+  "invoice_updated",
+  "invoice_deleted",
+  "table_created",
+  "table_updated",
+  "table_deleted",
+  "menu_created",
+  "menu_updated",
+  "menu_deleted",
+  "menu_synced",
+  "digital_menu_synced",
+  "data_cleared",
+]);
+
 function getStorage(req: Request): IStorage {
   const sessionStorage = getStorageForSession(req);
   return sessionStorage || storage;
 }
 
 function broadcastUpdate(type: string, data: any) {
+  if (dashboardStatsInvalidatingEvents.has(type)) {
+    dashboardStatsCache.clear();
+  }
   if (!wss) {
     console.log("[WebSocket] No WSS instance, cannot broadcast");
     return;
@@ -853,8 +880,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Dashboard aggregates computed from real stored data. The client passes its
   // UTC offset (minutes east of UTC) so "today" lines up with the browser.
   app.get("/api/dashboard/stats", requireAuth, async (req, res) => {
-    const st = getStorage(req);
     const tzEast = Number(req.query.tzOffset) || 0; // minutes east of UTC
+    const restaurantId = (req.session as any)?.restaurantId;
+    const cacheKey = typeof restaurantId === "string"
+      ? `${restaurantId}:${tzEast}`
+      : undefined;
+    if (cacheKey) {
+      const cached = dashboardStatsCache.get(cacheKey);
+      if (cached && cached.expiresAt > Date.now()) {
+        return res.json(cached.value);
+      }
+      if (cached) dashboardStatsCache.delete(cacheKey);
+    }
+    const st = getStorage(req);
 
     const startOfLocalDay = (instant: Date, daysBack = 0): number => {
       const localMs = instant.getTime() + tzEast * 60000 +
@@ -1063,7 +1101,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           total: toMoney(o.total),
         }));
 
-      res.json({
+      const dashboardStats = {
         todaySales,
         salesChange,
         todayOrders: todaysOrders.length,
@@ -1084,10 +1122,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           avgPrepTime,
         },
         recentOrders,
-      });
+      };
+
+      if (cacheKey) {
+        if (dashboardStatsCache.size >= 500) {
+          const oldestKey = dashboardStatsCache.keys().next().value;
+          if (oldestKey) dashboardStatsCache.delete(oldestKey);
+        }
+        dashboardStatsCache.set(cacheKey, {
+          expiresAt: Date.now() + DASHBOARD_STATS_CACHE_TTL_MS,
+          value: dashboardStats,
+        });
+      }
+      res.json(dashboardStats);
     } catch (error) {
-      console.error("Error building dashboard stats:", error);
-      res.status(500).json({ error: "Failed to load dashboard stats" });
+      throw error;
     }
   });
 

@@ -1,3 +1,4 @@
+import { startTransition } from "react";
 import {
   LayoutDashboard,
   ShoppingCart,
@@ -61,7 +62,7 @@ export function AppSidebar() {
   const { isMobile, setOpenMobile } = useSidebar();
 
   const handleNavigation = (url: string) => {
-    setLocation(url);
+    startTransition(() => setLocation(url));
     // Auto-close sidebar on mobile when clicking a menu item
     if (isMobile) {
       setOpenMobile(false);

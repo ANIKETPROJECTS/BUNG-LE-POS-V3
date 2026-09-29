@@ -65,10 +65,14 @@ export async function setupVite(app: Express, server: Server) {
         /<script type="module" src="\/@vite\/client"><\/script>/g,
         "",
       );
+      const pageWithoutRuntimeErrorClient = pageWithoutHmrClient.replace(
+        /<script type="module">[\s\S]*?<\/script>/g,
+        (script) => script.includes("/__dummy__runtime-error-plugin") ? "" : script,
+      );
       res
         .status(200)
         .set({ "Content-Type": "text/html" })
-        .end(pageWithoutHmrClient);
+        .end(pageWithoutRuntimeErrorClient);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);

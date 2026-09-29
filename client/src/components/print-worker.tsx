@@ -7,7 +7,7 @@ const WORKER_ID_KEY = "bungle_qz_print_worker_id";
 const PRINTER_LOCK_KEY = "bungle_qz_print_lock";
 const PRINTER_LOCK_MS = 90_000;
 const POLL_MS = 2500;
-const QZ_RETRY_MS = 15000;
+const QZ_RETRY_MS = 60_000;
 
 function getWorkerId() {
   const existing = localStorage.getItem(WORKER_ID_KEY);
@@ -101,11 +101,11 @@ export default function PrintWorker() {
         const availableNameKeys = new Set(localPrinterNames.map(normalisePrinterName));
         // A printer that disappeared is no longer considered ready. If it
         // returns later, it will get its own recovery boundary.
-        for (const readyName of readyPrinterNamesRef.current) {
+        readyPrinterNamesRef.current.forEach((readyName) => {
           if (!availableNameKeys.has(readyName)) {
             readyPrinterNamesRef.current.delete(readyName);
           }
-        }
+        });
         const recoveredPrinters = localPrinterNames.filter(
           (name) => !readyPrinterNamesRef.current.has(normalisePrinterName(name)),
         );

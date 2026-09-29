@@ -4,6 +4,12 @@ import { MongoClient, Db, Collection, Document } from 'mongodb';
 const CUSTOMERS_DB_NAME = 'customersdb';
 export const DIGITAL_MENU_DB_NAME = 'bungle';
 
+export const MONGO_CONNECTION_TIMEOUT_OPTIONS = {
+  connectTimeoutMS: 8_000,
+  serverSelectionTimeoutMS: 8_000,
+  waitQueueTimeoutMS: 8_000,
+};
+
 class MongoDBService {
   private client: MongoClient | null = null;
   private db: Db | null = null;
@@ -30,6 +36,7 @@ class MongoDBService {
       let client: MongoClient | null = null;
       try {
         client = new MongoClient(uri, {
+          ...MONGO_CONNECTION_TIMEOUT_OPTIONS,
           maxPoolSize: 10,
           minPoolSize: 0,
           maxConnecting: 2,

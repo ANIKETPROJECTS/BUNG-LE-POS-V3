@@ -39,8 +39,10 @@ export function useWebSocket() {
           switch (message.type) {
             case 'table_created':
             case 'table_updated':
+            case 'table_deleted':
               console.log('[WebSocket] Invalidating tables queries');
               queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
               break;
             case 'order_created':
             case 'order_updated':
@@ -51,6 +53,7 @@ export function useWebSocket() {
               queryClient.invalidateQueries({ queryKey: ['/api/orders/active'] });
               queryClient.invalidateQueries({ queryKey: ['/api/orders/completed'] });
               queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
               queryClient.invalidateQueries({
                 predicate: (query) =>
                   Array.isArray(query.queryKey) &&
@@ -70,6 +73,7 @@ export function useWebSocket() {
             case 'order_item_updated':
             case 'order_item_deleted':
               console.log('[WebSocket] Invalidating order items queries for orderId:', message.data?.orderId);
+              queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
               queryClient.invalidateQueries({ queryKey: ['/api/orders/active'] });
               queryClient.invalidateQueries({ queryKey: ['/api/orders/completed'] });
               queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
@@ -91,9 +95,12 @@ export function useWebSocket() {
               break;
             case 'menu_created':
             case 'menu_updated':
+            case 'menu_deleted':
             case 'menu_synced':
+            case 'digital_menu_synced':
               queryClient.invalidateQueries({ queryKey: ['/api/menu'] });
               queryClient.invalidateQueries({ queryKey: ['/api/menu/categories'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
               break;
             case 'floor_created':
             case 'floor_updated':
@@ -105,6 +112,14 @@ export function useWebSocket() {
             case 'invoice_updated':
             case 'invoice_deleted':
               queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+              break;
+            case 'data_cleared':
+              queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/invoices'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/menu'] });
               break;
             case 'inventory_updated':
               queryClient.invalidateQueries({ queryKey: ['/api/inventory'] });
