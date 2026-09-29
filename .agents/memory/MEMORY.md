@@ -10,3 +10,4 @@
 - [Discount validation rule](discount-validation-rule.md) — percentage discounts cap at 100%, rupee discounts cap at the calculated bill total.
 - [Billing draft polling](billing-draft-polling.md) — live order refresh must not overwrite unsaved billing fields while a cashier is editing.
 - [Vite dev preview cache and HMR](vite-runtime-overlay-hmr.md) — strip injected HMR clients and invalidate cached optimized chunks when their graph changes.
+- [External VPS npm installs](external-vps-npm-lockfiles.md) — lockfiles generated in Replit may contain internal tarball hosts that an external VPS cannot reach.
