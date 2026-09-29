@@ -26,7 +26,7 @@ export default function DigitalMenuOrdersPage() {
 
   const { data: syncStatus } = useQuery<{ isRunning: boolean; processedOrders: number }>({
     queryKey: ["/api/digital-menu/status"],
-    refetchInterval: 1000,
+    refetchInterval: 15_000,
   });
 
   const filteredOrders = orders.filter(order => 

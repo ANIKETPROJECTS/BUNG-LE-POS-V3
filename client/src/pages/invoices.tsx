@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Plus, Download, Send, Eye, Edit, Trash2, RefreshCw, X, Minus, StickyNote, Search, Filter, ArrowUpDown, MoreVertical, Printer } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { Plus, Download, Send, Eye, Edit, Trash2, RefreshCw, X, Minus, StickyNote, Search, Filter, ArrowUpDown, MoreVertical, Printer, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import AppHeader from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
@@ -35,8 +35,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { tryQzPrint } from "@/lib/qz-print";
 import type { Invoice, MenuItem } from "@shared/schema";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+
+const INVOICES_PER_PAGE = 10;
 
 interface InvoiceItem {
   name: string;
@@ -63,6 +63,7 @@ export default function InvoicesPage() {
   const [filterStatus, setFilterStatus] = useState<string[]>(["all"]);
   const [filterPayment, setFilterPayment] = useState<string[]>(["all"]);
   const [sortBy, setSortBy] = useState("date-desc");
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
 
   const { data: invoices = [], isLoading } = useQuery<Invoice[]>({
@@ -121,6 +122,18 @@ export default function InvoicesPage() {
 
     return result;
   }, [invoices, searchQuery, filterStatus, filterPayment, sortBy]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, filterStatus, filterPayment, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredAndSortedInvoices.length / INVOICES_PER_PAGE));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const pageStartIndex = (safeCurrentPage - 1) * INVOICES_PER_PAGE;
+  const visibleInvoices = filteredAndSortedInvoices.slice(
+    pageStartIndex,
+    pageStartIndex + INVOICES_PER_PAGE,
+  );
 
   const getStatusBadge = (status: string) => {
     const config: Record<string, string> = {
@@ -382,7 +395,11 @@ export default function InvoicesPage() {
     });
   };
 
-  const handleDownloadInvoice = (invoice: Invoice) => {
+  const handleDownloadInvoice = async (invoice: Invoice) => {
+    const [{ default: jsPDF }, { default: autoTable }] = await Promise.all([
+      import("jspdf"),
+      import("jspdf-autotable"),
+    ]);
     const doc = new jsPDF();
     
     doc.setFontSize(20);
@@ -662,7 +679,7 @@ export default function InvoicesPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredAndSortedInvoices.map((invoice) => (
+                {visibleInvoices.map((invoice) => (
                   <tr key={invoice.id} className="border-b border-border last:border-0 hover-elevate">
                     <td className="py-3 px-4 font-medium">{invoice.invoiceNumber}</td>
                     <td className="py-3 px-4">
@@ -691,7 +708,7 @@ export default function InvoicesPage() {
           </div>
 
           <div className="md:hidden space-y-3">
-            {filteredAndSortedInvoices.map((invoice) => (
+            {visibleInvoices.map((invoice) => (
               <div
                 key={invoice.id}
                 className="bg-card rounded-lg border border-card-border p-4 space-y-3"
@@ -766,6 +783,40 @@ export default function InvoicesPage() {
               </div>
             ))}
           </div>
+          {filteredAndSortedInvoices.length > 0 && (
+            <div className="mt-4 flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm text-muted-foreground">
+                Showing {pageStartIndex + 1}–{Math.min(pageStartIndex + INVOICES_PER_PAGE, filteredAndSortedInvoices.length)} of {filteredAndSortedInvoices.length} invoices
+              </p>
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between gap-3 sm:justify-end">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(safeCurrentPage - 1)}
+                    disabled={safeCurrentPage <= 1}
+                    data-testid="button-invoices-previous-page"
+                  >
+                    <ChevronLeft className="mr-1 h-4 w-4" />
+                    Previous
+                  </Button>
+                  <span className="whitespace-nowrap text-sm text-muted-foreground">
+                    Page {safeCurrentPage} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setCurrentPage(safeCurrentPage + 1)}
+                    disabled={safeCurrentPage >= totalPages}
+                    data-testid="button-invoices-next-page"
+                  >
+                    Next
+                    <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
           </>
         )}
       </div>

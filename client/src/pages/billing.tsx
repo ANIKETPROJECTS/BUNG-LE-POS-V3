@@ -269,7 +269,7 @@ export default function BillingPage() {
       }
     };
 
-    const intervalId = window.setInterval(refresh, 1000);
+    const intervalId = window.setInterval(refresh, 5000);
     return () => {
       stopped = true;
       window.clearInterval(intervalId);
