@@ -41,6 +41,8 @@ export class DigitalMenuSyncService {
     await this.loadSyncState();
     
     await this.syncOrders();
+
+    if (!this.isRunning) return;
     
     this.syncInterval = setInterval(async () => {
       await this.syncOrders();
@@ -90,9 +92,9 @@ export class DigitalMenuSyncService {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
       this.syncInterval = null;
-      this.isRunning = false;
-      console.log('🛑 Digital menu sync service stopped');
     }
+    this.isRunning = false;
+    console.log('🛑 Digital menu sync service stopped');
   }
 
   async syncOrders(): Promise<number> {

@@ -9,6 +9,10 @@ class MongoDBService {
   private db: Db | null = null;
   private connectPromise: Promise<void> | null = null;
 
+  usesUri(uri: string): boolean {
+    return Boolean(process.env.MONGODB_URI && uri === process.env.MONGODB_URI);
+  }
+
   async connect(): Promise<void> {
     if (this.client && this.db) {
       return;
@@ -23,8 +27,14 @@ class MongoDBService {
     }
 
     this.connectPromise = (async () => {
+      let client: MongoClient | null = null;
       try {
-        const client = new MongoClient(uri);
+        client = new MongoClient(uri, {
+          maxPoolSize: 10,
+          minPoolSize: 0,
+          maxConnecting: 2,
+          maxIdleTimeMS: 60_000,
+        });
         await client.connect();
 
         // Always use "POS" as the database name so POS data is isolated
@@ -34,6 +44,9 @@ class MongoDBService {
 
         console.log(`✅ Connected to MongoDB database: POS`);
       } catch (error) {
+        if (client) {
+          await client.close().catch(() => undefined);
+        }
         console.error('❌ MongoDB connection error:', error);
         throw error;
       } finally {
@@ -42,6 +55,14 @@ class MongoDBService {
     })();
 
     return this.connectPromise;
+  }
+
+  async getClient(): Promise<MongoClient> {
+    await this.connect();
+    if (!this.client) {
+      throw new Error('MongoDB connection was not established');
+    }
+    return this.client;
   }
 
   getDatabase(): Db {

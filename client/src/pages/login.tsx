@@ -62,6 +62,7 @@ export default function LoginPage() {
               <label className="text-sm font-medium mb-2 block">Username</label>
               <Input
                 type="text"
+                autoComplete="username"
                 placeholder="Enter username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
@@ -75,6 +76,7 @@ export default function LoginPage() {
               <label className="text-sm font-medium mb-2 block">Password</label>
               <Input
                 type="password"
+                autoComplete="current-password"
                 placeholder="Enter password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

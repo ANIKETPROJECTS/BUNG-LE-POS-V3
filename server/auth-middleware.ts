@@ -4,6 +4,7 @@ import MongoStore from 'connect-mongo';
 import { validateCredentials, getAccountById, loginSchema, type RestaurantAccount } from './auth';
 import { SessionStorage } from './session-storage';
 import { IStorage } from './storage';
+import { mongodb } from './mongodb';
 
 declare module 'express-session' {
   interface SessionData {
@@ -55,7 +56,7 @@ export function setupAuthRoutes(app: any) {
     saveUninitialized: false,
     rolling: true,
     store: MongoStore.create({
-      mongoUrl: mongoUri,
+      clientPromise: mongodb.getClient(),
       dbName: 'restaurant_pos',
       collectionName: 'sessions',
       ttl: SESSION_MAX_AGE / 1000,

@@ -1,5 +1,6 @@
 import { MongoClient } from "mongodb";
 import type { InsertMenuItem } from "@shared/schema";
+import { mongodb } from "./mongodb";
 
 export interface MongoDBItem {
   _id: string;
@@ -19,6 +20,7 @@ export interface MongoDBItem {
 
 export async function fetchMenuItemsFromMongoDB(mongoUri: string, databaseName?: string): Promise<{ items: InsertMenuItem[], categories: string[] }> {
   let client: MongoClient | null = null;
+  const usesSharedClient = mongodb.usesUri(mongoUri);
   
   try {
     let dbName: string;
@@ -29,8 +31,17 @@ export async function fetchMenuItemsFromMongoDB(mongoUri: string, databaseName?:
       dbName = extractDatabaseName(mongoUri);
     }
     
-    client = new MongoClient(mongoUri);
-    await client.connect();
+    if (usesSharedClient) {
+      client = await mongodb.getClient();
+    } else {
+      client = new MongoClient(mongoUri, {
+        maxPoolSize: 5,
+        minPoolSize: 0,
+        maxConnecting: 1,
+        maxIdleTimeMS: 60_000,
+      });
+      await client.connect();
+    }
     
     const db = client.db(dbName);
     const collections = await db.listCollections().toArray();
@@ -76,7 +87,7 @@ export async function fetchMenuItemsFromMongoDB(mongoUri: string, databaseName?:
     console.error("Error fetching from MongoDB:", error);
     throw new Error(`Failed to fetch menu items from MongoDB: ${error instanceof Error ? error.message : String(error)}`);
   } finally {
-    if (client) {
+    if (client && !usesSharedClient) {
       await client.close();
     }
   }

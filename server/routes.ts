@@ -3950,6 +3950,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   wss = new WebSocketServer({ server: httpServer, path: "/api/ws" });
+  httpServer.once("close", () => {
+    digitalMenuSync.stop();
+    externalOrdersSync.stop();
+    wss.clients.forEach((client) => client.terminate());
+    wss.close();
+  });
 
   wss.on("connection", (ws) => {
     ws.on("error", console.error);

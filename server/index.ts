@@ -1,7 +1,10 @@
+import "./silent-console";
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { setupAuthRoutes } from "./auth-middleware";
+import { dynamicMongoDB } from "./dynamic-mongodb";
+import { mongodb } from "./mongodb";
 
 const app = express();
 
@@ -65,11 +68,56 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+  let shutdownPromise: Promise<void> | null = null;
+
+  const shutdown = (signal: "SIGINT" | "SIGTERM"): Promise<void> => {
+    if (shutdownPromise) return shutdownPromise;
+
+    shutdownPromise = (async () => {
+      log(`Received ${signal}; closing server and MongoDB pools`);
+
+      const forceCloseTimer = setTimeout(() => {
+        server.closeAllConnections();
+      }, 10_000);
+      forceCloseTimer.unref();
+
+      try {
+        await new Promise<void>((resolve, reject) => {
+          server.close((error) => {
+            if (error) reject(error);
+            else resolve();
+          });
+        });
+      } finally {
+        clearTimeout(forceCloseTimer);
+      }
+
+      await dynamicMongoDB.closeAll();
+      await mongodb.disconnect();
+      log("Server and MongoDB pools closed");
+    })();
+
+    return shutdownPromise;
+  };
+
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+  });
+
+  process.once("SIGINT", () => {
+    void shutdown("SIGINT").catch((error) => {
+      console.error("Error during SIGINT shutdown:", error);
+      process.exitCode = 1;
+    });
+  });
+  process.once("SIGTERM", () => {
+    void shutdown("SIGTERM").catch((error) => {
+      console.error("Error during SIGTERM shutdown:", error);
+      process.exitCode = 1;
+    });
   });
 })();

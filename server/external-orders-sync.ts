@@ -28,6 +28,7 @@
 import { MongoClient, Db } from "mongodb";
 import type { IStorage } from "./storage";
 import { mongoStorage } from "./mongo-storage";
+import { mongodb } from "./mongodb";
 import { getDailyKotSequence, ensureDailyKotInvoiceNumber } from "./utils/billing-sequence";
 
 const EXTERNAL_DB_NAME = "Orders";
@@ -42,7 +43,7 @@ export class ExternalOrdersSyncService {
   private storage: IStorage;
   private client: MongoClient | null = null;
   private db: Db | null = null;
-  private currentUri: string | null = null;
+  private connectPromise: Promise<void> | null = null;
   private syncInterval: NodeJS.Timeout | null = null;
   private processedIds = new Set<string>();
   private isRunning = false;
@@ -69,6 +70,8 @@ export class ExternalOrdersSyncService {
     );
     await this.mirrorExistingActivePOSOrders();
     await this.sync();
+
+    if (!this.isRunning) return;
 
     this.syncInterval = setInterval(() => this.sync(), intervalMs);
     console.log(`✅ [ExternalOrders] Sync running every ${intervalMs / 1000}s`);
@@ -119,43 +122,29 @@ export class ExternalOrdersSyncService {
 
   /* ── internal helpers ───────────────────────────────────────────── */
 
-  /**
-   * Resolve the URI for the external Orders database.
-   *
-   * Since the POS and digital menu now share the same MongoDB cluster,
-   * MONGODB_URI is used for both. The POS stores its data in the "POS"
-   * database; digital menu orders live in the "Orders" database on the
-   * same cluster. No separate URI setting is needed.
-   */
-  private async resolveUri(): Promise<{ uri: string; source: string }> {
-    if (process.env.MONGODB_URI)
-      return { uri: process.env.MONGODB_URI, source: "MONGODB_URI (shared cluster)" };
-
-    throw new Error("MONGODB_URI is not set");
-  }
-
   private async connect(): Promise<void> {
-    const { uri, source } = await this.resolveUri();
+    if (this.connectPromise) return this.connectPromise;
 
-    // No-op if already connected to the same URI
-    if (this.client && this.currentUri === uri) return;
+    const pending = (async () => {
+      const client = await mongodb.getClient();
+      if (this.client === client && this.db) return;
 
-    // URI changed (or first connection) — close old client if any
-    if (this.client) {
-      console.log("🔄 [ExternalOrders] URI changed — reconnecting...");
-      await this.client.close().catch(() => {});
-      this.client = null;
-      this.db = null;
+      this.client = client;
+      this.db = client.db(EXTERNAL_DB_NAME);
+      console.log(`✅ [ExternalOrders] Using shared MongoDB client for "${EXTERNAL_DB_NAME}"`);
+
+      // Reload the in-memory guard when the shared client changes.
+      await this.loadAlreadySynced();
+    })();
+
+    this.connectPromise = pending;
+    try {
+      await pending;
+    } finally {
+      if (this.connectPromise === pending) {
+        this.connectPromise = null;
+      }
     }
-
-    this.currentUri = uri;
-    this.client = new MongoClient(uri);
-    await this.client.connect();
-    this.db = this.client.db(EXTERNAL_DB_NAME);
-    console.log(`✅ [ExternalOrders] Connected to "${EXTERNAL_DB_NAME}" database (via ${source})`);
-
-    // Reload already-synced set whenever we (re)connect
-    await this.loadAlreadySynced();
   }
 
   private collection() {
