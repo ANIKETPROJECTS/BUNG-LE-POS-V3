@@ -1,0 +1,42 @@
+I’m having a MongoDB Atlas connection-limit issue in my application.
+
+MongoDB Atlas is showing a warning that the cluster is “Nearing Connection Limit.” The dashboard shows approximately 354 active connections out of a 500 connection limit.
+
+I want you to investigate my entire codebase and identify why my application is creating/holding so many MongoDB connections.
+
+Please check specifically for:
+
+1. Multiple calls to mongoose.connect(), MongoClient.connect(), or equivalent MongoDB connection functions.
+2. MongoDB connections being created inside API routes, request handlers, controllers, services, loops, or functions that run repeatedly.
+3. Connections being opened repeatedly instead of using a single shared connection/pool.
+4. Incorrect connection-pool configuration such as an unnecessarily high maxPoolSize.
+5. Connections that aren't being closed or reused properly.
+6. Development hot-reload/server restart behavior causing duplicate connections.
+7. Multiple backend processes/workers/instances each creating their own MongoDB connection pool.
+8. Any serverless/API architecture issues where connections are created on every invocation.
+9. Background jobs, cron jobs, WebSocket handlers, or other processes that may be opening additional MongoDB connections.
+10. Any frontend code that could indirectly cause excessive API requests and therefore excessive database connections.
+
+Important: Do NOT simply increase the MongoDB connection limit or tell me to upgrade MongoDB. First identify the actual cause in my code.
+
+Please inspect the existing project architecture and determine:
+- Where the MongoDB connection is initialized.
+- How many connection pools could potentially be created.
+- Whether the connection is reused across requests.
+- Whether there are any connection leaks.
+- Whether the current connection-pool settings are appropriate.
+- Which exact files/functions are responsible for the problem.
+
+Then fix the issue in the code while preserving the existing application functionality.
+
+Use a centralized MongoDB connection approach so that the application reuses an existing connection/pool rather than creating a new connection for every request.
+
+After making the changes:
+- Explain what caused the high connection count.
+- Explain exactly what you changed.
+- Make sure all API routes use the shared database connection.
+- Make sure the application does not create duplicate connections during development/hot reload.
+- Check for any other code that could cause connection growth.
+- Do not make unrelated changes to the application.
+
+The goal is to reduce unnecessary MongoDB connections and prevent the application from reaching the Atlas connection limit of 500.
