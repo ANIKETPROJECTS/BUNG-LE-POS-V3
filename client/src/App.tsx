@@ -9,9 +9,9 @@ import { useWebSocket } from "@/hooks/use-websocket";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect } from "react";
+import LoginPage from "@/pages/login";
 
 const NotFound = lazy(() => import("@/pages/not-found"));
-const LoginPage = lazy(() => import("@/pages/login"));
 const DbErrorPage = lazy(() => import("@/pages/db-error"));
 const DashboardPage = lazy(() => import("@/pages/dashboard"));
 const BillingPage = lazy(() => import("@/pages/billing"));
@@ -160,7 +160,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   
   const isPublicRoute = location === "/login" || location === "/db-error";
   
-  if (isLoading) {
+  if (isLoading && !isPublicRoute) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
