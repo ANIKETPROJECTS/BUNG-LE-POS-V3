@@ -24,6 +24,9 @@ export async function setupVite(app: Express, server: Server) {
     middlewareMode: true,
     allowedHosts: true as const,
     hmr: false,
+    headers: {
+      "Cache-Control": "no-store",
+    },
   };
 
   const vite = await createViteServer({
@@ -71,7 +74,10 @@ export async function setupVite(app: Express, server: Server) {
       );
       res
         .status(200)
-        .set({ "Content-Type": "text/html" })
+        .set({
+          "Content-Type": "text/html",
+          "Cache-Control": "no-store",
+        })
         .end(pageWithoutRuntimeErrorClient);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);

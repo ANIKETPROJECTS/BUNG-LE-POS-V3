@@ -26,6 +26,11 @@ export default defineConfig({
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
+  optimizeDeps: {
+    // Changing this explicit include invalidates stale optimized chunks that
+    // browsers may still have cached from an earlier dependency graph.
+    include: ["@radix-ui/react-tooltip"],
+  },
   root: path.resolve(import.meta.dirname, "client"),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),

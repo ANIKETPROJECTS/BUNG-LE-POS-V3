@@ -45,6 +45,7 @@ export class ExternalOrdersSyncService {
   private db: Db | null = null;
   private connectPromise: Promise<void> | null = null;
   private syncInterval: NodeJS.Timeout | null = null;
+  private syncInFlight: Promise<number> | null = null;
   private processedIds = new Set<string>();
   private isRunning = false;
   private broadcastFn: ((type: string, data: any) => void) | null = null;
@@ -172,8 +173,21 @@ export class ExternalOrdersSyncService {
     }
   }
 
-  /** Main poll cycle */
+  /** Share one poll cycle across timer and manual callers. */
   async sync(): Promise<number> {
+    if (this.syncInFlight) return this.syncInFlight;
+
+    const run = this.runSync();
+    this.syncInFlight = run;
+    try {
+      return await run;
+    } finally {
+      if (this.syncInFlight === run) this.syncInFlight = null;
+    }
+  }
+
+  /** Main poll cycle */
+  private async runSync(): Promise<number> {
     try {
       // Re-resolve URI on every cycle — handles the case where a user logs in
       // after server startup and the restaurant's mongodb_uri setting becomes

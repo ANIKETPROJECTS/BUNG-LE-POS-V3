@@ -14,6 +14,7 @@ const STALE_CLAIM_MS = 2 * 60 * 1000;
 export class DigitalMenuSyncService {
   private storage: IStorage;
   private syncInterval: NodeJS.Timeout | null = null;
+  private syncInFlight: Promise<number> | null = null;
   private processedOrderIds: Set<string> = new Set();
   private orderStatusMap: Map<string, string> = new Map();
   private orderPaymentStatusMap: Map<string, string> = new Map();
@@ -98,6 +99,18 @@ export class DigitalMenuSyncService {
   }
 
   async syncOrders(): Promise<number> {
+    if (this.syncInFlight) return this.syncInFlight;
+
+    const run = this.runSyncOrders();
+    this.syncInFlight = run;
+    try {
+      return await run;
+    } finally {
+      if (this.syncInFlight === run) this.syncInFlight = null;
+    }
+  }
+
+  private async runSyncOrders(): Promise<number> {
     try {
       await mongodb.connect();
       const collection = mongodb.getCollection<any>('digital_menu_customer_orders');
