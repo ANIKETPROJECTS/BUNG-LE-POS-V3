@@ -59,7 +59,16 @@ export async function setupVite(app: Express, server: Server) {
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
       const page = await vite.transformIndexHtml(url, template);
-      res.status(200).set({ "Content-Type": "text/html" }).end(page);
+      // HMR is disabled in middleware mode. Remove Vite's injected client too:
+      // it otherwise keeps probing Replit's unreachable 24678 socket port.
+      const pageWithoutHmrClient = page.replace(
+        /<script type="module" src="\/@vite\/client"><\/script>/g,
+        "",
+      );
+      res
+        .status(200)
+        .set({ "Content-Type": "text/html" })
+        .end(pageWithoutHmrClient);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
       next(e);
