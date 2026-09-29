@@ -25,9 +25,16 @@ const consoleMethods = [
 ] as const;
 
 for (const method of consoleMethods) {
+  const original = (console as any)[method]?.bind(console);
   Object.defineProperty(console, method, {
     configurable: true,
     writable: true,
-    value: noop,
+    value: (...args: unknown[]) => {
+      if (args.some((arg) => typeof arg === "string" && arg.includes("[POS-DIAG]"))) {
+        original?.(...args);
+      } else {
+        noop();
+      }
+    },
   });
 }

@@ -13,7 +13,6 @@
     <div id="root"></div>
     <script>
       (() => {
-        const noop = () => undefined;
         const methods = [
           "assert", "clear", "count", "countReset", "debug", "dir", "dirxml",
           "error", "group", "groupCollapsed", "groupEnd", "info", "log",
@@ -22,15 +21,87 @@
         ];
         for (const method of methods) {
           try {
+            const original = console[method].bind(console);
             Object.defineProperty(console, method, {
               configurable: true,
               writable: true,
-              value: noop
+              value: (...args) => {
+                if (args.some((arg) => typeof arg === "string" && arg.includes("[POS-DIAG]"))) {
+                  original(...args);
+                }
+              }
             });
           } catch {
             // Some browsers expose a non-configurable console method.
           }
         }
+
+        const host = location.hostname;
+        const isDevelopmentPreview =
+          host === "localhost" ||
+          host === "127.0.0.1" ||
+          host.endsWith(".replit.dev");
+        if (!isDevelopmentPreview) return;
+
+        window.__POS_DIAGNOSTICS__ = true;
+        const safePath = (url) => {
+          try {
+            return new URL(url, location.href).pathname;
+          } catch {
+            return "<unknown>";
+          }
+        };
+
+        console.info("[POS-DIAG][BOOT] HTML loaded", {
+          path: location.pathname,
+          online: navigator.onLine
+        });
+
+        window.addEventListener("error", (event) => {
+          const target = event.target;
+          if (target instanceof HTMLScriptElement || target instanceof HTMLLinkElement) {
+            const url = target instanceof HTMLScriptElement ? target.src : target.href;
+            console.error("[POS-DIAG][RESOURCE] failed to load", {
+              tag: target.tagName,
+              path: safePath(url)
+            });
+            return;
+          }
+
+          console.error("[POS-DIAG][JS] uncaught error", {
+            message: String(event.message || "Unknown browser error").slice(0, 200),
+            path: event.filename ? safePath(event.filename) : undefined,
+            line: event.lineno,
+            column: event.colno
+          });
+        }, true);
+
+        window.addEventListener("unhandledrejection", (event) => {
+          const reason = event.reason;
+          const name = reason && typeof reason === "object" && "name" in reason
+            ? String(reason.name)
+            : typeof reason;
+          console.error("[POS-DIAG][JS] unhandled promise rejection", { name });
+        });
+        window.addEventListener("online", () => {
+          console.info("[POS-DIAG][NETWORK] browser online");
+        });
+        window.addEventListener("offline", () => {
+          console.warn("[POS-DIAG][NETWORK] browser offline");
+        });
+        document.addEventListener("DOMContentLoaded", () => {
+          console.info("[POS-DIAG][BOOT] DOM ready");
+        });
+        window.addEventListener("load", () => {
+          console.info("[POS-DIAG][BOOT] window loaded");
+        });
+        window.setTimeout(() => {
+          if (!window.__POS_DIAG_MAIN_STARTED__) {
+            console.error("[POS-DIAG][BOOT] main entry did not start within 8s", {
+              path: location.pathname
+            });
+          }
+        }, 8000);
       })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
