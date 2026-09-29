@@ -22,13 +22,11 @@ export function useWebSocket() {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const wsUrl = `${protocol}//${window.location.host}/api/ws`;
       
-      console.info('[POS-DIAG][WS] connecting', { path: '/api/ws' });
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
       ws.onopen = () => {
         failedAttemptsRef.current = 0;
-        console.info('[POS-DIAG][WS] connected');
       };
 
       ws.onmessage = (event) => {
@@ -136,15 +134,7 @@ export function useWebSocket() {
         }
       };
 
-      ws.onerror = () => {
-        console.error('[POS-DIAG][WS] connection error', { readyState: ws.readyState });
-      };
-
       ws.onclose = (event) => {
-        console.warn('[POS-DIAG][WS] closed', {
-          code: event.code,
-          wasClean: event.wasClean,
-        });
         if (isMountedRef.current) {
           failedAttemptsRef.current += 1;
           if (failedAttemptsRef.current >= MAX_FAILED_ATTEMPTS) {

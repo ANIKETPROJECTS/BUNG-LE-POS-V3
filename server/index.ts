@@ -9,39 +9,6 @@ import { mongodb } from "./mongodb";
 
 const app = express();
 
-app.use((req, res, next) => {
-  const diagnosticsEnabled = process.env.NODE_ENV !== "production";
-  const path = req.path;
-  if (!diagnosticsEnabled || !(path === "/api" || path.startsWith("/api/"))) {
-    return next();
-  }
-
-  const startedAt = Date.now();
-  let finished = false;
-  log(`[POS-DIAG][API] request started ${req.method} ${path}`, "express");
-
-  res.on("finish", () => {
-    finished = true;
-    const durationMs = Date.now() - startedAt;
-    const slowLabel = durationMs >= 1500 ? " (slow)" : "";
-    log(
-      `[POS-DIAG][API] response ${req.method} ${path} ${res.statusCode} in ${durationMs}ms${slowLabel}`,
-      "express",
-    );
-  });
-
-  res.on("close", () => {
-    if (!finished) {
-      log(
-        `[POS-DIAG][API] connection closed before response ${req.method} ${path} after ${Date.now() - startedAt}ms`,
-        "express",
-      );
-    }
-  });
-
-  next();
-});
-
 declare module 'http' {
   interface IncomingMessage {
     rawBody: unknown
@@ -78,10 +45,6 @@ setupAuthRoutes(app);
     const isMongoUnavailable = mongoAvailabilityErrors.has(err?.name);
     const rawStatus = Number(err?.status ?? err?.statusCode);
     const status = isMongoUnavailable ? 503 : Number.isInteger(rawStatus) ? rawStatus : 500;
-    if (process.env.NODE_ENV !== "production" && status >= 500) {
-      const errorName = typeof err?.name === "string" ? err.name : "Error";
-      log(`[POS-DIAG][API] handler error ${req.method} ${req.path} ${status} ${errorName}`, "express");
-    }
     const message = isMongoUnavailable
       ? "Database temporarily unavailable. Please try again."
       : status < 500
