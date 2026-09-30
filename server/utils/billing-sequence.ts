@@ -189,11 +189,30 @@ export async function getDailyKotInvoiceNumber(
   st: IStorage,
   order: Order,
 ): Promise<string> {
-  const [orders, invoices] = await Promise.all([
-    st.getOrders(),
-    st.getInvoices(),
+  const day = dayOf(order);
+  const dayStart = new Date(`${day}T00:00:00.000+05:30`);
+  if (Number.isNaN(dayStart.getTime())) {
+    throw new Error(`Cannot determine KOT invoice date for order ${order.id}`);
+  }
+  const dayEnd = new Date(dayStart.getTime() + 24 * 60 * 60 * 1000);
+  const [orders, dailyInvoices] = await Promise.all([
+    st.getOrdersCreatedBetween(dayStart, dayEnd),
+    st.getInvoicesCreatedBetween(dayStart, dayEnd),
   ]);
-  return calculateDailyKotInvoiceNumbers(orders, invoices, [order]).get(order.id)!;
+  const ordersById = new Map(orders.map((candidate) => [candidate.id, candidate]));
+  ordersById.set(order.id, order);
+  const dailyOrders = Array.from(ordersById.values());
+  const orderInvoices = await st.getInvoicesByOrderIds(
+    dailyOrders.map((candidate) => candidate.id),
+  );
+  const invoicesById = new Map<string, (typeof dailyInvoices)[number]>();
+  for (const invoice of [...dailyInvoices, ...orderInvoices]) {
+    invoicesById.set(invoice.id, invoice);
+  }
+  const invoices = Array.from(invoicesById.values()).sort(
+    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+  );
+  return calculateDailyKotInvoiceNumbers(dailyOrders, invoices, [order]).get(order.id)!;
 }
 
 export async function ensureDailyKotInvoiceNumber(

@@ -23,6 +23,7 @@ import { tryQzPrint } from "@/lib/qz-print";
 interface KOTTicket {
   order: Order;
   items: OrderItem[];
+  batch: number;
   tableNumber: string;
   floorName: string;
   kotNumber: string;
@@ -401,14 +402,12 @@ function KOTDeleteModal({
 
   const deleteMutation = useMutation({
     mutationFn: async (kot: KOTTicket) => {
-      // A KOT is a batch of items, not the whole POS order. Delete only this
-      // batch so later KOTs for the same table/order remain intact.
-      // Delete sequentially. Each delete synchronizes the matching external
-      // order; parallel requests can race the external-order poller and make
-      // an old item look like a newly-added item, which triggers a reprint.
-      for (const item of kot.items) {
-        await apiRequest("DELETE", `/api/order-items/${item.id}`);
-      }
+      // Delete one batch in a single request. The server keeps the external
+      // sync ahead of local deletion and cancels only this batch's print jobs.
+      await apiRequest(
+        "DELETE",
+        `/api/orders/${kot.order.id}/kot-batches/${kot.batch}`,
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/orders/active"] });
@@ -754,6 +753,7 @@ export default function KOTPage() {
       return Array.from(batches.entries()).map(([batch, batchItems]) => ({
         order,
         items: batchItems,
+        batch,
         tableNumber,
         floorName,
         // Assigned after active and completed orders are merged so numbering

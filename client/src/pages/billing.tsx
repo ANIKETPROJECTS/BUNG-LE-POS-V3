@@ -730,8 +730,11 @@ export default function BillingPage() {
     }
 
     const unsavedItems = orderItems.filter((item) => !item.isFromDatabase);
+    const draftWrites: Promise<unknown>[] = [
+      persistBillingDraft(orderId!),
+    ];
     if (unsavedItems.length > 0) {
-      await addOrderItemsMutation.mutateAsync({
+      draftWrites.push(addOrderItemsMutation.mutateAsync({
         orderId: orderId!,
         items: unsavedItems.map((item) => ({
           orderId: orderId!,
@@ -743,10 +746,13 @@ export default function BillingPage() {
           status: item.status === "non_kot" ? "non_kot" : "new",
           isVeg: item.isVeg ?? true,
         })),
-      });
+      }));
     }
-
-    await persistBillingDraft(orderId!);
+    const writeResults = await Promise.allSettled(draftWrites);
+    const writeFailure = writeResults.find(
+      (result): result is PromiseRejectedResult => result.status === "rejected",
+    );
+    if (writeFailure) throw writeFailure.reason;
     
     return orderId;
   };

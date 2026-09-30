@@ -71,6 +71,7 @@ export interface IStorage {
   getOrders(): Promise<Order[]>;
   getOrder(id: string): Promise<Order | undefined>;
   getOrdersByTable(tableId: string): Promise<Order[]>;
+  getOrdersCreatedBetween(start: Date, end: Date): Promise<Order[]>;
   getActiveOrders(filters?: { tableId?: string; createdAfter?: Date }): Promise<Order[]>;
   getCompletedOrders(): Promise<Order[]>;
   getCompletedOrdersSince(createdAfter: Date): Promise<Order[]>;
@@ -99,6 +100,7 @@ export interface IStorage {
   updateOrderItemStatus(id: string, status: string): Promise<OrderItem | undefined>;
   updateOrderItem(id: string, data: Partial<Pick<OrderItem, 'quantity' | 'notes' | 'name'>>): Promise<OrderItem | undefined>;
   deleteOrderItem(id: string): Promise<boolean>;
+  deleteOrderItemsByIds(ids: string[]): Promise<number>;
   assignMissingKotBatch(orderId: string, batch: number): Promise<void>;
 
   getInventoryItems(): Promise<InventoryItem[]>;
@@ -146,6 +148,8 @@ export interface IStorage {
   deleteWastage(id: string): Promise<boolean>;
 
   getInvoices(): Promise<Invoice[]>;
+  getInvoicesCreatedBetween(start: Date, end: Date): Promise<Invoice[]>;
+  getInvoicesByOrderIds(orderIds: string[]): Promise<Invoice[]>;
   getInvoice(id: string): Promise<Invoice | undefined>;
   getInvoiceByNumber(invoiceNumber: string): Promise<Invoice | undefined>;
   createInvoice(invoice: InsertInvoice): Promise<Invoice>;
@@ -481,6 +485,17 @@ export class MemStorage implements IStorage {
     return Array.from(this.orders.values()).filter((o) => o.tableId === tableId);
   }
 
+  async getOrdersCreatedBetween(start: Date, end: Date): Promise<Order[]> {
+    const startTime = start.getTime();
+    const endTime = end.getTime();
+    return Array.from(this.orders.values())
+      .filter((order) => {
+        const createdAt = new Date(order.createdAt).getTime();
+        return createdAt >= startTime && createdAt < endTime;
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
   async getActiveOrders(filters?: { tableId?: string; createdAfter?: Date }): Promise<Order[]> {
     return Array.from(this.orders.values()).filter(
       (o) =>
@@ -708,6 +723,14 @@ export class MemStorage implements IStorage {
     return this.orderItems.delete(id);
   }
 
+  async deleteOrderItemsByIds(ids: string[]): Promise<number> {
+    let deletedCount = 0;
+    for (const id of ids) {
+      if (this.orderItems.delete(id)) deletedCount++;
+    }
+    return deletedCount;
+  }
+
   async assignMissingKotBatch(orderId: string, batch: number): Promise<void> {
     for (const [id, item] of this.orderItems.entries()) {
       if (item.orderId === orderId && item.status !== "non_kot" && item.kotBatch == null) {
@@ -889,6 +912,25 @@ export class MemStorage implements IStorage {
     return Array.from(this.invoices.values()).sort((a, b) => 
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
+  }
+
+  async getInvoicesCreatedBetween(start: Date, end: Date): Promise<Invoice[]> {
+    const startTime = start.getTime();
+    const endTime = end.getTime();
+    return Array.from(this.invoices.values())
+      .filter((invoice) => {
+        const createdAt = new Date(invoice.createdAt).getTime();
+        return createdAt >= startTime && createdAt < endTime;
+      })
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }
+
+  async getInvoicesByOrderIds(orderIds: string[]): Promise<Invoice[]> {
+    if (orderIds.length === 0) return [];
+    const orderIdSet = new Set(orderIds);
+    return Array.from(this.invoices.values())
+      .filter((invoice) => orderIdSet.has(invoice.orderId))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
   async getInvoice(id: string): Promise<Invoice | undefined> {

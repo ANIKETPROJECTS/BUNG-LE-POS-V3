@@ -1,5 +1,6 @@
 - [Mongo poll-sync duplicate-on-restart](mongo-poll-sync-claim-pattern.md) — mark-synced-at-end sync loops duplicate work across restarts; claim before create, not after.
 - [Stable table invoice numbers](stable-table-invoice-number.md) — resolve an ongoing table invoice before recalculating any daily sequence.
+- [KOT invoice lookup scope](kot-invoice-lookup-scope.md) — bound numbering reads to the order’s Kolkata day while retaining invoices linked to those orders.
 - [POS performance](pos-performance.md) — batch derived order data and back off aggressively when QZ is unavailable.
 - [Shared order ownership](pos-orders-database-ownership.md) — mirror POS orders for digital-menu visibility, but mark ownership to prevent circular re-imports.
 - [KOT print identity](kot-print-job-identity.md) — deduplicate KOT jobs by order and batch, never invoice number alone for ongoing tables.

@@ -271,6 +271,14 @@ export class SessionStorage implements IStorage {
     return orders;
   }
 
+  async getOrdersCreatedBetween(start: Date, end: Date): Promise<Order[]> {
+    await this.ensureConnection();
+    return this.getCollection<Order>('orders')
+      .find({ createdAt: { $gte: start, $lt: end } } as any)
+      .sort({ createdAt: -1 })
+      .toArray();
+  }
+
   async getActiveOrders(filters?: { tableId?: string; createdAfter?: Date }): Promise<Order[]> {
     await this.ensureConnection();
     const query: Record<string, unknown> = {
@@ -534,6 +542,14 @@ export class SessionStorage implements IStorage {
     await this.ensureConnection();
     const result = await this.getCollection<OrderItem>('orderItems').deleteOne({ id } as any);
     return result.deletedCount > 0;
+  }
+
+  async deleteOrderItemsByIds(ids: string[]): Promise<number> {
+    if (ids.length === 0) return 0;
+    await this.ensureConnection();
+    const result = await this.getCollection<OrderItem>('orderItems')
+      .deleteMany({ id: { $in: ids } } as any);
+    return result.deletedCount ?? 0;
   }
 
   async assignMissingKotBatch(orderId: string, batch: number): Promise<void> {
@@ -874,6 +890,23 @@ export class SessionStorage implements IStorage {
     await this.ensureConnection();
     const invoices = await this.getCollection<Invoice>('invoices').find().sort({ createdAt: -1 }).toArray();
     return invoices;
+  }
+
+  async getInvoicesCreatedBetween(start: Date, end: Date): Promise<Invoice[]> {
+    await this.ensureConnection();
+    return this.getCollection<Invoice>('invoices')
+      .find({ createdAt: { $gte: start, $lt: end } } as any)
+      .sort({ createdAt: -1 })
+      .toArray();
+  }
+
+  async getInvoicesByOrderIds(orderIds: string[]): Promise<Invoice[]> {
+    if (orderIds.length === 0) return [];
+    await this.ensureConnection();
+    return this.getCollection<Invoice>('invoices')
+      .find({ orderId: { $in: orderIds } } as any)
+      .sort({ createdAt: -1 })
+      .toArray();
   }
 
   async getInvoice(id: string): Promise<Invoice | undefined> {

@@ -700,6 +700,40 @@ export class ExternalOrdersSyncService {
   }
 
   /**
+   * Remove several items from one external order with a single read/write.
+   * Names are applied in order so duplicate names are removed exactly like
+   * repeated syncItemDelete calls.
+   */
+  async syncItemsDelete(posOrderId: string, itemNames: string[]): Promise<void> {
+    if (itemNames.length === 0) return;
+    try {
+      const doc = await this.findExternalDoc(posOrderId);
+      if (!doc) return;
+
+      const remainingItems: any[] = [...(doc.items || [])];
+      for (const itemName of itemNames) {
+        const index = remainingItems.findIndex((item: any) =>
+          (item.name || item.menuItemName || item.itemName || "") === itemName
+        );
+        if (index >= 0) remainingItems.splice(index, 1);
+      }
+      const newTotal = remainingItems.reduce(
+        (sum: number, item: any) =>
+          sum + Number(item.price || 0) * Number(item.quantity || 1),
+        0,
+      );
+
+      await this.collection().updateOne(
+        { posOrderId },
+        { $set: { items: remainingItems, total: newTotal } },
+      );
+    } catch {
+      // Match the existing single-item sync contract: local POS deletion may
+      // proceed if the external menu database is temporarily unavailable.
+    }
+  }
+
+  /**
    * Add a new item to the external-DB order that corresponds to `posOrderId`.
    * Called when an item is added to a KOT order from the POS.
    */

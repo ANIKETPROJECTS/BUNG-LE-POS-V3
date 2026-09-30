@@ -1656,13 +1656,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       st.getMenuItems(),
     ]);
     const menuItemsById = new Map(menuItems.map((menuItem) => [menuItem.id, menuItem]));
-    await Promise.all(
+    const nonKotItemIds = new Set(
       allOrderItems
         .filter((item) =>
           menuItemsById.get(item.menuItemId)?.kotEnabled === false &&
           item.status !== "non_kot",
         )
-        .map((item) => st.updateOrderItemStatus(item.id, "non_kot")),
+        .map((item) => item.id),
+    );
+    await Promise.all(
+      Array.from(nonKotItemIds).map((itemId) => st.updateOrderItemStatus(itemId, "non_kot")),
     );
     console.log("[Server] Sending order to kitchen:", req.params.id);
     const order = await st.updateOrderStatus(req.params.id, "sent_to_kitchen");
@@ -1670,8 +1673,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(404).json({ error: "Order not found" });
     }
     externalOrdersSync.mirrorPOSOrder(order.id).catch(() => {});
-    const pendingKotItems = (await st.getOrderItems(req.params.id))
-      .filter((item) => item.status === "new");
+    const pendingKotItems = allOrderItems.filter(
+      (item) => item.status === "new" && !nonKotItemIds.has(item.id),
+    );
     if (pendingKotItems.length === 0) {
       return res.status(400).json({ error: "There are no KOT items in this order" });
     }
@@ -2293,6 +2297,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     broadcastUpdate("order_item_updated", item);
     res.json(item);
+  });
+
+  app.delete("/api/orders/:id/kot-batches/:batch", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    const orderId = req.params.id;
+    const batch = Number(req.params.batch);
+    if (!Number.isInteger(batch) || batch < 1) {
+      return res.status(400).json({ error: "Invalid KOT batch" });
+    }
+
+    const [order, itemsBeforeDelete] = await Promise.all([
+      st.getOrder(orderId),
+      st.getOrderItems(orderId),
+    ]);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+    const batchItems = itemsBeforeDelete.filter(
+      (item) =>
+        item.status !== "non_kot" &&
+        ((item as any).kotBatch ?? 1) === batch,
+    );
+    if (batchItems.length === 0) {
+      return res.status(404).json({ error: "KOT batch not found" });
+    }
+
+    const batchItemIds = new Set(batchItems.map((item) => item.id));
+    const remainingItems = itemsBeforeDelete.filter((item) => !batchItemIds.has(item.id));
+
+    // Update the external source before local deletion, in one ordered batch,
+    // so the poller cannot re-import the items while POS is removing them.
+    if (remainingItems.length === 0) {
+      await externalOrdersSync.deleteExternalOrder(orderId);
+    } else {
+      await externalOrdersSync.syncItemsDelete(
+        orderId,
+        batchItems.map((item) => item.name),
+      );
+    }
+
+    // Legacy KOT items may have no batch field. Preserve their existing
+    // order-wide cancellation fallback, while cancelling a modern batch only.
+    const hasLegacyBatchItem = batchItems.some(
+      (item) => typeof (item as any).kotBatch !== "number",
+    );
+    await mongoStorage.cancelPrintJobsForOrderBatch(
+      orderId,
+      hasLegacyBatchItem ? null : batch,
+    );
+
+    const deletedCount = await st.deleteOrderItemsByIds(Array.from(batchItemIds));
+    if (deletedCount !== batchItems.length) {
+      return res.status(409).json({ error: "KOT batch changed while it was being deleted" });
+    }
+
+    if (remainingItems.length > 0) {
+      const total = remainingItems.reduce(
+        (sum, orderItem) => sum + parseFloat(orderItem.price) * orderItem.quantity,
+        0,
+      );
+      await st.updateOrderTotal(orderId, total.toFixed(2));
+    } else {
+      if (order.tableId) {
+        await Promise.all([
+          st.updateTableOrder(order.tableId, null),
+          st.updateTableStatus(order.tableId, "free"),
+        ]);
+        const updatedTable = await st.getTable(order.tableId);
+        if (updatedTable) broadcastUpdate("table_updated", updatedTable);
+      }
+      await st.deleteOrder(orderId);
+      broadcastUpdate("order_updated", { id: orderId, deleted: true });
+    }
+
+    for (const item of batchItems) {
+      broadcastUpdate("order_item_deleted", { id: item.id, orderId });
+    }
+    res.json({ success: true, deletedCount });
   });
 
   app.delete("/api/order-items/:id", requireAuth, async (req, res) => {
