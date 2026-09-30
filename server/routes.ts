@@ -1965,10 +1965,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const ACTIVE_STATUSES = ["sent_to_kitchen", "ready_to_bill", "billed"];
     let ordersToSettle = [order];
     if (order.tableId) {
-      const allOrders = await st.getOrders();
-      ordersToSettle = allOrders.filter(
+      const tableOrders = await st.getOrdersByTable(order.tableId);
+      ordersToSettle = tableOrders.filter(
         (o) =>
-          o.tableId === order.tableId &&
           (ACTIVE_STATUSES.includes(o.status) || o.id === order.id),
       );
       // Keep deterministic ordering so the invoice/primary order is predictable.
@@ -1979,11 +1978,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     // Aggregate items across every order being settled in this checkout.
-    const orderItems: OrderItem[] = [];
-    for (const ord of ordersToSettle) {
-      const ordItems = await st.getOrderItems(ord.id);
-      orderItems.push(...ordItems);
+    const fetchedItems = await st.getOrderItemsByOrderIds(ordersToSettle.map((ord) => ord.id));
+    const itemsByOrderId = new Map<string, OrderItem[]>();
+    for (const item of fetchedItems) {
+      const items = itemsByOrderId.get(item.orderId) ?? [];
+      items.push(item);
+      itemsByOrderId.set(item.orderId, items);
     }
+    const orderItems = ordersToSettle.flatMap((ord) => itemsByOrderId.get(ord.id) ?? []);
 
     const subtotal = orderItems.reduce(
       (sum, item) => sum + parseFloat(item.price) * item.quantity,

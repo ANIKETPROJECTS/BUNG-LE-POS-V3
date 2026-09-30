@@ -266,22 +266,34 @@ export default function BillingPage() {
     if (!currentOrderId && !currentTableId) return;
 
     let stopped = false;
+    let refreshInFlight = false;
     const refresh = async () => {
-      if (stopped) return;
+      if (stopped || document.visibilityState !== "visible" || refreshInFlight) return;
       // Do not replace POS edits while the cashier is composing the next
       // KOT. The Digital Menu poller may update the same order concurrently.
       if (localEditingRef.current) return;
-      if (currentTableId) {
-        await fetchTableOrder(currentTableId);
-      } else if (currentOrderId) {
-        await fetchExistingOrder(currentOrderId);
+      refreshInFlight = true;
+      try {
+        if (currentTableId) {
+          await fetchTableOrder(currentTableId);
+        } else if (currentOrderId) {
+          await fetchExistingOrder(currentOrderId);
+        }
+      } finally {
+        refreshInFlight = false;
       }
     };
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") void refresh();
+    };
+
     const intervalId = window.setInterval(refresh, 5000);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     return () => {
       stopped = true;
       window.clearInterval(intervalId);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [currentTableId, currentOrderId]);
 

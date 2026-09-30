@@ -118,6 +118,9 @@ export default function MenuPage() {
 
   const { data: inventoryItems = [] } = useQuery<InventoryItem[]>({
     queryKey: ["/api/inventory"],
+    enabled: isAddDialogOpen || isEditDialogOpen,
+    staleTime: 5 * 60_000,
+    refetchInterval: false,
   });
 
   const createMenuItemMutation = useMutation({

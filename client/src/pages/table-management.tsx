@@ -177,6 +177,8 @@ function TableRow({
   const { data: qrPreview } = useQuery<{ qrDataUrl: string }>({
     queryKey: ["/api/admin/qr-token/preview", table.id],
     enabled: isGrid,
+    staleTime: 0,
+    refetchInterval: false,
     queryFn: async () => {
       const res = await apiRequest("POST", "/api/admin/qr-token", { tableId: table.id });
       return res.json();

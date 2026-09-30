@@ -148,10 +148,17 @@ export async function getDailyKotSequence(st: IStorage, order: Order): Promise<n
     dayOf(o) === dayOf(order) &&
     (o.status !== "completed" || invoicedOrderIds.has(o.id))
   );
+  const orderItems = await st.getOrderItemsByOrderIds(orders.map((candidate) => candidate.id));
+  const itemsByOrderId = new Map<string, typeof orderItems>();
+  for (const item of orderItems) {
+    const items = itemsByOrderId.get(item.orderId) ?? [];
+    items.push(item);
+    itemsByOrderId.set(item.orderId, items);
+  }
   const tickets: { key: string; createdAt: number; day: string }[] = [];
 
   for (const candidate of orders) {
-    const items = await st.getOrderItems(candidate.id);
+    const items = itemsByOrderId.get(candidate.id) ?? [];
     const batches = new Map<string, number>();
     for (const item of items) {
       const batch = item.kotBatch ?? 1;
