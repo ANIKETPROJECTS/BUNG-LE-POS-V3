@@ -83,6 +83,7 @@ export function useWebSocket() {
             case 'menu_synced':
             case 'digital_menu_synced':
               queryClient.invalidateQueries({ queryKey: ['/api/menu'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/menu/pos'] });
               queryClient.invalidateQueries({ queryKey: ['/api/menu/categories'] });
               queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
               queryClient.invalidateQueries({

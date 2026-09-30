@@ -623,6 +623,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json({ categories });
   });
 
+  app.get("/api/menu/pos", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    const items = await st.getMenuItems();
+    res.json(items.map((item) => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      price: item.price,
+      available: item.available,
+      isVeg: item.isVeg,
+      quickCode: item.quickCode,
+      kotEnabled: item.kotEnabled,
+    })));
+  });
+
   app.get("/api/menu/:id", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const item = await st.getMenuItem(req.params.id);
@@ -913,7 +928,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/orders/active", requireAuth, async (req, res) => {
     const st = getStorage(req);
-    const orders = await st.getActiveOrders();
+    if (req.query.tableId !== undefined && typeof req.query.tableId !== "string") {
+      return res.status(400).json({ error: "Invalid tableId value" });
+    }
+    if (req.query.createdAfter !== undefined && typeof req.query.createdAfter !== "string") {
+      return res.status(400).json({ error: "Invalid createdAfter value" });
+    }
+    const tableId = typeof req.query.tableId === "string" ? req.query.tableId : undefined;
+    const createdAfter = typeof req.query.createdAfter === "string"
+      ? new Date(req.query.createdAfter)
+      : undefined;
+    if (createdAfter && !Number.isFinite(createdAfter.getTime())) {
+      return res.status(400).json({ error: "Invalid createdAfter value" });
+    }
+    const orders = await st.getActiveOrders({ tableId, createdAfter });
+    if (tableId) {
+      return res.json(orders);
+    }
     const invoiceNumbers = await getDailyKotInvoiceNumbers(st, orders);
     const ordersWithInvoiceNumbers = orders.map((order) => ({
       ...order,

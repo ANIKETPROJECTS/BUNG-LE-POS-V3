@@ -271,10 +271,15 @@ export class SessionStorage implements IStorage {
     return orders;
   }
 
-  async getActiveOrders(): Promise<Order[]> {
+  async getActiveOrders(filters?: { tableId?: string; createdAfter?: Date }): Promise<Order[]> {
     await this.ensureConnection();
+    const query: Record<string, unknown> = {
+      status: { $nin: ['completed', 'cancelled'] },
+    };
+    if (filters?.tableId) query.tableId = filters.tableId;
+    if (filters?.createdAfter) query.createdAt = { $gte: filters.createdAfter };
     const orders = await this.getCollection<Order>('orders')
-      .find({ status: { $nin: ['completed', 'cancelled'] } } as any)
+      .find(query as any)
       .sort({ createdAt: -1 })
       .toArray();
     return orders;

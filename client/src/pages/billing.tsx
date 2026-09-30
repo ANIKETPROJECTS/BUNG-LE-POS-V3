@@ -152,11 +152,15 @@ export default function BillingPage() {
     try {
       // currentOrderId points only to the latest order. A table can have
       // multiple ongoing Digital Menu orders, so load all active orders.
-      const tableRes = await fetch(`/api/tables/${tableId}`);
-      const table = tableRes.ok ? await tableRes.json() : null;
-      const ordersRes = await fetch(`/api/orders/active`);
+      const [tableRes, ordersRes] = await Promise.all([
+        fetch(`/api/tables/${tableId}`),
+        fetch(`/api/orders/active?tableId=${encodeURIComponent(tableId)}`),
+      ]);
       if (!ordersRes.ok) return;
-      const orders = await ordersRes.json();
+      const [table, orders] = await Promise.all([
+        tableRes.ok ? tableRes.json() : Promise.resolve(null),
+        ordersRes.json(),
+      ]);
       const tableOrders = orders
         .filter((order: any) => order.tableId === tableId)
         .sort((a: any, b: any) =>
@@ -167,16 +171,21 @@ export default function BillingPage() {
       }
       if (tableOrders.length === 0) return;
 
-      const itemLists = await Promise.all(
-        tableOrders.map(async (order: any) => {
-          const response = await fetch(`/api/orders/${order.id}/items`);
-          return response.ok ? response.json() : [];
-        })
+      const itemOrderIdChunks: string[][] = [];
+      const itemOrderIds = tableOrders.map((order: any) => order.id);
+      for (let index = 0; index < itemOrderIds.length; index += 200) {
+        itemOrderIdChunks.push(itemOrderIds.slice(index, index + 200));
+      }
+      const itemGroups = await Promise.all(
+        itemOrderIdChunks.map(async (orderIds) => {
+          const response = await apiRequest("POST", "/api/orders/items/batch", { orderIds });
+          return await response.json();
+        }),
       );
       if (fetchVersion !== tableFetchVersionRef.current || localEditingRef.current) {
         return;
       }
-      const formattedItems = itemLists.flat().map((item: any) => ({
+      const formattedItems = itemGroups.flat().map((item: any) => ({
         id: item.id,
         menuItemId: item.menuItemId,
         name: item.name,
@@ -217,7 +226,7 @@ export default function BillingPage() {
     try {
       const [orderRes, itemsRes] = await Promise.all([
         fetch(`/api/orders/${orderId}`),
-        fetch(`/api/orders/${orderId}/items`),
+        apiRequest("POST", "/api/orders/items/batch", { orderIds: [orderId] }),
       ]);
       const order = orderRes.ok ? await orderRes.json() : null;
       const items = await itemsRes.json();
@@ -276,12 +285,18 @@ export default function BillingPage() {
     };
   }, [currentTableId, currentOrderId]);
 
-  const { data: menuItems = [], isLoading: menuLoading } = useQuery<MenuItem[]>({
-    queryKey: ["/api/menu"],
+  const { data: menuItems = [], isLoading: menuLoading } = useQuery<
+    Pick<MenuItem, "id" | "name" | "category" | "price" | "available" | "isVeg" | "quickCode" | "kotEnabled">[]
+  >({
+    queryKey: ["/api/menu/pos"],
+    staleTime: 5 * 60_000,
+    refetchInterval: false,
   });
 
   const { data: categoriesData } = useQuery<{ categories: string[] }>({
     queryKey: ["/api/menu/categories"],
+    staleTime: 5 * 60_000,
+    refetchInterval: false,
   });
 
   const { data: floors = [] } = useQuery<any[]>({

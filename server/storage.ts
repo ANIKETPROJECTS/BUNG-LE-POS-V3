@@ -71,7 +71,7 @@ export interface IStorage {
   getOrders(): Promise<Order[]>;
   getOrder(id: string): Promise<Order | undefined>;
   getOrdersByTable(tableId: string): Promise<Order[]>;
-  getActiveOrders(): Promise<Order[]>;
+  getActiveOrders(filters?: { tableId?: string; createdAfter?: Date }): Promise<Order[]>;
   getCompletedOrders(): Promise<Order[]>;
   getCompletedOrdersSince(createdAfter: Date): Promise<Order[]>;
   getDeliveryOrders(): Promise<Order[]>;
@@ -481,9 +481,12 @@ export class MemStorage implements IStorage {
     return Array.from(this.orders.values()).filter((o) => o.tableId === tableId);
   }
 
-  async getActiveOrders(): Promise<Order[]> {
+  async getActiveOrders(filters?: { tableId?: string; createdAfter?: Date }): Promise<Order[]> {
     return Array.from(this.orders.values()).filter(
-      (o) => o.status === "sent_to_kitchen" || o.status === "ready_to_bill" || o.status === "billed"
+      (o) =>
+        (o.status === "sent_to_kitchen" || o.status === "ready_to_bill" || o.status === "billed") &&
+        (!filters?.tableId || o.tableId === filters.tableId) &&
+        (!filters?.createdAfter || new Date(o.createdAt).getTime() >= filters.createdAfter.getTime())
     );
   }
 

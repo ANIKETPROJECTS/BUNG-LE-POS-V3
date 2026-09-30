@@ -29,6 +29,8 @@ interface KOTTicket {
   invoiceNumber: string;
 }
 
+type MenuPickerItem = Pick<MenuItem, "id" | "name" | "price" | "isVeg" | "kotEnabled">;
+
 /* ─── Status helpers ─────────────────────────────────────────────────────── */
 const STATUS_CFG: Record<string, { label: string; bg: string; text: string; dot: string }> = {
   sent_to_kitchen: { label: "New",       bg: "bg-amber-50",   text: "text-amber-700",  dot: "bg-amber-500"  },
@@ -207,7 +209,12 @@ function KOTEditModal({
     if (ticket) setLocalItems(ticket.items.map(i => ({ ...i })));
   }, [ticket]);
 
-  const { data: menuItems = [] } = useQuery<MenuItem[]>({ queryKey: ["/api/menu"] });
+  const { data: menuItems = [] } = useQuery<MenuPickerItem[]>({
+    queryKey: ["/api/menu/pos"],
+    enabled: open && !!ticket,
+    staleTime: 5 * 60_000,
+    refetchInterval: false,
+  });
   const [menuSearch, setMenuSearch] = useState("");
 
   const updateItemMutation = useMutation({
@@ -274,7 +281,7 @@ function KOTEditModal({
     }
   };
 
-  const handleAddMenuItem = async (mi: MenuItem) => {
+  const handleAddMenuItem = async (mi: MenuPickerItem) => {
     await addItemMutation.mutateAsync({
       name: mi.name, menuItemId: mi.id,
       price: mi.price, isVeg: mi.isVeg,
@@ -623,7 +630,6 @@ export default function KOTPage() {
   const [editTicket,   setEditTicket]   = useState<KOTTicket | null>(null);
   const [deleteTicket, setDeleteTicket] = useState<KOTTicket | null>(null);
 
-  const { data: activeOrders    = [] } = useQuery<Order[]>({ queryKey: ["/api/orders/active"] });
   const { data: tables          = [] } = useQuery<Table[]>({ queryKey: ["/api/tables"] });
   const { data: floors          = [] } = useQuery<Floor[]>({ queryKey: ["/api/floors"] });
   const { data: printers        = [] } = useQuery<PrinterDevice[]>({ queryKey: ["/api/printers"] });
@@ -656,6 +662,17 @@ export default function KOTPage() {
     return d;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayKey]);
+
+  const { data: activeOrders = [] } = useQuery<Order[]>({
+    queryKey: ["/api/orders/active", dayKey],
+    queryFn: async () => {
+      const response = await apiRequest(
+        "GET",
+        `/api/orders/active?createdAfter=${encodeURIComponent(todayStart.toISOString())}`,
+      );
+      return await response.json() as Order[];
+    },
+  });
 
   const { data: completedOrders = [] } = useQuery<Order[]>({
     queryKey: ["/api/orders/completed", dayKey],

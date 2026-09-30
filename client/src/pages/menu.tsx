@@ -127,6 +127,7 @@ export default function MenuPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/pos"] });
       setIsAddDialogOpen(false);
       toast({
         title: "Success",
@@ -142,6 +143,7 @@ export default function MenuPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/pos"] });
       setIsEditDialogOpen(false);
       setEditingItem(null);
       toast({
@@ -158,6 +160,7 @@ export default function MenuPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/menu"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/menu/pos"] });
       toast({
         title: "Success",
         description: "Menu item deleted successfully",

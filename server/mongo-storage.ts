@@ -241,11 +241,14 @@ export class MongoStorage implements IStorage {
     return orders;
   }
 
-  async getActiveOrders(): Promise<Order[]> {
+  async getActiveOrders(filters?: { tableId?: string; createdAfter?: Date }): Promise<Order[]> {
     await this.ensureConnection();
-    const orders = await mongodb.getCollection<Order>('orders').find({
-      status: { $in: ["sent_to_kitchen", "ready_to_bill", "billed"] }
-    } as any).toArray();
+    const query: Record<string, unknown> = {
+      status: { $in: ["sent_to_kitchen", "ready_to_bill", "billed"] },
+    };
+    if (filters?.tableId) query.tableId = filters.tableId;
+    if (filters?.createdAfter) query.createdAt = { $gte: filters.createdAfter };
+    const orders = await mongodb.getCollection<Order>('orders').find(query as any).toArray();
     return orders;
   }
 
