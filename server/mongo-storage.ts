@@ -435,6 +435,25 @@ export class MongoStorage implements IStorage {
     return orderItem;
   }
 
+  async createOrderItems(items: InsertOrderItem[]): Promise<OrderItem[]> {
+    if (items.length === 0) return [];
+    await this.ensureConnection();
+    const orderItems = items.map((item) => ({
+      id: randomUUID(),
+      orderId: item.orderId,
+      menuItemId: item.menuItemId,
+      name: item.name,
+      quantity: item.quantity,
+      price: item.price,
+      notes: item.notes ?? null,
+      status: item.status ?? "new",
+      isVeg: item.isVeg ?? true,
+      createdAt: new Date(),
+    }));
+    await mongodb.getCollection<OrderItem>('orderItems').insertMany(orderItems as any[]);
+    return orderItems;
+  }
+
   async updateOrderItemStatus(id: string, status: string): Promise<OrderItem | undefined> {
     await this.ensureConnection();
     const result = await mongodb.getCollection<OrderItem>('orderItems').findOneAndUpdate(

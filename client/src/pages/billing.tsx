@@ -316,9 +316,11 @@ export default function BillingPage() {
     });
   };
 
-  const addOrderItemMutation = useMutation({
-    mutationFn: async (data: { orderId: string; item: any }) => {
-      const res = await apiRequest("POST", `/api/orders/${data.orderId}/items`, data.item);
+  const addOrderItemsMutation = useMutation({
+    mutationFn: async (data: { orderId: string; items: any[] }) => {
+      const res = await apiRequest("POST", `/api/orders/${data.orderId}/items/batch`, {
+        items: data.items,
+      });
       return await res.json();
     },
   });
@@ -700,22 +702,21 @@ export default function BillingPage() {
       orderId = order.id;
     }
 
-    for (const item of orderItems) {
-      if (!item.isFromDatabase) {
-        await addOrderItemMutation.mutateAsync({
+    const unsavedItems = orderItems.filter((item) => !item.isFromDatabase);
+    if (unsavedItems.length > 0) {
+      await addOrderItemsMutation.mutateAsync({
+        orderId: orderId!,
+        items: unsavedItems.map((item) => ({
           orderId: orderId!,
-          item: {
-            orderId: orderId!,
-            menuItemId: item.menuItemId,
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price.toFixed(2),
-            notes: item.notes || null,
-            status: item.status === "non_kot" ? "non_kot" : "new",
-            isVeg: item.isVeg ?? true,
-          },
-        });
-      }
+          menuItemId: item.menuItemId,
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price.toFixed(2),
+          notes: item.notes || null,
+          status: item.status === "non_kot" ? "non_kot" : "new",
+          isVeg: item.isVeg ?? true,
+        })),
+      });
     }
 
     await persistBillingDraft(orderId!);

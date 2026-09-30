@@ -1423,6 +1423,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(item);
   });
 
+  app.post("/api/orders/:id/items/batch", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    const result = z.array(insertOrderItemSchema).min(1).safeParse(req.body?.items);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    const orderId = req.params.id;
+    const [order, menuItems] = await Promise.all([
+      st.getOrder(orderId),
+      st.getMenuItems(),
+    ]);
+    if (!order) {
+      return res.status(404).json({ error: "Order not found" });
+    }
+
+    const menuItemsById = new Map(menuItems.map((menuItem) => [menuItem.id, menuItem]));
+    const itemsToCreate = result.data.map((item) => ({
+      ...item,
+      orderId,
+      status: menuItemsById.get(item.menuItemId)?.kotEnabled === false
+        ? "non_kot"
+        : item.status,
+    }));
+    const createdItems = await st.createOrderItems(itemsToCreate);
+
+    const orderItems = await st.getOrderItems(orderId);
+    const total = orderItems.reduce(
+      (sum, item) => sum + parseFloat(item.price) * item.quantity,
+      0,
+    );
+    await st.updateOrderTotal(orderId, total.toFixed(2));
+
+    if (order.tableId) {
+      await st.updateTableStatus(order.tableId, "occupied");
+      const updatedTable = await st.getTable(order.tableId);
+      if (updatedTable) {
+        broadcastUpdate("table_updated", updatedTable);
+      }
+    }
+
+    for (const item of createdItems) {
+      broadcastUpdate("order_item_added", { orderId, item });
+      externalOrdersSync
+        .syncItemAdd(orderId, {
+          name: item.name,
+          price: parseFloat(item.price),
+          quantity: item.quantity,
+          notes: item.notes ?? null,
+          isVeg: item.isVeg,
+        })
+        .catch(() => {});
+    }
+
+    res.status(201).json(createdItems);
+  });
+
   app.patch("/api/orders/:id/status", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const { status } = req.body;
@@ -1459,15 +1516,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json({ error: result.error });
     }
 
-    const allOrderItems = await st.getOrderItems(req.params.id);
-    const menuItems = await st.getMenuItems();
-    for (const item of allOrderItems) {
-      const menuItem = menuItems.find(menu => menu.id === item.menuItemId);
-      if (menuItem?.kotEnabled === false && item.status !== "non_kot") {
-        item.status = "non_kot";
-        await st.updateOrderItemStatus(item.id, "non_kot");
-      }
-    }
+    const [allOrderItems, menuItems] = await Promise.all([
+      st.getOrderItems(req.params.id),
+      st.getMenuItems(),
+    ]);
+    const menuItemsById = new Map(menuItems.map((menuItem) => [menuItem.id, menuItem]));
+    await Promise.all(
+      allOrderItems
+        .filter((item) =>
+          menuItemsById.get(item.menuItemId)?.kotEnabled === false &&
+          item.status !== "non_kot",
+        )
+        .map((item) => st.updateOrderItemStatus(item.id, "non_kot")),
+    );
     console.log("[Server] Sending order to kitchen:", req.params.id);
     const order = await st.updateOrderStatus(req.params.id, "sent_to_kitchen");
     if (!order) {

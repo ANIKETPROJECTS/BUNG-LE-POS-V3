@@ -137,6 +137,12 @@ export async function ensureDailyKotInvoiceNumber(
   st: IStorage,
   order: Order,
 ): Promise<{ order: Order; invoiceNumber: string }> {
+  // Keep a POS-assigned invoice number stable across every KOT for an ongoing
+  // order instead of rescanning the day's orders and invoices on each add-on.
+  if (order.invoiceNumber && order.invoiceNumberSource === "pos") {
+    return { order, invoiceNumber: order.invoiceNumber };
+  }
+
   const generated = await getDailyKotInvoiceNumber(st, order);
   const persisted = await st.setOrderInvoiceNumber(order.id, generated);
   const resolved = persisted ?? { ...order, invoiceNumber: generated };

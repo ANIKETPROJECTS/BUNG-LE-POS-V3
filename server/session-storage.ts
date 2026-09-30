@@ -466,6 +466,25 @@ export class SessionStorage implements IStorage {
     return item;
   }
 
+  async createOrderItems(items: InsertOrderItem[]): Promise<OrderItem[]> {
+    if (items.length === 0) return [];
+    await this.ensureConnection();
+    const orderItems = items.map((insertItem) => ({
+      id: randomUUID(),
+      orderId: insertItem.orderId,
+      menuItemId: insertItem.menuItemId,
+      name: insertItem.name,
+      quantity: insertItem.quantity,
+      price: insertItem.price,
+      notes: insertItem.notes ?? null,
+      status: insertItem.status ?? 'new',
+      isVeg: insertItem.isVeg ?? true,
+      createdAt: new Date(),
+    }));
+    await this.getCollection<OrderItem>('orderItems').insertMany(orderItems as any[]);
+    return orderItems;
+  }
+
   async updateOrderItemStatus(id: string, status: string): Promise<OrderItem | undefined> {
     await this.ensureConnection();
     const result = await this.getCollection<OrderItem>('orderItems').findOneAndUpdate(
