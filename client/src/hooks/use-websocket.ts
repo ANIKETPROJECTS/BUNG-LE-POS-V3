@@ -32,13 +32,11 @@ export function useWebSocket() {
       ws.onmessage = (event) => {
         try {
           const message: WebSocketMessage = JSON.parse(event.data);
-          console.log('[WebSocket] Message received:', message.type, 'Data:', message.data);
 
           switch (message.type) {
             case 'table_created':
             case 'table_updated':
             case 'table_deleted':
-              console.log('[WebSocket] Invalidating tables queries');
               queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
               queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
               break;
@@ -46,50 +44,38 @@ export function useWebSocket() {
             case 'order_updated':
             case 'order_completed':
             case 'order_paid':
-              console.log('[WebSocket] Invalidating order queries for order:', message.data?.id);
-              queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/orders'], exact: true });
               queryClient.invalidateQueries({ queryKey: ['/api/orders/active'] });
               queryClient.invalidateQueries({ queryKey: ['/api/orders/completed'] });
               queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
               queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
-              queryClient.invalidateQueries({
-                predicate: (query) =>
-                  Array.isArray(query.queryKey) &&
-                  query.queryKey[0] === '/api/orders' &&
-                  query.queryKey[2] === 'items'
-              });
               if (message.data?.id) {
-                queryClient.invalidateQueries({ 
-                  predicate: (query) => 
-                    Array.isArray(query.queryKey) && 
-                    query.queryKey[0] === '/api/orders' && 
-                    query.queryKey[1] === message.data.id 
+                queryClient.invalidateQueries({
+                  queryKey: ['/api/orders', message.data.id],
+                });
+              }
+              if (message.type === 'order_updated') {
+                queryClient.invalidateQueries({
+                  queryKey: ['/api/orders', 'items', 'batch'],
                 });
               }
               break;
             case 'order_item_added':
+            case 'order_items_added':
             case 'order_item_updated':
             case 'order_item_deleted':
-              console.log('[WebSocket] Invalidating order items queries for orderId:', message.data?.orderId);
-              queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+              queryClient.invalidateQueries({ queryKey: ['/api/orders'], exact: true });
               queryClient.invalidateQueries({ queryKey: ['/api/orders/active'] });
               queryClient.invalidateQueries({ queryKey: ['/api/orders/completed'] });
-              queryClient.invalidateQueries({ queryKey: ['/api/orders'] });
-              queryClient.invalidateQueries({ queryKey: ['/api/tables'] });
-              queryClient.invalidateQueries({
-                predicate: (query) =>
-                  Array.isArray(query.queryKey) &&
-                  query.queryKey[0] === '/api/orders' &&
-                  query.queryKey[2] === 'items'
-              });
+              queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
               if (message.data?.orderId) {
-                queryClient.invalidateQueries({ 
-                  predicate: (query) => 
-                    Array.isArray(query.queryKey) && 
-                    query.queryKey[0] === '/api/orders' && 
-                    query.queryKey[1] === message.data.orderId 
+                queryClient.invalidateQueries({
+                  queryKey: ['/api/orders', message.data.orderId],
                 });
               }
+              queryClient.invalidateQueries({
+                queryKey: ['/api/orders', 'items', 'batch'],
+              });
               break;
             case 'menu_created':
             case 'menu_updated':
@@ -99,6 +85,9 @@ export function useWebSocket() {
               queryClient.invalidateQueries({ queryKey: ['/api/menu'] });
               queryClient.invalidateQueries({ queryKey: ['/api/menu/categories'] });
               queryClient.invalidateQueries({ queryKey: ['/api/dashboard/stats'] });
+              queryClient.invalidateQueries({
+                queryKey: ['/api/orders', 'items', 'batch'],
+              });
               break;
             case 'floor_created':
             case 'floor_updated':
@@ -125,27 +114,23 @@ export function useWebSocket() {
             case 'kot_created':
               queryClient.invalidateQueries({ queryKey: ['/api/orders/active'] });
               queryClient.invalidateQueries({ queryKey: ['/api/orders/completed'] });
+              queryClient.invalidateQueries({
+                queryKey: ['/api/orders', 'items', 'batch'],
+              });
               break;
             default:
               break;
           }
-        } catch (error) {
-          console.error('[WebSocket] Failed to parse message:', error);
+        } catch {
         }
       };
 
-      ws.onclose = (event) => {
+      ws.onclose = () => {
         if (isMountedRef.current) {
           failedAttemptsRef.current += 1;
           if (failedAttemptsRef.current >= MAX_FAILED_ATTEMPTS) {
-            console.warn(
-              `[WebSocket] Stopped reconnecting after ${MAX_FAILED_ATTEMPTS} consecutive failed connection attempts`,
-            );
             return;
           }
-          console.log(
-            `[WebSocket] Reconnecting in 1s (attempt ${failedAttemptsRef.current + 1}/${MAX_FAILED_ATTEMPTS})...`,
-          );
           reconnectTimeoutRef.current = setTimeout(connect, 1000);
         }
       };

@@ -289,6 +289,17 @@ export class SessionStorage implements IStorage {
     return orders;
   }
 
+  async getCompletedOrdersSince(createdAfter: Date): Promise<Order[]> {
+    await this.ensureConnection();
+    return this.getCollection<Order>('orders')
+      .find({
+        status: { $in: ['paid', 'completed'] },
+        createdAt: { $gte: createdAfter },
+      } as any)
+      .sort({ completedAt: -1 })
+      .toArray();
+  }
+
   async getDeliveryOrders(): Promise<Order[]> {
     await this.ensureConnection();
     const orders = await this.getCollection<Order>('orders')
@@ -439,6 +450,15 @@ export class SessionStorage implements IStorage {
     await this.ensureConnection();
     const items = await this.getCollection<OrderItem>('orderItems').find({ orderId } as any).toArray();
     return items;
+  }
+
+  async getOrderItemsByOrderIds(orderIds: string[]): Promise<OrderItem[]> {
+    if (orderIds.length === 0) return [];
+    await this.ensureConnection();
+    return this
+      .getCollection<OrderItem>('orderItems')
+      .find({ orderId: { $in: orderIds } } as any)
+      .toArray();
   }
 
   async getOrderItem(id: string): Promise<OrderItem | undefined> {

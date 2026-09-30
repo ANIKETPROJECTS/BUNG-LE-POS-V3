@@ -263,6 +263,7 @@ const dashboardStatsInvalidatingEvents = new Set([
   "order_completed",
   "order_paid",
   "order_item_added",
+  "order_items_added",
   "order_item_updated",
   "order_item_deleted",
   "invoice_created",
@@ -551,6 +552,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/menu", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const items = await st.getMenuItems();
+
+    if (req.query.page !== undefined) {
+      const requestedPage = typeof req.query.page === "string" ? Number(req.query.page) : NaN;
+      if (!Number.isInteger(requestedPage) || requestedPage < 1) {
+        return res.status(400).json({ error: "Invalid page number" });
+      }
+
+      const pageSize = 10;
+      const search = typeof req.query.search === "string"
+        ? req.query.search.trim().toLowerCase()
+        : "";
+      const category = typeof req.query.category === "string"
+        ? req.query.category.trim().toLowerCase()
+        : "all";
+      const availability = typeof req.query.availability === "string"
+        ? req.query.availability
+        : "all";
+      const type = typeof req.query.type === "string" ? req.query.type : "all";
+      const sort = typeof req.query.sort === "string" ? req.query.sort : "name-asc";
+
+      const filteredItems = items.filter((item) => {
+        const matchesCategory = category === "all" || item.category.toLowerCase() === category;
+        const matchesSearch = item.name.toLowerCase().includes(search);
+        const matchesAvailability = availability === "all" ||
+          (availability === "available" && item.available) ||
+          (availability === "unavailable" && !item.available);
+        const matchesType = type === "all" ||
+          (type === "veg" && item.isVeg) ||
+          (type === "nonveg" && !item.isVeg);
+        return matchesCategory && matchesSearch && matchesAvailability && matchesType;
+      });
+
+      filteredItems.sort((a, b) => {
+        switch (sort) {
+          case "name-desc": return b.name.localeCompare(a.name);
+          case "price-asc": return parseFloat(a.price) - parseFloat(b.price);
+          case "price-desc": return parseFloat(b.price) - parseFloat(a.price);
+          case "category-asc": return a.category.localeCompare(b.category);
+          case "category-desc": return b.category.localeCompare(a.category);
+          case "cost-asc": return parseFloat(a.cost) - parseFloat(b.cost);
+          case "cost-desc": return parseFloat(b.cost) - parseFloat(a.cost);
+          case "type-veg": return a.isVeg === b.isVeg ? 0 : a.isVeg ? -1 : 1;
+          case "type-nonveg": return a.isVeg === b.isVeg ? 0 : a.isVeg ? 1 : -1;
+          case "name-asc":
+          default: return a.name.localeCompare(b.name);
+        }
+      });
+
+      const total = filteredItems.length;
+      const totalPages = Math.max(1, Math.ceil(total / pageSize));
+      const page = Math.min(requestedPage, totalPages);
+      const start = (page - 1) * pageSize;
+      return res.json({
+        items: filteredItems.slice(start, start + pageSize),
+        total,
+        page,
+        pageSize,
+        totalPages,
+      });
+    }
+
     res.json(items);
   });
 
@@ -862,7 +924,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get("/api/orders/completed", requireAuth, async (req, res) => {
     const st = getStorage(req);
-    const orders = await st.getCompletedOrders();
+    let createdAfter: Date | undefined;
+    if (req.query.createdAfter !== undefined) {
+      if (typeof req.query.createdAfter !== "string") {
+        return res.status(400).json({ error: "Invalid createdAfter value" });
+      }
+      const parsedCreatedAfter = new Date(req.query.createdAfter);
+      if (!Number.isFinite(parsedCreatedAfter.getTime())) {
+        return res.status(400).json({ error: "Invalid createdAfter value" });
+      }
+      createdAfter = parsedCreatedAfter;
+    }
+    const orders = createdAfter
+      ? await st.getCompletedOrdersSince(createdAfter)
+      : await st.getCompletedOrders();
     const invoiceNumbers = await getDailyKotInvoiceNumbers(st, orders);
     const ordersWithInvoiceNumbers = orders.map((order) => ({
       ...order,
@@ -1354,6 +1429,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.json(items);
   });
 
+  app.post("/api/orders/items/batch", requireAuth, async (req, res) => {
+    const st = getStorage(req);
+    const result = z.object({
+      orderIds: z.array(z.string().min(1)).min(1).max(200),
+    }).safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ error: result.error });
+    }
+
+    const orderIds = Array.from(new Set(result.data.orderIds));
+    const [items, menuItems] = await Promise.all([
+      st.getOrderItemsByOrderIds(orderIds),
+      st.getMenuItems(),
+    ]);
+    const menuItemsById = new Map(menuItems.map((menuItem) => [menuItem.id, menuItem]));
+    const itemsToNormalize = items.filter((item) =>
+      menuItemsById.get(item.menuItemId)?.kotEnabled === false &&
+      item.status !== "non_kot",
+    );
+    await Promise.all(
+      itemsToNormalize.map((item) => st.updateOrderItemStatus(item.id, "non_kot")),
+    );
+    for (const item of itemsToNormalize) {
+      item.status = "non_kot";
+    }
+
+    res.json(items);
+  });
+
   app.post("/api/orders", requireAuth, async (req, res) => {
     const st = getStorage(req);
     const result = insertOrderSchema.safeParse(req.body);
@@ -1464,8 +1568,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     }
 
+    broadcastUpdate("order_items_added", { orderId, items: createdItems });
     for (const item of createdItems) {
-      broadcastUpdate("order_item_added", { orderId, item });
       externalOrdersSync
         .syncItemAdd(orderId, {
           name: item.name,
@@ -4055,7 +4159,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  externalOrdersSync.start(1000);
+  externalOrdersSync.start(5000);
 
   const httpServer = createServer(app);
 

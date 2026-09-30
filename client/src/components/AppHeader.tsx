@@ -4,7 +4,6 @@ import {
   Menu,
   ShoppingCart,
   Table,
-  MonitorPlay,
   UtensilsCrossed,
   Calendar,
   FileText,
@@ -51,12 +50,6 @@ export default function AppHeader({
       icon: Table, 
       path: "/tables",
       color: "text-purple-600 dark:text-purple-400"
-    },
-    { 
-      label: "Kitchen Display", 
-      icon: MonitorPlay, 
-      path: "/kitchen",
-      color: "text-green-600 dark:text-green-400"
     },
     { 
       label: "KOT", 

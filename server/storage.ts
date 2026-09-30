@@ -73,6 +73,7 @@ export interface IStorage {
   getOrdersByTable(tableId: string): Promise<Order[]>;
   getActiveOrders(): Promise<Order[]>;
   getCompletedOrders(): Promise<Order[]>;
+  getCompletedOrdersSince(createdAfter: Date): Promise<Order[]>;
   getDeliveryOrders(): Promise<Order[]>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
@@ -91,6 +92,7 @@ export interface IStorage {
   deleteOrder(id: string): Promise<boolean>;
 
   getOrderItems(orderId: string): Promise<OrderItem[]>;
+  getOrderItemsByOrderIds(orderIds: string[]): Promise<OrderItem[]>;
   getOrderItem(id: string): Promise<OrderItem | undefined>;
   createOrderItem(item: InsertOrderItem): Promise<OrderItem>;
   createOrderItems(items: InsertOrderItem[]): Promise<OrderItem[]>;
@@ -491,6 +493,14 @@ export class MemStorage implements IStorage {
     );
   }
 
+  async getCompletedOrdersSince(createdAfter: Date): Promise<Order[]> {
+    return Array.from(this.orders.values()).filter(
+      (o) =>
+        (o.status === "paid" || o.status === "completed") &&
+        new Date(o.createdAt).getTime() >= createdAfter.getTime(),
+    );
+  }
+
   async getDeliveryOrders(): Promise<Order[]> {
     return Array.from(this.orders.values())
       .filter((o) => o.orderType === "delivery")
@@ -626,6 +636,12 @@ export class MemStorage implements IStorage {
 
   async getOrderItems(orderId: string): Promise<OrderItem[]> {
     return Array.from(this.orderItems.values()).filter((item) => item.orderId === orderId);
+  }
+
+  async getOrderItemsByOrderIds(orderIds: string[]): Promise<OrderItem[]> {
+    if (orderIds.length === 0) return [];
+    const orderIdSet = new Set(orderIds);
+    return Array.from(this.orderItems.values()).filter((item) => orderIdSet.has(item.orderId));
   }
 
   async getOrderItem(id: string): Promise<OrderItem | undefined> {

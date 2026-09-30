@@ -17,7 +17,6 @@ const DashboardPage = lazy(() => import("@/pages/dashboard"));
 const BillingPage = lazy(() => import("@/pages/billing"));
 const TablesPage = lazy(() => import("@/pages/tables"));
 const TableManagementPage = lazy(() => import("@/pages/table-management"));
-const KitchenPage = lazy(() => import("@/pages/kitchen"));
 const MenuPage = lazy(() => import("@/pages/menu"));
 const ReportsPage = lazy(() => import("@/pages/reports"));
 const SettingsPage = lazy(() => import("@/pages/settings"));
@@ -118,7 +117,6 @@ function Router() {
       <Route path="/billing">{() => <ProtectedRoute component={BillingPage} />}</Route>
       <Route path="/tables">{() => <ProtectedRoute component={TablesPage} />}</Route>
       <Route path="/table-management">{() => <ProtectedRoute component={TableManagementPage} />}</Route>
-      <Route path="/kitchen">{() => <ProtectedRoute component={KitchenPage} />}</Route>
       <Route path="/menu">{() => <ProtectedRoute component={MenuPage} />}</Route>
       <Route path="/reports">{() => <ProtectedRoute component={ReportsPage} />}</Route>
       <Route path="/settings">{() => <ProtectedRoute component={SettingsPage} />}</Route>

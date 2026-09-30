@@ -257,6 +257,14 @@ export class MongoStorage implements IStorage {
     return orders;
   }
 
+  async getCompletedOrdersSince(createdAfter: Date): Promise<Order[]> {
+    await this.ensureConnection();
+    return mongodb.getCollection<Order>('orders').find({
+      status: { $in: ["paid", "completed"] },
+      createdAt: { $gte: createdAfter },
+    } as any).toArray();
+  }
+
   async getDeliveryOrders(): Promise<Order[]> {
     await this.ensureConnection();
     const orders = await mongodb.getCollection<Order>('orders').find({
@@ -408,6 +416,15 @@ export class MongoStorage implements IStorage {
     await this.ensureConnection();
     const items = await mongodb.getCollection<OrderItem>('orderItems').find({ orderId } as any).toArray();
     return items;
+  }
+
+  async getOrderItemsByOrderIds(orderIds: string[]): Promise<OrderItem[]> {
+    if (orderIds.length === 0) return [];
+    await this.ensureConnection();
+    return mongodb
+      .getCollection<OrderItem>('orderItems')
+      .find({ orderId: { $in: orderIds } } as any)
+      .toArray();
   }
 
   async getOrderItem(id: string): Promise<OrderItem | undefined> {

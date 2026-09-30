@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Plus, Edit, Trash2, Eye, MoreVertical, ArrowUpDown, Search, Filter, X } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, MoreVertical, ArrowUpDown, Search, Filter, X, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import AppHeader from "@/components/AppHeader";
 import CategorySidebar from "@/components/CategorySidebar";
@@ -38,6 +38,14 @@ type SortOption = "name-asc" | "name-desc" | "price-asc" | "price-desc" | "categ
 type AvailabilityFilter = "all" | "available" | "unavailable";
 type TypeFilter = "all" | "veg" | "nonveg";
 
+interface MenuPageResponse {
+  items: MenuItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 interface RecipeIngredient {
   id?: string;
   inventoryItemId: string;
@@ -51,6 +59,8 @@ export default function MenuPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>("all");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState(searchQuery.trim());
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false);
@@ -60,9 +70,47 @@ export default function MenuPage() {
   const [isLoadingRecipe, setIsLoadingRecipe] = useState(false);
   const { toast } = useToast();
 
-  const { data: items = [], isLoading } = useQuery<MenuItem[]>({
-    queryKey: ["/api/menu"],
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedSearchQuery(searchQuery.trim()), 250);
+    return () => window.clearTimeout(timeout);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, searchQuery, availabilityFilter, typeFilter, sortOption]);
+
+  const { data: menuPage, isLoading, isFetching } = useQuery<MenuPageResponse>({
+    queryKey: [
+      "/api/menu",
+      currentPage,
+      selectedCategory,
+      debouncedSearchQuery,
+      availabilityFilter,
+      typeFilter,
+      sortOption,
+    ],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        search: debouncedSearchQuery,
+        category: selectedCategory,
+        availability: availabilityFilter,
+        type: typeFilter,
+        sort: sortOption,
+      });
+      const response = await apiRequest("GET", `/api/menu?${params.toString()}`);
+      return await response.json() as MenuPageResponse;
+    },
   });
+  const items = menuPage?.items ?? [];
+  const totalItems = menuPage?.total ?? 0;
+  const totalPages = menuPage?.totalPages ?? 1;
+
+  useEffect(() => {
+    if (menuPage && menuPage.page !== currentPage) {
+      setCurrentPage(menuPage.page);
+    }
+  }, [menuPage, currentPage]);
 
   const { data: categoriesData } = useQuery<{ categories: string[] }>({
     queryKey: ["/api/menu/categories"],
@@ -126,45 +174,6 @@ export default function MenuPage() {
     id: cat.toLowerCase(),
     name: cat,
   }));
-
-  const filteredItems = items.filter(item => {
-    const matchesCategory = selectedCategory === "all" || item.category.toLowerCase() === selectedCategory;
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesAvailability = availabilityFilter === "all" || 
-      (availabilityFilter === "available" && item.available) ||
-      (availabilityFilter === "unavailable" && !item.available);
-    const matchesType = typeFilter === "all" ||
-      (typeFilter === "veg" && item.isVeg) ||
-      (typeFilter === "nonveg" && !item.isVeg);
-    return matchesCategory && matchesSearch && matchesAvailability && matchesType;
-  });
-
-  const sortedItems = [...filteredItems].sort((a, b) => {
-    switch (sortOption) {
-      case "name-asc":
-        return a.name.localeCompare(b.name);
-      case "name-desc":
-        return b.name.localeCompare(a.name);
-      case "price-asc":
-        return parseFloat(a.price) - parseFloat(b.price);
-      case "price-desc":
-        return parseFloat(b.price) - parseFloat(a.price);
-      case "category-asc":
-        return a.category.localeCompare(b.category);
-      case "category-desc":
-        return b.category.localeCompare(a.category);
-      case "cost-asc":
-        return parseFloat(a.cost) - parseFloat(b.cost);
-      case "cost-desc":
-        return parseFloat(b.cost) - parseFloat(a.cost);
-      case "type-veg":
-        return a.isVeg === b.isVeg ? 0 : a.isVeg ? -1 : 1;
-      case "type-nonveg":
-        return a.isVeg === b.isVeg ? 0 : a.isVeg ? 1 : -1;
-      default:
-        return 0;
-    }
-  });
 
   const handleAddSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -712,7 +721,13 @@ export default function MenuPage() {
                 </tr>
               </thead>
               <tbody>
-                {sortedItems.map((item) => {
+                {items.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="py-10 text-center text-muted-foreground">
+                      No menu items found.
+                    </td>
+                  </tr>
+                ) : items.map((item) => {
                   const price = parseFloat(item.price);
                   return (
                     <tr key={item.id} className="border-b border-border last:border-0 hover-elevate" data-testid={`menu-item-${item.id}`}>
@@ -798,7 +813,9 @@ export default function MenuPage() {
             </div>
 
               <div className="md:hidden space-y-3">
-                {sortedItems.map((item) => {
+                {items.length === 0 ? (
+                  <div className="py-10 text-center text-muted-foreground">No menu items found.</div>
+                ) : items.map((item) => {
                   const price = parseFloat(item.price);
                   return (
                     <div
@@ -871,6 +888,38 @@ export default function MenuPage() {
                     </div>
                   );
                 })}
+              </div>
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-border mt-4 pt-4">
+                <p className="text-sm text-muted-foreground">
+                  Showing {totalItems === 0 ? 0 : (currentPage - 1) * (menuPage?.pageSize ?? 10) + 1}–
+                  {Math.min(currentPage * (menuPage?.pageSize ?? 10), totalItems)} of {totalItems} items
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+                    disabled={currentPage <= 1 || isFetching}
+                    data-testid="button-menu-previous-page"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground px-1" aria-live="polite">
+                    Page {currentPage} of {Math.max(1, totalPages)}
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+                    disabled={currentPage >= totalPages || isFetching}
+                    data-testid="button-menu-next-page"
+                  >
+                    Next
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
               </div>
             </>
           )}

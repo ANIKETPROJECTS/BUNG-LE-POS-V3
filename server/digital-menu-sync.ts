@@ -1,5 +1,9 @@
 import { mongodb } from './mongodb';
-import { type DigitalMenuOrder, type DigitalMenuCustomer } from '@shared/schema';
+import {
+  type DigitalMenuOrder,
+  type DigitalMenuCustomer,
+  type OrderItem,
+} from '@shared/schema';
 import { type IStorage } from './storage';
 import { ObjectId } from 'mongodb';
 import { computeBillTotals, DEFAULT_TAX_SETTINGS } from '@shared/tax';
@@ -391,7 +395,7 @@ export class DigitalMenuSyncService {
     if (incomingItems.length <= existingItems.length) return 0;
 
     const addedItems = incomingItems.slice(existingItems.length);
-    const createdItems = [];
+    const createdItems: OrderItem[] = [];
     for (const item of addedItems) {
       const menuItem = await this.findMenuItemByName(item.menuItemName);
       const notes = [
@@ -448,10 +452,8 @@ export class DigitalMenuSyncService {
         });
       }
     }
-    for (const item of createdItems) {
-      if (this.broadcastFn) {
-        this.broadcastFn("order_item_added", { orderId: posOrder.id, item });
-      }
+    if (createdItems.length > 0) {
+      this.broadcastFn?.("order_items_added", { orderId: posOrder.id, items: createdItems });
     }
     return createdItems.length;
   }
@@ -486,7 +488,7 @@ export class DigitalMenuSyncService {
     }
 
     // Map digital menu payment status to POS order status
-    // Use 'sent_to_kitchen' for unpaid orders so they appear in Kitchen Display
+    // Use 'sent_to_kitchen' for unpaid orders so they appear in KOT
     const orderStatus = digitalOrder.paymentStatus === 'paid' ? 'billed' : 'sent_to_kitchen';
 
     const posOrder = await this.storage.createOrder({
@@ -503,7 +505,7 @@ export class DigitalMenuSyncService {
       expectedPickupTime: null,
     });
 
-    // Broadcast order_created event so Kitchen Display updates in real-time
+    // Broadcast order_created event so order views update in real-time
     if (this.broadcastFn) {
       this.broadcastFn('order_created', posOrder);
       console.log(`[WebSocket] Broadcast order_created for digital menu order ${posOrder.id}`);
@@ -520,6 +522,7 @@ export class DigitalMenuSyncService {
     }
 
     let calculatedSubtotal = 0;
+    const createdItemsForBroadcast: OrderItem[] = [];
 
     for (const item of digitalOrder.items || []) {
       const menuItem = await this.findMenuItemByName(item.menuItemName);
@@ -542,12 +545,14 @@ export class DigitalMenuSyncService {
         status: 'new',
         isVeg: menuItem?.isVeg ?? true,
       });
+      createdItemsForBroadcast.push(createdItem);
+    }
 
-      // Broadcast order_item_added event so Kitchen Display shows items in real-time
-      if (this.broadcastFn) {
-        this.broadcastFn('order_item_added', { orderId: posOrder.id, item: createdItem });
-        console.log(`[WebSocket] Broadcast order_item_added for item ${createdItem.name}`);
-      }
+    if (createdItemsForBroadcast.length > 0) {
+      this.broadcastFn?.("order_items_added", {
+        orderId: posOrder.id,
+        items: createdItemsForBroadcast,
+      });
     }
 
     const orderTotal = (digitalOrder.total || 0).toFixed(2);

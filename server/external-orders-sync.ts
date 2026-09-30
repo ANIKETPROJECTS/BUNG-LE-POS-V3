@@ -27,6 +27,7 @@
 
 import { MongoClient, Db } from "mongodb";
 import type { IStorage } from "./storage";
+import type { OrderItem } from "@shared/schema";
 import { mongoStorage } from "./mongo-storage";
 import { mongodb } from "./mongodb";
 import { getDailyKotSequence, ensureDailyKotInvoiceNumber } from "./utils/billing-sequence";
@@ -223,12 +224,6 @@ export class ExternalOrdersSyncService {
         ],
         status: { $nin: ["cancelled", "rejected", "cancel", "reject"] },
       }).sort({ createdAt: 1 }).toArray();
-
-      // Diagnostic: also count how many total unsynced docs exist at all
-      const totalUnsynced = await coll.countDocuments({ syncedToPOS: { $ne: true } });
-      if (totalUnsynced !== docs.length) {
-        console.log(`🔍 [ExternalOrders] ${totalUnsynced} total unsynced (${totalUnsynced - docs.length} skipped by status filter)`);
-      }
 
       if (docs.length > 0) {
         console.log(`🔍 [ExternalOrders] Found ${docs.length} unsynced document(s) to process`);
@@ -442,8 +437,8 @@ export class ExternalOrdersSyncService {
     }
 
     this.broadcastFn?.("order_updated", updatedOrder);
-    for (const item of created) {
-      this.broadcastFn?.("order_item_added", { orderId: posOrder.id, item });
+    if (created.length > 0) {
+      this.broadcastFn?.("order_items_added", { orderId: posOrder.id, items: created });
     }
     this.broadcastFn?.("kot_created", {
       orderId: posOrder.id,
@@ -819,6 +814,7 @@ export class ExternalOrdersSyncService {
     // ── 7. Create order items ─────────────────────────────────────────
     const items: any[] = doc.items || doc.orderItems || doc.cart || [];
     let subtotal = 0;
+    const createdItemsForBroadcast: OrderItem[] = [];
 
     const parseBoolFlag = (v: unknown): boolean => {
       if (typeof v === "boolean") return v;
@@ -857,7 +853,13 @@ export class ExternalOrdersSyncService {
       await this.storage.setOrderItemKotBatch(created.id, 1);
 
       console.log(`  🍽️  [ExternalOrders] Item: ${itemName} x${qty} (${isVeg ? "veg" : "non-veg"})`);
-      this.broadcastFn?.("order_item_added", { orderId: posOrder.id, item: created });
+      createdItemsForBroadcast.push(created);
+    }
+    if (createdItemsForBroadcast.length > 0) {
+      this.broadcastFn?.("order_items_added", {
+        orderId: posOrder.id,
+        items: createdItemsForBroadcast,
+      });
     }
 
     // ── 8. Update total ────────────────────────────────────────────────

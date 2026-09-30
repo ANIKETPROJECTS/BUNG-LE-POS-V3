@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
-import { useQuery, useQueries, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import AppHeader from "@/components/AppHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -624,7 +624,6 @@ export default function KOTPage() {
   const [deleteTicket, setDeleteTicket] = useState<KOTTicket | null>(null);
 
   const { data: activeOrders    = [] } = useQuery<Order[]>({ queryKey: ["/api/orders/active"] });
-  const { data: completedOrders = [] } = useQuery<Order[]>({ queryKey: ["/api/orders/completed"] });
   const { data: tables          = [] } = useQuery<Table[]>({ queryKey: ["/api/tables"] });
   const { data: floors          = [] } = useQuery<Floor[]>({ queryKey: ["/api/floors"] });
   const { data: printers        = [] } = useQuery<PrinterDevice[]>({ queryKey: ["/api/printers"] });
@@ -658,6 +657,17 @@ export default function KOTPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dayKey]);
 
+  const { data: completedOrders = [] } = useQuery<Order[]>({
+    queryKey: ["/api/orders/completed", dayKey],
+    queryFn: async () => {
+      const response = await apiRequest(
+        "GET",
+        `/api/orders/completed?createdAfter=${encodeURIComponent(todayStart.toISOString())}`,
+      );
+      return await response.json() as Order[];
+    },
+  });
+
   // When the calendar day changes, refetch so the board contains only today's
   // tickets (and KOT numbering restarts from KOT-0001 the next morning).
   useEffect(() => {
@@ -670,28 +680,46 @@ export default function KOTPage() {
     [activeOrders, todayStart]
   );
 
-  const activeQueries = useQueries({
-    queries: kitchenOrders.map(o => ({
-      queryKey: ["/api/orders", o.id, "items"],
-      queryFn: () => fetch(`/api/orders/${o.id}/items`).then(r => r.json()) as Promise<OrderItem[]>,
-    })),
-  });
-
   const todayCompletedOrders = useMemo(() =>
     completedOrders.filter(o => new Date(o.createdAt) >= todayStart),
     [completedOrders, todayStart]
   );
 
-  const completedQueries = useQueries({
-    queries: todayCompletedOrders.map(o => ({
-      queryKey: ["/api/orders", o.id, "items"],
-      queryFn: () => fetch(`/api/orders/${o.id}/items`).then(r => r.json()) as Promise<OrderItem[]>,
-    })),
+  const orderIdsForItems = useMemo(
+    () => Array.from(new Set([...kitchenOrders, ...todayCompletedOrders].map((order) => order.id))).sort(),
+    [kitchenOrders, todayCompletedOrders],
+  );
+  const { data: boardItems = [] } = useQuery<OrderItem[]>({
+    queryKey: ["/api/orders", "items", "batch", ...orderIdsForItems],
+    enabled: orderIdsForItems.length > 0,
+    queryFn: async () => {
+      const chunks: string[][] = [];
+      for (let index = 0; index < orderIdsForItems.length; index += 200) {
+        chunks.push(orderIdsForItems.slice(index, index + 200));
+      }
+      const itemGroups = await Promise.all(
+        chunks.map(async (orderIds) => {
+          const response = await apiRequest("POST", "/api/orders/items/batch", { orderIds });
+          return await response.json() as OrderItem[];
+        }),
+      );
+      return itemGroups.flat();
+    },
   });
 
-  const buildTickets = (orders: Order[], queries: typeof activeQueries): KOTTicket[] =>
-    orders.flatMap((order, i) => {
-      const items  = queries[i]?.data ?? [];
+  const itemsByOrderId = useMemo(() => {
+    const grouped = new Map<string, OrderItem[]>();
+    for (const item of boardItems) {
+      const group = grouped.get(item.orderId) ?? [];
+      group.push(item);
+      grouped.set(item.orderId, group);
+    }
+    return grouped;
+  }, [boardItems]);
+
+  const buildTickets = (orders: Order[]): KOTTicket[] =>
+    orders.flatMap((order) => {
+      const items  = itemsByOrderId.get(order.id) ?? [];
       const table  = tables.find(t => t.id === order.tableId);
       const floor  = floors.find(f => f.id === table?.floorId);
       const tableNumber = order.orderType === "dine-in" && table
@@ -719,8 +747,8 @@ export default function KOTPage() {
     });
 
   const allTickets = useMemo(() => {
-    const active = buildTickets(kitchenOrders, activeQueries);
-    const done   = buildTickets(todayCompletedOrders, completedQueries);
+    const active = buildTickets(kitchenOrders);
+    const done   = buildTickets(todayCompletedOrders);
     const sorted = [...active, ...done].sort(
       (a, b) => {
         // Add-on KOTs share their parent order's createdAt. Use the first
@@ -749,7 +777,7 @@ export default function KOTPage() {
       kotNumber: `KOT ${index + 1}`,
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [kitchenOrders, completedOrders, activeQueries, completedQueries, tables, floors]);
+  }, [kitchenOrders, todayCompletedOrders, itemsByOrderId, tables, floors]);
 
   const filtered = useMemo(() => {
     let list = allTickets;
